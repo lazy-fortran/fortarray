@@ -50,8 +50,8 @@ program example
     call df%to_file('output.dat', format='csv')
     df = from_file('input.dat', format='csv')
     
-    ! Select data by label
-    df_subset = df%select(time='2024-01-01', station='A001')
+    ! Get data by label
+    df_subset = df%get(time='2024-01-01', station='A001')
     
     ! Compute mean along dimension
     df_mean = df%mean(dim='time')
