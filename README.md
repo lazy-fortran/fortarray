@@ -40,15 +40,15 @@ program example
                    dims=['time', 'station'], &
                    coords=[time_coords, station_coords])
     
-    ! Save to file (auto-detects format from extension)
-    call df%save('output.nc')
+    ! Write to file (auto-detects format from extension)
+    call df%to_file('output.nc')
     
-    ! Load from file (auto-detects format from extension)
-    df = load('input.nc')
+    ! Read from file (auto-detects format from extension)
+    df = from_file('input.nc')
     
     ! Or specify format explicitly
-    call df%save('output.dat', format='csv')
-    df = load('input.dat', format='csv')
+    call df%to_file('output.dat', format='csv')
+    df = from_file('input.dat', format='csv')
     
     ! Select data by label
     df_subset = df%sel(time='2024-01-01', station='A001')
