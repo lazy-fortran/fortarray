@@ -53,8 +53,8 @@ program example
     ! Filter data by label
     df_subset = df%filter(time='2024-01-01', station='A001')
     
-    ! Select specific columns
-    df_cols = df%columns(['temperature', 'pressure'])
+    ! Select specific variables
+    df_vars = df%vars(['temperature', 'pressure'])
     
     ! Compute mean along dimension
     df_mean = df%mean(dim='time')
