@@ -29,7 +29,7 @@ program example
     use foxel
     implicit none
     
-    type(dataframe) :: df
+    type(dataframe_t) :: df
     real, allocatable :: data(:,:)
     
     ! Create a DataFrame from array
