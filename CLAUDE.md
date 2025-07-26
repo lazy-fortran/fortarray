@@ -47,7 +47,7 @@ foxel_plotting   - Visualization interface (using fortplot)
 - Default to OMP_NUM_THREADS=24 for testing
 
 ## API Design Guidelines
-- Consistent naming: `dataframe%filter()`, `dataframe%mean()`, etc.
+- Consistent naming: `dataframe%filter()`, `dataframe%columns()`, `dataframe%mean()`, etc.
 - Optional arguments for flexibility
 - Return new objects rather than modifying in-place (functional style)
 - Support method chaining where appropriate
