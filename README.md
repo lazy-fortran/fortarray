@@ -30,13 +30,13 @@ program example
     implicit none
     
     type(dataframe_t) :: df
-    real, allocatable :: data(:,:)
+    real, allocatable :: values(:,:)
     
     ! Create a DataFrame from array
-    allocate(data(100, 50))
-    call random_number(data)
+    allocate(values(100, 50))
+    call random_number(values)
     
-    df = dataframe(data, &
+    df = dataframe(values, &
                    dims=['time', 'station'], &
                    coords=[time_coords, station_coords])
     
