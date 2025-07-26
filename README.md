@@ -40,11 +40,15 @@ program example
                    dims=['time', 'station'], &
                    coords=[time_coords, station_coords])
     
-    ! Write to NetCDF
-    call df%to_netcdf('output.nc')
+    ! Save to file (auto-detects format from extension)
+    call df%save('output.nc')
     
-    ! Read from NetCDF
-    df = read_netcdf('input.nc')
+    ! Load from file (auto-detects format from extension)
+    df = load('input.nc')
+    
+    ! Or specify format explicitly
+    call df%save('output.dat', format='csv')
+    df = load('input.dat', format='csv')
     
     ! Select data by label
     df_subset = df%sel(time='2024-01-01', station='A001')
