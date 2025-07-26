@@ -12,6 +12,7 @@ A modern Fortran library for handling multi-dimensional labeled arrays and datas
 - **Built-in computations** - Aggregations, reductions, and transformations
 - **Missing data handling** - Proper NaN support and propagation
 - **Parallel operations** - OpenMP support for computationally intensive tasks
+- **Visualization** - Built-in plotting capabilities via fortplot integration
 
 ## Installation
 
@@ -51,6 +52,9 @@ program example
     ! Compute mean along dimension
     df_mean = df%mean(dim='time')
     
+    ! Plot the data
+    call df%plot(x='time', y='station')
+    
 end program example
 ```
 
@@ -68,11 +72,13 @@ The central data structure in Foxel, containing:
 - **Aggregation**: Compute statistics along dimensions
 - **Arithmetic**: Element-wise and broadcasting operations
 - **I/O**: Read/write various formats (NetCDF, CSV)
+- **Visualization**: Plot DataFrames directly using fortplot
 
 ## Requirements
 
 - Modern Fortran compiler (gfortran 9+, ifort 2021+)
 - NetCDF-Fortran library
+- fortplot (installed automatically via fpm)
 - OpenMP support (optional)
 - fpm (Fortran Package Manager)
 

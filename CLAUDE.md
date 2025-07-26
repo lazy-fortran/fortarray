@@ -31,7 +31,7 @@ foxel_io         - I/O operations (NetCDF, CSV, etc.)
 foxel_indexing   - Indexing and selection operations
 foxel_compute    - Computational routines
 foxel_utils      - Utility functions
-foxel_plotting   - Visualization interface
+foxel_plotting   - Visualization interface (using fortplot)
 ```
 
 ## Memory Management
@@ -57,6 +57,11 @@ foxel_plotting   - Visualization interface
 - Provide usage examples in comments
 - Maintain API reference documentation
 - Include performance considerations
+
+## Dependencies
+- NetCDF-Fortran for file I/O
+- fortplot for visualization capabilities
+- OpenMP for parallel computing
 
 ## Version Control
 - Atomic commits with clear messages

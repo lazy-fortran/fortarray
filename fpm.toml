@@ -1,0 +1,32 @@
+name = "foxel"
+version = "0.1.0"
+license = "MIT"
+author = "Foxel Contributors"
+maintainer = "krystophny@github"
+copyright = "2025 Foxel Contributors"
+
+[build]
+auto-executables = true
+auto-tests = true
+auto-examples = true
+
+[install]
+library = false
+
+[[executable]]
+name = "foxel-example"
+source-dir = "app"
+main = "main.f90"
+
+[dependencies]
+fortplot = { git = "https://github.com/krystophny/fortplot.git" }
+
+[dev-dependencies]
+
+[library]
+source-dir = "src"
+
+[[test]]
+name = "foxel-tests"
+source-dir = "test"
+main = "test_main.f90"

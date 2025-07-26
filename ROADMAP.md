@@ -37,10 +37,11 @@ Foxel aims to be a modern Fortran library for handling multi-dimensional labeled
 - [ ] Apply functions along dimensions
 
 ## Phase 6: Visualization (Month 6)
-- [ ] Basic plotting interface
-- [ ] Line plots for 1D data
-- [ ] Contour plots for 2D data
-- [ ] Export to common plotting formats
+- [ ] Integration with fortplot library for plotting capabilities
+- [ ] Basic plotting interface through fortplot
+- [ ] Line plots for 1D data using fortplot
+- [ ] Contour plots for 2D data using fortplot
+- [ ] Export to common plotting formats via fortplot
 
 ## Phase 7: Time Series Support (Month 7)
 - [ ] DateTime coordinate support
