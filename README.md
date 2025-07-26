@@ -51,7 +51,7 @@ program example
     df = from_file('input.dat', format='csv')
     
     ! Select data by label
-    df_subset = df%sel(time='2024-01-01', station='A001')
+    df_subset = df%select(time='2024-01-01', station='A001')
     
     ! Compute mean along dimension
     df_mean = df%mean(dim='time')
