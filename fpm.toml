@@ -13,20 +13,7 @@ auto-examples = true
 [install]
 library = false
 
-[[executable]]
-name = "foxel-example"
-source-dir = "app"
-main = "main.f90"
-
 [dependencies]
 fortplot = { git = "https://github.com/krystophny/fortplot.git" }
+netcdf = "*"
 
-[dev-dependencies]
-
-[library]
-source-dir = "src"
-
-[[test]]
-name = "foxel-tests"
-source-dir = "test"
-main = "test_main.f90"
