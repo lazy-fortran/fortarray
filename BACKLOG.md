@@ -78,21 +78,21 @@
 
 ## Phase 2: I/O Operations (Sprint 5-8)
 
-### Sprint 5: NetCDF4 Reader
-- [ ] Implement complete NetCDF4 file reading
-  - [ ] Read all dimensions and their lengths
-  - [ ] Read all variables with proper types
-  - [ ] Handle coordinate variables specially
-  - [ ] Read all attributes (global and variable)
-  - [ ] Support NetCDF4 groups
-- [ ] Handle special cases
-  - [ ] Scalar variables (0D)
-  - [ ] Unlimited dimensions
-  - [ ] String variables
-  - [ ] Missing values and fill values
-- [ ] Create dataset from NetCDF file
-- [ ] Selective variable loading
-- [ ] Test with real NetCDF files
+### Sprint 5: NetCDF4 Reader ✓
+- [x] Implement complete NetCDF4 file reading
+  - [x] Read all dimensions and their lengths
+  - [x] Read all variables with proper types
+  - [x] Handle coordinate variables specially
+  - [x] Read all attributes (global and variable)
+  - [ ] Support NetCDF4 groups (deferred to Phase 9)
+- [x] Handle special cases
+  - [x] Scalar variables (0D)
+  - [x] Unlimited dimensions
+  - [ ] String variables (partial - reads as char arrays)
+  - [x] Missing values and fill values
+- [x] Create dataset from NetCDF file
+- [x] Selective variable loading
+- [ ] Test with real NetCDF files (deferred to integration testing)
 
 ### Sprint 6: NetCDF4 Writer
 - [ ] Implement complete NetCDF4 writing

@@ -172,18 +172,18 @@ contains
         ! Test with many attributes
         var%initialized = .true.
         var%n_attrs = max_attrs
-        allocate(var%attr_keys(max_attrs))
-        allocate(var%attr_values(max_attrs))
+        allocate(var%attrs(max_attrs))
         
         do i = 1, max_attrs
             write(key, '(A,I0)') "attr_", i
-            var%attr_keys(i) = key
-            var%attr_values(i) = "test_value"
+            var%attrs(i)%name = key
+            var%attrs(i)%value = "test_value"
+            var%attrs(i)%dtype = ATTR_TYPE_STRING
         end do
         
         if (var%n_attrs /= max_attrs) test_passed = .false.
-        if (size(var%attr_keys) /= max_attrs) test_passed = .false.
-        if (var%attr_keys(500) /= "attr_500") test_passed = .false.
+        if (size(var%attrs) /= max_attrs) test_passed = .false.
+        if (var%attrs(500)%name /= "attr_500") test_passed = .false.
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
@@ -193,8 +193,7 @@ contains
         end if
         
         ! Clean up
-        if (allocated(var%attr_keys)) deallocate(var%attr_keys)
-        if (allocated(var%attr_values)) deallocate(var%attr_values)
+        if (allocated(var%attrs)) deallocate(var%attrs)
     end subroutine test_max_attributes
     
     subroutine test_long_names()

@@ -125,13 +125,14 @@ contains
         
         ! Test attribute storage
         var%n_attrs = 2
-        allocate(var%attr_keys(2))
-        allocate(var%attr_values(2))
+        allocate(var%attrs(2))
         
-        var%attr_keys(1) = "units"
-        var%attr_values(1) = "degrees_celsius"
-        var%attr_keys(2) = "long_name"
-        var%attr_values(2) = "Surface Temperature"
+        var%attrs(1)%name = "units"
+        var%attrs(1)%value = "degrees_celsius"
+        var%attrs(1)%dtype = ATTR_TYPE_STRING
+        var%attrs(2)%name = "long_name"
+        var%attrs(2)%value = "Surface Temperature"
+        var%attrs(2)%dtype = ATTR_TYPE_STRING
         
         ! Test direct access to common attributes
         var%units = "K"
@@ -140,8 +141,8 @@ contains
         
         ! Verify attributes
         if (var%n_attrs /= 2) test_passed = .false.
-        if (var%attr_keys(1) /= "units") test_passed = .false.
-        if (var%attr_values(2) /= "Surface Temperature") test_passed = .false.
+        if (var%attrs(1)%name /= "units") test_passed = .false.
+        if (var%attrs(2)%value /= "Surface Temperature") test_passed = .false.
         if (var%units /= "K") test_passed = .false.
         if (var%long_name /= "Air Temperature") test_passed = .false.
         
@@ -153,8 +154,7 @@ contains
         end if
         
         ! Clean up
-        if (allocated(var%attr_keys)) deallocate(var%attr_keys)
-        if (allocated(var%attr_values)) deallocate(var%attr_values)
+        if (allocated(var%attrs)) deallocate(var%attrs)
     end subroutine test_attribute_storage
     
     subroutine test_type_assignment()

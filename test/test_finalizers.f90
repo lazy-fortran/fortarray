@@ -50,10 +50,10 @@ contains
             
             ! Allocate attributes
             var%n_attrs = 1
-            allocate(var%attr_keys(1))
-            allocate(var%attr_values(1))
-            var%attr_keys(1) = "test"
-            var%attr_values(1) = "value"
+            allocate(var%attrs(1))
+            var%attrs(1)%name = "test"
+            var%attrs(1)%value = "value"
+            var%attrs(1)%dtype = ATTR_TYPE_STRING
             
             ! When block ends, finalizer should be called
         end block
@@ -117,10 +117,10 @@ contains
             
             ! Allocate attributes
             coord%n_attrs = 1
-            allocate(coord%attr_keys(1))
-            allocate(coord%attr_values(1))
-            coord%attr_keys(1) = "units"
-            coord%attr_values(1) = "seconds"
+            allocate(coord%attrs(1))
+            coord%attrs(1)%name = "units"
+            coord%attrs(1)%value = "seconds"
+            coord%attrs(1)%dtype = ATTR_TYPE_STRING
         end block
         
         if (test_passed) then

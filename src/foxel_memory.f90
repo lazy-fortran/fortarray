@@ -35,8 +35,7 @@ contains
         end select
         
         ! Deallocate attributes
-        if (allocated(coord%attr_keys)) deallocate(coord%attr_keys)
-        if (allocated(coord%attr_values)) deallocate(coord%attr_values)
+        if (allocated(coord%attrs)) deallocate(coord%attrs)
         
         coord%initialized = .false.
         coord%length = 0
@@ -101,8 +100,7 @@ contains
         end if
         
         ! Deallocate attributes
-        if (allocated(var%attr_keys)) deallocate(var%attr_keys)
-        if (allocated(var%attr_values)) deallocate(var%attr_values)
+        if (allocated(var%attrs)) deallocate(var%attrs)
         
         ! Reset all values
         var%initialized = .false.

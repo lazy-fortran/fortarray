@@ -365,10 +365,8 @@ contains
         
         ! Copy attributes
         if (src%n_attrs > 0) then
-            allocate(dest%attr_keys(src%n_attrs))
-            allocate(dest%attr_values(src%n_attrs))
-            dest%attr_keys = src%attr_keys
-            dest%attr_values = src%attr_values
+            allocate(dest%attrs(src%n_attrs))
+            dest%attrs = src%attrs
         end if
     end subroutine copy_coordinate
     
@@ -1638,17 +1636,18 @@ contains
             
             ! Store CSV metadata and column names as attributes
             var%n_attrs = n_cols + 1
-            allocate(var%attr_keys(var%n_attrs))
-            allocate(var%attr_values(var%n_attrs))
+            allocate(var%attrs(var%n_attrs))
             
             ! Store format
-            var%attr_keys(1) = "source_format"
-            var%attr_values(1) = "CSV"
+            var%attrs(1)%name = "source_format"
+            var%attrs(1)%value = "CSV"
+            var%attrs(1)%dtype = ATTR_TYPE_STRING
             
             ! Store column names
             do i = 1, n_cols
-                write(var%attr_keys(i+1), '(A,I0)') "column_", i
-                var%attr_values(i+1) = trim(adjustl(headers(i)))
+                write(var%attrs(i+1)%name, '(A,I0)') "column_", i
+                var%attrs(i+1)%value = trim(adjustl(headers(i)))
+                var%attrs(i+1)%dtype = ATTR_TYPE_STRING
             end do
         end if
         

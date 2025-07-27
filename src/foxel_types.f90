@@ -17,6 +17,18 @@ module foxel_types
     integer, parameter :: DTYPE_CHAR = 7
     integer, parameter :: DTYPE_LOGICAL = 8
     
+    ! Attribute type constants
+    integer, parameter :: ATTR_TYPE_STRING = 1
+    integer, parameter :: ATTR_TYPE_NUMERIC = 2
+    integer, parameter :: ATTR_TYPE_LOGICAL = 3
+    
+    ! Attribute type
+    type :: attribute_t
+        character(len=MAX_NAME_LEN) :: name = ""
+        character(len=MAX_ATTR_LEN) :: value = ""
+        integer :: dtype = ATTR_TYPE_STRING
+    end type attribute_t
+    
     ! Dimension type - represents a NetCDF dimension
     type :: dimension_t
         character(len=MAX_NAME_LEN) :: name = ""
@@ -41,8 +53,7 @@ module foxel_types
         real(real64) :: spacing = 0.0_real64  ! For regular coords
         ! Attributes
         integer :: n_attrs = 0
-        character(len=MAX_NAME_LEN), allocatable :: attr_keys(:)
-        character(len=MAX_ATTR_LEN), allocatable :: attr_values(:)
+        type(attribute_t), allocatable :: attrs(:)
     contains
         final :: coordinate_finalizer
     end type coordinate_t
@@ -85,8 +96,7 @@ module foxel_types
         
         ! Attributes (NetCDF attributes)
         integer :: n_attrs = 0
-        character(len=MAX_NAME_LEN), allocatable :: attr_keys(:)
-        character(len=MAX_ATTR_LEN), allocatable :: attr_values(:)
+        type(attribute_t), allocatable :: attrs(:)
         
         ! Memory layout flags
         logical :: is_c_order = .false.  ! False = Fortran order (default)
@@ -164,6 +174,8 @@ module foxel_types
     public :: MAX_NAME_LEN, MAX_ATTR_LEN
     public :: DTYPE_INT8, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64
     public :: DTYPE_REAL32, DTYPE_REAL64, DTYPE_CHAR, DTYPE_LOGICAL
+    public :: ATTR_TYPE_STRING, ATTR_TYPE_NUMERIC, ATTR_TYPE_LOGICAL
+    public :: attribute_t
     
 contains
 
@@ -176,8 +188,7 @@ contains
         if (allocated(coord%values_r32)) deallocate(coord%values_r32)
         if (allocated(coord%values_r64)) deallocate(coord%values_r64)
         if (allocated(coord%values_char)) deallocate(coord%values_char)
-        if (allocated(coord%attr_keys)) deallocate(coord%attr_keys)
-        if (allocated(coord%attr_values)) deallocate(coord%attr_values)
+        if (allocated(coord%attrs)) deallocate(coord%attrs)
     end subroutine coordinate_finalizer
     
     !> Finalizer for data_storage_t type
@@ -201,8 +212,7 @@ contains
         if (allocated(var%strides)) deallocate(var%strides)
         if (allocated(var%coords)) deallocate(var%coords)
         if (allocated(var%has_coord)) deallocate(var%has_coord)
-        if (allocated(var%attr_keys)) deallocate(var%attr_keys)
-        if (allocated(var%attr_values)) deallocate(var%attr_values)
+        if (allocated(var%attrs)) deallocate(var%attrs)
     end subroutine variable_finalizer
     
     !> Finalizer for dataset_t type

@@ -5,6 +5,7 @@ module foxel
     use foxel_constructors
     use foxel_indexing
     use foxel_datasets
+    use foxel_netcdf
     implicit none
     
     ! Re-export everything from submodules

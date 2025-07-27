@@ -116,7 +116,9 @@ contains
         end if
         
         ! Expand array if needed
-        if (dset%n_vars >= size(dset%variables)) then
+        if (.not. allocated(dset%variables)) then
+            allocate(dset%variables(10))
+        else if (dset%n_vars >= size(dset%variables)) then
             new_size = max(2 * size(dset%variables), 10)
             allocate(temp_vars(new_size))
             temp_vars(1:dset%n_vars) = dset%variables(1:dset%n_vars)
