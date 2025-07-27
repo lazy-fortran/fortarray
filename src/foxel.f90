@@ -10,6 +10,7 @@ module foxel
     use foxel_format_detection
     use foxel_broadcasting
     use foxel_arithmetic
+    use foxel_aggregation
     implicit none
     
     ! Re-export everything from submodules
