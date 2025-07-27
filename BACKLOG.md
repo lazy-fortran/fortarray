@@ -10,23 +10,23 @@
 
 ## Architecture Refactoring (IMMEDIATE PRIORITY)
 
-### Sprint 0: Refactor to NetCDF Model ⚠️ IN PROGRESS
-- [ ] Rename `dataframe_t` to `variable_t` throughout codebase
-- [ ] Update all references from "dataframe" to "variable"
-- [ ] Create `dataset_t` type for multi-variable collections
-- [ ] Update module names to reflect NetCDF terminology
-- [ ] Refactor tests to use new type names
-- [ ] Update all documentation
+### Sprint 0: Refactor to NetCDF Model ✓
+- [x] Rename `dataframe_t` to `variable_t` throughout codebase
+- [x] Update all references from "dataframe" to "variable"
+- [x] Create `dataset_t` type for multi-variable collections
+- [x] Update module names to reflect NetCDF terminology
+- [x] Refactor tests to use new type names
+- [x] Update all documentation
 
 ## Phase 1: Core Data Structures (Sprint 1-4)
 
-### Sprint 1: Basic Type Definitions ✓ (NEEDS REFACTORING)
-- [x] Define core types (currently as dataframe_t, needs rename to variable_t)
-- [ ] Refactor to variable_t with NetCDF semantics
-- [ ] Add dimension_t type for named dimensions
-- [ ] Add dataset_t type for variable collections
-- [ ] Update finalizers for new types
-- [ ] Refactor test suite for new type names
+### Sprint 1: Basic Type Definitions ✓
+- [x] Define core types (now as variable_t with NetCDF semantics)
+- [x] Refactor to variable_t with NetCDF semantics
+- [x] Add dimension_t type for named dimensions
+- [x] Add dataset_t type for variable collections
+- [x] Update finalizers for new types
+- [x] Refactor test suite for new type names
 
 ### Sprint 2: Generic Data Storage ✓ (COMPATIBLE)
 - [x] Implement generic interfaces for data types
