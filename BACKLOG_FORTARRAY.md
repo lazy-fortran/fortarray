@@ -11,29 +11,61 @@
 
 ## Architecture Transformation (IMMEDIATE PRIORITY)
 
-### Sprint 0: Global Rename Foxel → FortArray ✓
+### Sprint 0: Global Rename Foxel → FortArray ✅ COMPLETED
 - [x] Rename all modules from `foxel_*` to `fortarray_*`
 - [x] Rename `variable_t` to `fortarray_t` throughout codebase
 - [x] Update all references from "foxel" to "fortarray" (case insensitive)
 - [x] Update documentation and README
 - [x] Update repository name and URLs
 - [x] Update all import statements and module names
+- [x] Test compilation and basic functionality
+- [x] Commit and push changes
+
+### Sprint 0.5: Critical Analysis and Fixes
+- [ ] **CRITICAL**: Review XARRAY.md plan for oversimplifications
+- [ ] **CRITICAL**: Identify gaps between current `fortarray_t` and planned xarray API
+- [ ] **CRITICAL**: Assess Fortran-specific implementation challenges:
+  - [ ] Method chaining memory management
+  - [ ] Performance implications of multiple method overloads
+  - [ ] Coordinate lookup optimization needs
+  - [ ] Broadcasting compatibility with new selection methods
+- [ ] **CRITICAL**: Design concrete implementation for:
+  - [ ] `slice_t` type for range operations
+  - [ ] Generic coordinate comparison (string, numeric, datetime)
+  - [ ] Efficient nearest-neighbor selection algorithms
+  - [ ] Method chaining temporary object management
+- [ ] Plan performance benchmarking strategy vs current implementation
+- [ ] Update sprint priorities based on complexity analysis
 
 ## Phase 1: Core API Harmonization (Sprint 1-6)
 
-### Sprint 1: Type System Redesign ✓
-- [x] Rename `variable_t` → `fortarray_t` as central type
-- [x] Add backward compatibility via `type, extends(fortarray_t) :: variable_t`
-- [x] Update all constructor interfaces
-- [x] Add xarray-compatible method signatures to `fortarray_t`
-- [x] Test type compatibility and inheritance
+### Sprint 1: Type System Redesign
+- [x] Rename `variable_t` → `fortarray_t` as central type (COMPLETED)
+- [ ] Add backward compatibility via `type, extends(fortarray_t) :: variable_t`
+- [ ] Update all constructor interfaces to use `fortarray_t`
+- [ ] Add xarray-compatible method signatures to `fortarray_t`:
+  - [ ] `sel_point(coord_name, value, method)` 
+  - [ ] `sel_range(coord_name, start, stop, step)`
+  - [ ] `isel_point(dim_name, index)`
+  - [ ] `isel_range(dim_name, start, stop, step)`
+  - [ ] `filter(condition, other_value)`
+  - [ ] `values()` method for data access
+- [ ] Test type compatibility and inheritance
+- [ ] Performance impact assessment of new methods
 
-### Sprint 2: Constructor Harmonization ✓
-- [x] Create `new_array()` constructor interface (avoid case conflict)
-- [x] Create `new_dataset()` constructor interface
-- [x] Implement positional argument constructors (no keyword args in Fortran)
-- [x] Add overloaded constructors for different data types
-- [x] Test all constructor combinations
+### Sprint 2: Constructor Harmonization  
+- [ ] Create `new_array()` constructor interface (avoid case conflict)
+  - [ ] `new_array(data, dims, name, units, attrs)`
+  - [ ] `new_array(scalar_value, name, units)`
+  - [ ] `new_array(data, coords, dims, name)`
+- [ ] Create `new_dataset()` constructor interface
+  - [ ] `new_dataset(arrays, coords, attrs)`
+  - [ ] `new_dataset()` empty constructor
+- [ ] Implement positional argument constructors (no keyword args in Fortran)
+- [ ] Add overloaded constructors for all data types (real64, real32, int32, int64)
+- [ ] Add validation for all constructor arguments
+- [ ] Test all constructor combinations with edge cases
+- [ ] Ensure backward compatibility with existing `variable()` constructor
 
 ### Sprint 3: Method Name Mapping ✓
 - [x] Add xarray-compatible method names to `fortarray_t`:

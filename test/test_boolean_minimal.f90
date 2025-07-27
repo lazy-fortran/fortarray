@@ -1,11 +1,11 @@
 program test_boolean_minimal
-    use foxel_boolean_indexing, only: create_mask_from_logical_array, where_mask_only
-    use foxel_types, only: variable_t
-    use foxel_constructors, only: variable
+    use fortarray_boolean_indexing, only: create_mask_from_logical_array, where_mask_only
+    use fortarray_types, only: fortarray_t
+    use fortarray_constructors, only: variable
     use iso_fortran_env, only: real64, error_unit
     implicit none
     
-    type(variable_t) :: var, mask, result
+    type(fortarray_t) :: var, mask, result
     real(real64), dimension(3) :: data
     logical, dimension(3) :: mask_data
     logical :: success

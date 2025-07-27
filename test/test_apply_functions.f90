@@ -1,5 +1,5 @@
 program test_apply_functions
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -43,7 +43,7 @@ program test_apply_functions
 contains
 
     subroutine test_apply_along_dimension()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(12) :: data
         integer :: i
         logical :: test_passed
@@ -85,7 +85,7 @@ contains
     end subroutine test_apply_along_dimension
     
     subroutine test_apply_user_function()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -125,7 +125,7 @@ contains
     end subroutine test_apply_user_function
     
     subroutine test_apply_vectorized_operations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(6) :: data
         integer :: i
         logical :: test_passed
@@ -165,7 +165,7 @@ contains
     end subroutine test_apply_vectorized_operations
     
     subroutine test_apply_result_type_inference()
-        type(variable_t) :: var_real, var_int, result_real, result_int
+        type(fortarray_t) :: var_real, var_int, result_real, result_int
         real(real64), dimension(3) :: real_data
         integer(int32), dimension(3) :: int_data
         logical :: test_passed
@@ -207,7 +207,7 @@ contains
     end subroutine test_apply_result_type_inference
     
     subroutine test_apply_1d_function()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -244,7 +244,7 @@ contains
     end subroutine test_apply_1d_function
     
     subroutine test_apply_2d_function()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(6) :: data
         logical :: test_passed
         
@@ -276,7 +276,7 @@ contains
     end subroutine test_apply_2d_function
     
     subroutine test_apply_3d_function()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(24) :: data
         integer :: i
         logical :: test_passed
@@ -311,7 +311,7 @@ contains
     end subroutine test_apply_3d_function
     
     subroutine test_apply_custom_function()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(4) :: data
         logical :: test_passed
         
@@ -341,7 +341,7 @@ contains
     end subroutine test_apply_custom_function
     
     subroutine test_apply_with_coordinates()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(3) :: data, coord_vals
         integer :: stat

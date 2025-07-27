@@ -1,6 +1,6 @@
 program test_edge_cases
-    use foxel_types
-    use foxel_memory
+    use fortarray_types
+    use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64
     implicit none
     
@@ -26,7 +26,7 @@ program test_edge_cases
 contains
 
     subroutine test_empty_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataframe_t) :: df  ! Legacy
         logical :: test_passed
         
@@ -51,7 +51,7 @@ contains
     end subroutine test_empty_variable
     
     subroutine test_single_element_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -90,7 +90,7 @@ contains
     end subroutine test_single_element_variable
     
     subroutine test_large_dimensions()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: i
         
@@ -130,7 +130,7 @@ contains
     end subroutine test_large_dimensions
     
     subroutine test_zero_dimensions()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataset_t) :: ds
         logical :: test_passed
         
@@ -160,7 +160,7 @@ contains
     end subroutine test_zero_dimensions
     
     subroutine test_max_attributes()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer, parameter :: max_attrs = 1000
         logical :: test_passed
         integer :: i
@@ -197,7 +197,7 @@ contains
     end subroutine test_max_attributes
     
     subroutine test_long_names()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         character(len=MAX_NAME_LEN) :: long_name
         logical :: test_passed
         
@@ -231,7 +231,7 @@ contains
     end subroutine test_long_names
     
     subroutine test_mixed_coordinate_types()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t) :: coord_time, coord_station
         logical :: test_passed
         integer :: i
@@ -284,7 +284,7 @@ contains
     end subroutine test_mixed_coordinate_types
     
     subroutine test_memory_ownership()
-        type(variable_t) :: var_owner, var_view
+        type(fortarray_t) :: var_owner, var_view
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1

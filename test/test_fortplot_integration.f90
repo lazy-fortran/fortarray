@@ -1,5 +1,5 @@
 program test_fortplot_integration
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic, only: ieee_is_nan, ieee_value, ieee_quiet_nan
     implicit none
@@ -44,7 +44,7 @@ program test_fortplot_integration
 contains
 
     subroutine test_plot_1d_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100) :: data
         integer :: i
         logical :: test_passed
@@ -82,7 +82,7 @@ contains
     end subroutine test_plot_1d_variable
     
     subroutine test_plot_2d_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(400) :: data
         integer :: i, j, idx
         logical :: test_passed
@@ -124,7 +124,7 @@ contains
     end subroutine test_plot_2d_variable
     
     subroutine test_plot_with_coordinates()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t) :: x_coord
         real(real64), dimension(50) :: data, coord_vals
         integer :: i, stat
@@ -173,7 +173,7 @@ contains
     end subroutine test_plot_with_coordinates
     
     subroutine test_plot_multiple_variables()
-        type(variable_t) :: var1, var2, var3
+        type(fortarray_t) :: var1, var2, var3
         real(real64), dimension(100) :: data1, data2, data3
         type(plot_options_t) :: opts
         integer :: i
@@ -212,7 +212,7 @@ contains
     end subroutine test_plot_multiple_variables
     
     subroutine test_plot_with_missing_data()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100) :: data
         integer :: i
         logical :: test_passed
@@ -246,7 +246,7 @@ contains
     end subroutine test_plot_with_missing_data
     
     subroutine test_plot_methods_chaining()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100) :: data
         integer :: i
         logical :: test_passed
@@ -275,7 +275,7 @@ contains
     end subroutine test_plot_methods_chaining
     
     subroutine test_plot_customization()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(50) :: data
         integer :: i
         logical :: test_passed
@@ -304,7 +304,7 @@ contains
     end subroutine test_plot_customization
     
     subroutine test_plot_export_formats()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(50) :: data
         integer :: i
         logical :: test_passed
@@ -351,7 +351,7 @@ contains
     end subroutine test_plot_export_formats
     
     subroutine test_plot_automatic_labels()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t) :: x_coord
         real(real64), dimension(30) :: data, coord_vals
         integer :: i, stat
@@ -404,7 +404,7 @@ contains
     
     subroutine test_plot_dataset_visualization()
         type(dataset_t) :: ds
-        type(variable_t) :: temp, pressure, humidity
+        type(fortarray_t) :: temp, pressure, humidity
         real(real64), dimension(100) :: temp_data, pres_data, hum_data
         integer :: i
         logical :: test_passed

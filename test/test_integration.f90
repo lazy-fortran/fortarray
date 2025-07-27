@@ -1,5 +1,5 @@
 program test_integration
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -39,7 +39,7 @@ contains
 
     subroutine test_complete_workflow()
         type(dataset_t) :: ds, ds_loaded
-        type(variable_t) :: temp_var, precip_var, result_var
+        type(fortarray_t) :: temp_var, precip_var, result_var
         type(coordinate_t) :: lat_coord, lon_coord, time_coord
         real(real64), dimension(365) :: temp_data, precip_data, time_data
         real(real64), dimension(180) :: lat_data
@@ -167,7 +167,7 @@ contains
     end subroutine test_netcdf_roundtrip
     
     subroutine test_large_dataset_operations()
-        type(variable_t) :: large_var, result_var, mean_result, std_result
+        type(fortarray_t) :: large_var, result_var, mean_result, std_result
         real(real64), dimension(10000) :: large_data
         integer :: i
         logical :: test_passed
@@ -216,7 +216,7 @@ contains
     end subroutine test_large_dataset_operations
     
     subroutine test_time_series_analysis()
-        type(variable_t) :: ts_var, seasonal_var, trend_var
+        type(fortarray_t) :: ts_var, seasonal_var, trend_var
         real(real64), dimension(365*3) :: ts_data  ! 3 years
         integer :: i
         logical :: test_passed
@@ -265,7 +265,7 @@ contains
     end subroutine test_coordinate_transformations
     
     subroutine test_parallel_operations()
-        type(variable_t) :: par_var, serial_sum, parallel_sum
+        type(fortarray_t) :: par_var, serial_sum, parallel_sum
         real(real64), dimension(50000) :: par_data
         integer :: i, original_threads
         logical :: test_passed
@@ -319,7 +319,7 @@ contains
     end subroutine test_memory_efficiency
     
     subroutine test_error_handling()
-        type(variable_t) :: err_var
+        type(fortarray_t) :: err_var
         real(real64), dimension(10) :: err_data
         integer :: i, stat
         logical :: test_passed

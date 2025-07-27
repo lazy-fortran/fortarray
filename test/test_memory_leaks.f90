@@ -1,5 +1,5 @@
 program test_memory_leaks
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -38,7 +38,7 @@ program test_memory_leaks
 contains
 
     subroutine test_variable_allocation_deallocation()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(1000) :: data
         integer :: i, iter
         logical :: test_passed
@@ -77,7 +77,7 @@ contains
     
     subroutine test_dataset_memory_management()
         type(dataset_t) :: ds
-        type(variable_t) :: var1, var2, var3
+        type(fortarray_t) :: var1, var2, var3
         real(real64), dimension(100) :: data1, data2, data3
         integer :: i, iter
         logical :: test_passed
@@ -174,7 +174,7 @@ contains
     
     subroutine test_storage_memory_management()
         ! Storage is internal, test with variables instead
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(200) :: test_data
         integer :: i, iter
         logical :: test_passed
@@ -211,7 +211,7 @@ contains
     end subroutine test_storage_memory_management
     
     subroutine test_large_operation_memory()
-        type(variable_t) :: large_var, result
+        type(fortarray_t) :: large_var, result
         real(real64), dimension(100000) :: large_data  ! 100K elements
         integer :: i, iter
         logical :: test_passed
@@ -252,7 +252,7 @@ contains
     end subroutine test_large_operation_memory
     
     subroutine test_repeated_operations_memory()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(1000) :: data1, data2
         integer :: i, iter
         logical :: test_passed
@@ -296,7 +296,7 @@ contains
     
     subroutine test_io_memory_management()
         type(dataset_t) :: ds
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10000) :: data
         integer :: i, iter, stat
         logical :: test_passed
@@ -351,7 +351,7 @@ contains
     end subroutine test_io_memory_management
     
     subroutine test_arithmetic_memory_management()
-        type(variable_t) :: var, result1, result2, result3
+        type(fortarray_t) :: var, result1, result2, result3
         real(real64), dimension(5000) :: data
         integer :: i, iter
         logical :: test_passed
@@ -390,7 +390,7 @@ contains
     end subroutine test_arithmetic_memory_management
     
     subroutine test_aggregation_memory_management()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(10000) :: data
         real(real64) :: mean_val, sum_val, std_val
         integer :: i, iter

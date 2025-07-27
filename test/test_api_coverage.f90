@@ -1,5 +1,5 @@
 program test_api_coverage
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -47,7 +47,7 @@ program test_api_coverage
 contains
 
     subroutine test_type_constructors()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataset_t) :: ds
         type(coordinate_t) :: coord
         real(real64), dimension(10) :: data
@@ -101,7 +101,7 @@ contains
     end subroutine test_storage_interfaces
     
     subroutine test_indexing_api()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(index_t) :: idx
         real(real64), dimension(20) :: data
         real(real64) :: value
@@ -140,7 +140,7 @@ contains
     
     subroutine test_dataset_api()
         type(dataset_t) :: ds
-        type(variable_t) :: var1, var2, retrieved
+        type(fortarray_t) :: var1, var2, retrieved
         real(real64), dimension(10) :: data1, data2
         integer :: i
         logical :: test_passed, has_var
@@ -192,7 +192,7 @@ contains
     end subroutine test_dataset_api
     
     subroutine test_io_api()
-        type(variable_t) :: var, loaded
+        type(fortarray_t) :: var, loaded
         type(dataset_t) :: ds, ds_loaded
         real(real64), dimension(5) :: data
         integer :: i, stat
@@ -250,7 +250,7 @@ contains
     end subroutine test_io_api
     
     subroutine test_arithmetic_api()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(5) :: data1, data2
         integer :: i
         logical :: test_passed
@@ -293,7 +293,7 @@ contains
     end subroutine test_arithmetic_api
     
     subroutine test_aggregation_api()
-        type(variable_t) :: var, mean_result, sum_result, min_result, max_result, std_result
+        type(fortarray_t) :: var, mean_result, sum_result, min_result, max_result, std_result
         real(real64), dimension(10) :: data
         real(real64) :: mean_val, sum_val, min_val, max_val, std_val
         integer :: i
@@ -362,7 +362,7 @@ contains
     end subroutine test_boolean_indexing_api
     
     subroutine test_slicing_api()
-        type(variable_t) :: var, sliced
+        type(fortarray_t) :: var, sliced
         real(real64), dimension(20) :: data
         integer :: i
         logical :: test_passed
@@ -410,7 +410,7 @@ contains
     end subroutine test_lazy_evaluation_api
     
     subroutine test_chunked_operations_api()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(1000) :: data
         integer :: i
         logical :: test_passed
@@ -471,7 +471,7 @@ contains
     end subroutine test_time_coordinates_api
     
     subroutine test_time_operations_api()
-        type(variable_t) :: var, resampled
+        type(fortarray_t) :: var, resampled
         real(real64), dimension(365) :: data
         integer :: i
         logical :: test_passed

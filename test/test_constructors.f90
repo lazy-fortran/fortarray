@@ -1,8 +1,8 @@
 program test_constructors
-    use foxel_types
-    use foxel_constructors
-    use foxel_storage
-    use foxel_memory
+    use fortarray_types
+    use fortarray_constructors
+    use fortarray_storage
+    use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -36,7 +36,7 @@ program test_constructors
 contains
 
     subroutine test_basic_constructor()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataframe_t) :: df  ! Legacy
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
@@ -104,7 +104,7 @@ contains
     end subroutine test_basic_constructor
     
     subroutine test_constructor_validation()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
         type(coordinate_t), dimension(2) :: coords
@@ -143,7 +143,7 @@ contains
     end subroutine test_constructor_validation
     
     subroutine test_dimension_validation()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10, 5, 3) :: data_3d
         character(len=20), dimension(3) :: dim_names
         character(len=256) :: error_msg
@@ -187,7 +187,7 @@ contains
     end subroutine test_dimension_validation
     
     subroutine test_coordinate_validation()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
         type(coordinate_t), dimension(2) :: coords
@@ -237,7 +237,7 @@ contains
     end subroutine test_coordinate_validation
     
     subroutine test_shape_validation()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(:,:), allocatable :: data_2d
         character(len=20), dimension(2) :: dim_names
         character(len=256) :: error_msg
@@ -268,7 +268,7 @@ contains
     end subroutine test_shape_validation
     
     subroutine test_from_array_constructors()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10, 5) :: data_2d
         real(real32), dimension(20) :: data_1d
         integer(int32), dimension(3, 3, 3) :: data_3d
@@ -324,7 +324,7 @@ contains
     end subroutine test_from_array_constructors
     
     subroutine test_from_csv_constructor()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         character(len=256) :: error_msg
         logical :: test_passed
         integer :: stat, unit
@@ -382,7 +382,7 @@ contains
     end subroutine test_from_csv_constructor
     
     subroutine test_empty_constructor()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         character(len=20), dimension(2) :: dim_names
         integer, dimension(2) :: shape
         logical :: test_passed
@@ -418,7 +418,7 @@ contains
     end subroutine test_empty_constructor
     
     subroutine test_scalar_constructor()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64) :: scalar_value
         logical :: test_passed
         integer :: stat
@@ -450,7 +450,7 @@ contains
     end subroutine test_scalar_constructor
     
     subroutine test_error_messages()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(5, 5) :: data_2d
         character(len=20), dimension(3) :: dim_names  ! Wrong size!
         character(len=256) :: error_msg
@@ -481,7 +481,7 @@ contains
     end subroutine test_error_messages
     
     subroutine test_edge_cases()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataset_t) :: ds
         real(real64), dimension(:), allocatable :: data_1d
         real(real64), dimension(1, 1) :: single_element

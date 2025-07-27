@@ -1,5 +1,5 @@
 program test_format_detection
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -41,7 +41,7 @@ program test_format_detection
 contains
 
     subroutine create_test_files()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataset_t) :: ds
         real(real64), dimension(3,4) :: data
         integer :: stat, unit, i
@@ -118,7 +118,7 @@ contains
     end subroutine cleanup_test_files
     
     subroutine test_netcdf_detection()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataset_t) :: ds
         integer :: stat
         logical :: test_passed
@@ -156,7 +156,7 @@ contains
     end subroutine test_netcdf_detection
     
     subroutine test_netcdf4_detection()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -184,7 +184,7 @@ contains
     end subroutine test_netcdf4_detection
     
     subroutine test_hdf5_detection()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -212,7 +212,7 @@ contains
     end subroutine test_hdf5_detection
     
     subroutine test_csv_detection()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -243,7 +243,7 @@ contains
     end subroutine test_csv_detection
     
     subroutine test_content_based_detection()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -272,7 +272,7 @@ contains
     end subroutine test_content_based_detection
     
     subroutine test_error_handling()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         character(len=256) :: error_msg
@@ -315,7 +315,7 @@ contains
     end subroutine test_error_handling
     
     subroutine test_comprehensive_from_file()
-        type(variable_t) :: var_nc, var_csv
+        type(fortarray_t) :: var_nc, var_csv
         integer :: stat
         logical :: test_passed
         

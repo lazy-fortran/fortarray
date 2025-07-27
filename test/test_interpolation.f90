@@ -1,5 +1,5 @@
 program test_interpolation
-    use foxel
+    use fortarray
     use ieee_arithmetic, only: ieee_quiet_nan, ieee_value
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
@@ -44,7 +44,7 @@ program test_interpolation
 contains
 
     subroutine test_linear_interpolation_1d()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         real(real64), dimension(3) :: interp_points
@@ -106,7 +106,7 @@ contains
     end subroutine test_linear_interpolation_1d
     
     subroutine test_nearest_neighbor_interpolation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         real(real64), dimension(3) :: interp_points
@@ -168,7 +168,7 @@ contains
     end subroutine test_nearest_neighbor_interpolation
     
     subroutine test_cubic_interpolation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(6) :: data, coord_vals
         real(real64), dimension(1) :: interp_points
@@ -223,7 +223,7 @@ contains
     end subroutine test_cubic_interpolation
     
     subroutine test_interpolation_extrapolation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(3) :: data, coord_vals, interp_points
         integer :: stat
@@ -278,7 +278,7 @@ contains
     end subroutine test_interpolation_extrapolation
     
     subroutine test_interpolation_with_missing_data()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         real(real64), dimension(3) :: interp_points
@@ -327,7 +327,7 @@ contains
     end subroutine test_interpolation_with_missing_data
     
     subroutine test_interpolation_2d()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(6) :: data
         real(real64), dimension(2) :: x_interp, y_interp
         logical :: test_passed
@@ -364,7 +364,7 @@ contains
     end subroutine test_interpolation_2d
     
     subroutine test_interpolation_edge_cases()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1) :: data, coord_vals, interp_points
         logical :: test_passed
         
@@ -399,7 +399,7 @@ contains
     end subroutine test_interpolation_edge_cases
     
     subroutine test_interpolation_performance()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000) :: data, coord_vals, interp_points
         integer :: i
         logical :: test_passed

@@ -1,5 +1,5 @@
 program test_plot_types
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic, only: ieee_is_nan, ieee_value, ieee_quiet_nan
     implicit none
@@ -44,7 +44,7 @@ program test_plot_types
 contains
 
     subroutine test_line_plot_basic()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100) :: x_data, y_data
         type(plot_options_t) :: opts
         integer :: i
@@ -78,7 +78,7 @@ contains
     end subroutine test_line_plot_basic
     
     subroutine test_line_plot_multiple()
-        type(variable_t), dimension(3) :: vars
+        type(fortarray_t), dimension(3) :: vars
         real(real64), dimension(50) :: x_data, y1, y2, y3
         type(plot_options_t) :: opts
         integer :: i
@@ -116,7 +116,7 @@ contains
     end subroutine test_line_plot_multiple
     
     subroutine test_line_plot_styles()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(20) :: data
         type(plot_options_t) :: opts
         integer :: i
@@ -160,7 +160,7 @@ contains
     end subroutine test_line_plot_styles
     
     subroutine test_scatter_plot()
-        type(variable_t) :: x_var, y_var, size_var, color_var
+        type(fortarray_t) :: x_var, y_var, size_var, color_var
         real(real64), dimension(100) :: x_data, y_data, sizes, colors
         type(plot_options_t) :: opts
         integer :: i
@@ -209,7 +209,7 @@ contains
     end subroutine test_scatter_plot
     
     subroutine test_stem_plot()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(30) :: data
         type(plot_options_t) :: opts
         integer :: i
@@ -240,7 +240,7 @@ contains
     end subroutine test_stem_plot
     
     subroutine test_bar_plot()
-        type(variable_t) :: categories, values
+        type(fortarray_t) :: categories, values
         real(real64), dimension(5) :: data
         type(plot_options_t) :: opts
         logical :: test_passed
@@ -269,7 +269,7 @@ contains
     end subroutine test_bar_plot
     
     subroutine test_histogram_plot()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(1000) :: data
         type(plot_options_t) :: opts
         real(real64) :: mean, std
@@ -307,7 +307,7 @@ contains
     end subroutine test_histogram_plot
     
     subroutine test_contour_plot_levels()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(2500) :: data
         real(real64), dimension(10) :: levels
         type(plot_options_t) :: opts
@@ -349,7 +349,7 @@ contains
     end subroutine test_contour_plot_levels
     
     subroutine test_filled_contour_plot()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10000) :: data
         type(plot_options_t) :: opts
         integer :: i, j, idx
@@ -387,7 +387,7 @@ contains
     end subroutine test_filled_contour_plot
     
     subroutine test_surface_plot()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(900) :: data
         type(plot_options_t) :: opts
         integer :: i, j, idx
@@ -428,7 +428,7 @@ contains
     end subroutine test_surface_plot
     
     subroutine test_mesh_plot()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(400) :: data
         type(plot_options_t) :: opts
         integer :: i, j, idx
@@ -462,7 +462,7 @@ contains
     end subroutine test_mesh_plot
     
     subroutine test_time_series_plot()
-        type(variable_t) :: time_var, data_var
+        type(fortarray_t) :: time_var, data_var
         real(real64), dimension(365) :: time, temperature
         type(plot_options_t) :: opts
         integer :: i
@@ -499,7 +499,7 @@ contains
     end subroutine test_time_series_plot
     
     subroutine test_subplot_grid()
-        type(variable_t), dimension(4) :: vars
+        type(fortarray_t), dimension(4) :: vars
         real(real64), dimension(100) :: x, y1, y2, y3, y4
         type(plot_options_t) :: opts
         integer :: i
@@ -538,7 +538,7 @@ contains
     end subroutine test_subplot_grid
     
     subroutine test_twin_axes()
-        type(variable_t) :: var1, var2
+        type(fortarray_t) :: var1, var2
         real(real64), dimension(50) :: x, y1, y2
         type(plot_options_t) :: opts1, opts2
         integer :: i

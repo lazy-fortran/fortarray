@@ -1,9 +1,9 @@
 program test_type_combinations
-    use foxel_types
-    use foxel_storage
-    use foxel_storage_int32
-    use foxel_storage_real64
-    use foxel_storage_char
+    use fortarray_types
+    use fortarray_storage
+    use fortarray_storage_int32
+    use fortarray_storage_real64
+    use fortarray_storage_char
     use iso_fortran_env, only: int32, int64, real32, real64
     implicit none
     

@@ -1,5 +1,5 @@
 program test_performance
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -36,7 +36,7 @@ program test_performance
 contains
 
     subroutine benchmark_large_array_operations()
-        type(variable_t) :: large_var1, large_var2, result
+        type(fortarray_t) :: large_var1, large_var2, result
         real(real64), dimension(1000000) :: data1, data2  ! 1M elements
         integer :: i
         integer(int64) :: start_time, end_time, count_rate
@@ -94,7 +94,7 @@ contains
     
     subroutine benchmark_io_operations()
         type(dataset_t) :: ds
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100000) :: data  ! 100K elements
         integer :: i, stat
         integer(int64) :: start_time, end_time, count_rate
@@ -158,7 +158,7 @@ contains
     end subroutine benchmark_io_operations
     
     subroutine benchmark_aggregation_operations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000000) :: data  ! 1M elements
         real(real64) :: mean_val, sum_val, std_val
         integer :: i
@@ -219,7 +219,7 @@ contains
     end subroutine benchmark_aggregation_operations
     
     subroutine benchmark_parallel_scaling()
-        type(variable_t) :: var, serial_sum, parallel_sum
+        type(fortarray_t) :: var, serial_sum, parallel_sum
         real(real64), dimension(1000000) :: data  ! 1M elements
         real(real64) :: sum_val
         integer :: i, threads, original_threads
@@ -278,7 +278,7 @@ contains
     end subroutine benchmark_memory_usage
     
     subroutine benchmark_chunked_processing()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000000) :: data  ! 1M elements
         integer :: i
         integer(int64) :: start_time, end_time, count_rate
@@ -325,7 +325,7 @@ contains
     end subroutine benchmark_chunked_processing
     
     subroutine benchmark_time_series_operations()
-        type(variable_t) :: ts_var, result
+        type(fortarray_t) :: ts_var, result
         real(real64), dimension(365*10) :: ts_data  ! 10 years daily
         integer :: i
         integer(int64) :: start_time, end_time, count_rate

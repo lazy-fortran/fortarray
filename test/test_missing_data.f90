@@ -1,5 +1,5 @@
 program test_missing_data
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic
     implicit none
@@ -44,7 +44,7 @@ program test_missing_data
 contains
 
     subroutine test_fill_value_semantics()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(5) :: data
         real(real64) :: fill_val
         logical :: test_passed
@@ -67,7 +67,7 @@ contains
         
         ! Check isnull detection
         block
-            type(variable_t) :: null_mask
+            type(fortarray_t) :: null_mask
             null_mask = isnull(var)
             if (.not. null_mask%data%values_logical(2) .or. &
                 .not. null_mask%data%values_logical(4)) then
@@ -88,7 +88,7 @@ contains
     end subroutine test_fill_value_semantics
     
     subroutine test_where_masking()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(6) :: data
         logical, dimension(6) :: mask_data
         logical :: test_passed
@@ -140,7 +140,7 @@ contains
     end subroutine test_where_masking
     
     subroutine test_fillna_constant()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -179,7 +179,7 @@ contains
     end subroutine test_fillna_constant
     
     subroutine test_fillna_forward()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(7) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -219,7 +219,7 @@ contains
     end subroutine test_fillna_forward
     
     subroutine test_fillna_backward()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(7) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -260,7 +260,7 @@ contains
     end subroutine test_fillna_backward
     
     subroutine test_fillna_interpolate()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(7) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -300,7 +300,7 @@ contains
     end subroutine test_fillna_interpolate
     
     subroutine test_dropna_1d()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(6) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -343,7 +343,7 @@ contains
     end subroutine test_dropna_1d
     
     subroutine test_dropna_2d()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(3,4) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -381,7 +381,7 @@ contains
     end subroutine test_dropna_2d
     
     subroutine test_dropna_along_dim()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(3,4) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -419,7 +419,7 @@ contains
     end subroutine test_dropna_along_dim
     
     subroutine test_isnull_isvalid()
-        type(variable_t) :: var, null_mask, valid_mask
+        type(fortarray_t) :: var, null_mask, valid_mask
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -468,7 +468,7 @@ contains
     end subroutine test_isnull_isvalid
     
     subroutine test_missing_in_calculations()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(4) :: data1, data2
         real(real64) :: missing
         logical :: test_passed
@@ -510,7 +510,7 @@ contains
     end subroutine test_missing_in_calculations
     
     subroutine test_missing_propagation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -551,7 +551,7 @@ contains
     end subroutine test_missing_propagation
     
     subroutine test_missing_with_aggregations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -591,7 +591,7 @@ contains
     end subroutine test_missing_with_aggregations
     
     subroutine test_nan_handling()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: nan_val
         logical :: test_passed
@@ -633,10 +633,10 @@ contains
     end subroutine test_nan_handling
     
     subroutine test_mixed_missing_types()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(6) :: data
         real(real64) :: missing, nan_val, inf_val
-        type(variable_t) :: null_mask
+        type(fortarray_t) :: null_mask
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1

@@ -1,5 +1,5 @@
 program test_boolean_indexing
-    use foxel
+    use fortarray
     use ieee_arithmetic, only: ieee_value, ieee_quiet_nan
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
@@ -44,7 +44,7 @@ program test_boolean_indexing
 contains
 
     subroutine test_create_boolean_mask()
-        type(variable_t) :: var, mask
+        type(fortarray_t) :: var, mask
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -89,7 +89,7 @@ contains
     end subroutine test_create_boolean_mask
     
     subroutine test_apply_mask_1d()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(5) :: data
         logical, dimension(5) :: mask_data
         logical :: test_passed
@@ -132,7 +132,7 @@ contains
     end subroutine test_apply_mask_1d
     
     subroutine test_apply_mask_2d()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(6) :: data
         logical, dimension(6) :: mask_data
         logical :: test_passed
@@ -192,7 +192,7 @@ contains
     end subroutine test_apply_mask_2d
     
     subroutine test_conditional_selection()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -230,7 +230,7 @@ contains
     end subroutine test_conditional_selection
     
     subroutine test_multi_condition_and()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -267,7 +267,7 @@ contains
     end subroutine test_multi_condition_and
     
     subroutine test_multi_condition_or()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -304,7 +304,7 @@ contains
     end subroutine test_multi_condition_or
     
     subroutine test_multi_condition_not()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -343,7 +343,7 @@ contains
     end subroutine test_multi_condition_not
     
     subroutine test_mask_with_missing_data()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: test_data
         logical :: test_passed
         
@@ -387,7 +387,7 @@ contains
     end subroutine test_mask_with_missing_data
     
     subroutine test_where_function()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(5) :: data, fill_values
         logical, dimension(5) :: mask_data
         logical :: test_passed
@@ -433,7 +433,7 @@ contains
     end subroutine test_where_function
     
     subroutine test_boolean_mask_broadcasting()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(6) :: data
         logical, dimension(2) :: mask_data
         logical :: test_passed
@@ -486,7 +486,7 @@ contains
     end subroutine test_boolean_mask_broadcasting
     
     subroutine test_mask_edge_cases()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(1) :: data
         logical, dimension(1) :: mask_data
         logical :: test_passed
@@ -537,7 +537,7 @@ contains
     end subroutine test_mask_edge_cases
     
     subroutine test_mask_performance()
-        type(variable_t) :: var, result, even_mask, temp_var
+        type(fortarray_t) :: var, result, even_mask, temp_var
         real(real64), dimension(1000) :: data, temp_data
         logical, dimension(1000) :: mask_data
         integer :: i
@@ -584,7 +584,7 @@ contains
     end subroutine test_mask_performance
     
     subroutine test_mask_with_coordinates()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         integer :: stat
@@ -634,7 +634,7 @@ contains
     end subroutine test_mask_with_coordinates
     
     subroutine test_complex_conditions()
-        type(variable_t) :: var, result, mask1, mask2, mask3, combined_mask
+        type(fortarray_t) :: var, result, mask1, mask2, mask3, combined_mask
         real(real64), dimension(10) :: data
         integer :: i
         logical :: test_passed
@@ -684,7 +684,7 @@ contains
     end subroutine test_complex_conditions
     
     subroutine test_mask_combinations()
-        type(variable_t) :: var, mask1, mask2, combined_mask, result
+        type(fortarray_t) :: var, mask1, mask2, combined_mask, result
         real(real64), dimension(5) :: data
         logical, dimension(5) :: mask1_data, mask2_data
         logical :: test_passed

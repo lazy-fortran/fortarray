@@ -1,5 +1,5 @@
 program test_coordinate_selection
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -43,7 +43,7 @@ program test_coordinate_selection
 contains
 
     subroutine test_sel_single_value()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10) :: data, coord_vals
         integer :: i
@@ -85,7 +85,7 @@ contains
     end subroutine test_sel_single_value
     
     subroutine test_sel_multiple_values()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10) :: data, coord_vals
         real(real64), dimension(3) :: select_vals
@@ -130,7 +130,7 @@ contains
     end subroutine test_sel_multiple_values
     
     subroutine test_sel_range()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10) :: data, coord_vals
         integer :: i
@@ -185,7 +185,7 @@ contains
     end subroutine test_sel_range
     
     subroutine test_sel_nearest()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         logical :: test_passed
@@ -236,7 +236,7 @@ contains
     end subroutine test_sel_nearest
     
     subroutine test_sel_multidim()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord, y_coord
         real(real64), dimension(4,3) :: data
         real(real64), dimension(4) :: x_vals
@@ -303,7 +303,7 @@ contains
     end subroutine test_sel_multidim
     
     subroutine test_sel_between()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: time_coord
         real(real64), dimension(10) :: data, time_vals
         integer :: i
@@ -347,7 +347,7 @@ contains
     end subroutine test_sel_between
     
     subroutine test_sel_tolerance()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         logical :: test_passed
@@ -416,7 +416,7 @@ contains
     
     subroutine test_sel_string_coords()
         ! Test selection with string coordinates
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: label_coord
         real(real64), dimension(4) :: data
         character(len=10), dimension(4) :: labels
@@ -460,7 +460,7 @@ contains
     end subroutine test_sel_string_coords
     
     subroutine test_sel_preserve_attrs()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         logical :: test_passed
@@ -508,7 +508,7 @@ contains
     end subroutine test_sel_preserve_attrs
     
     subroutine test_sel_performance()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord, y_coord, z_coord
         real(real64), dimension(100,100,50) :: data
         real(real64), dimension(100) :: x_vals
@@ -575,7 +575,7 @@ contains
     end subroutine test_sel_performance
     
     subroutine test_sel_edge_cases()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         logical :: test_passed
@@ -619,7 +619,7 @@ contains
     end subroutine test_sel_edge_cases
     
     subroutine test_isel_vs_sel()
-        type(variable_t) :: var, result_sel, result_isel
+        type(fortarray_t) :: var, result_sel, result_isel
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         logical :: test_passed
@@ -660,7 +660,7 @@ contains
     end subroutine test_isel_vs_sel
     
     subroutine test_sel_method_parameter()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         logical :: test_passed
@@ -723,7 +723,7 @@ contains
     end subroutine test_sel_method_parameter
     
     subroutine test_sel_drop_parameter()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord, y_coord
         real(real64), dimension(3,4) :: data
         real(real64), dimension(3) :: x_vals

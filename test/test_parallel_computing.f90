@@ -1,5 +1,5 @@
 program test_parallel_computing
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     !$ use omp_lib
     use ieee_arithmetic, only: ieee_is_nan, ieee_value, ieee_quiet_nan
@@ -76,7 +76,7 @@ contains
     end subroutine test_openmp_initialization
     
     subroutine test_thread_safe_operations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000) :: data
         integer :: i
         logical :: test_passed
@@ -119,7 +119,7 @@ contains
     end subroutine test_thread_safe_operations
     
     subroutine test_parallel_arithmetic()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(10000) :: data1, data2
         integer :: i
         logical :: test_passed
@@ -166,7 +166,7 @@ contains
     end subroutine test_parallel_arithmetic
     
     subroutine test_parallel_aggregations()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100000) :: data
         real(real64) :: mean_val, min_val, max_val
         integer :: i
@@ -215,7 +215,7 @@ contains
     end subroutine test_parallel_aggregations
     
     subroutine test_parallel_apply_functions()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(50000) :: data
         integer :: i
         logical :: test_passed
@@ -255,7 +255,7 @@ contains
     end subroutine test_parallel_apply_functions
     
     subroutine test_load_balancing()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(10000) :: data
         integer :: i, chunk_size
         logical :: test_passed
@@ -298,7 +298,7 @@ contains
     end subroutine test_load_balancing
     
     subroutine test_reduction_operations()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(1000) :: data
         real(real64) :: sum_result, product_result
         integer :: i, count_result
@@ -339,7 +339,7 @@ contains
     end subroutine test_reduction_operations
     
     subroutine test_nested_parallelism()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100, 100) :: data2d
         real(real64), dimension(10000) :: data1d
         integer :: i, j, idx
@@ -382,7 +382,7 @@ contains
     end subroutine test_nested_parallelism
     
     subroutine test_thread_local_storage()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(1000) :: data
         real(real64), dimension(:), allocatable :: thread_sums
         integer :: i, tid, num_threads
@@ -437,7 +437,7 @@ contains
     
     subroutine test_parallel_io()
         type(dataset_t) :: ds
-        type(variable_t) :: var, var_read
+        type(fortarray_t) :: var, var_read
         real(real64), dimension(10000) :: data
         character(len=256) :: filename
         integer :: i, stat
@@ -499,7 +499,7 @@ contains
     end subroutine test_parallel_io
     
     subroutine test_parallel_broadcasting()
-        type(variable_t) :: var_small, var_large, result
+        type(fortarray_t) :: var_small, var_large, result
         real(real64), dimension(10) :: small_data
         real(real64), dimension(10000) :: large_data
         integer :: i
@@ -547,7 +547,7 @@ contains
     end subroutine test_parallel_broadcasting
     
     subroutine test_parallel_missing_data()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000) :: data
         integer :: i
         logical :: test_passed
@@ -599,7 +599,7 @@ contains
     end subroutine test_parallel_missing_data
     
     subroutine test_parallel_coordinate_selection()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10000) :: data, coord_vals
         integer :: i, n_selected, stat
@@ -654,7 +654,7 @@ contains
     end subroutine test_parallel_coordinate_selection
     
     subroutine test_parallel_performance()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000000) :: data
         real(real64) :: start_time, end_time, seq_time, par_time
         real(real64) :: speedup, efficiency
@@ -723,7 +723,7 @@ contains
     end subroutine test_parallel_performance
     
     subroutine test_parallel_error_handling()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(100) :: data
         integer :: i, error_count
         logical :: test_passed
@@ -799,7 +799,7 @@ contains
     end function expensive_function
     
     subroutine process_chunk(var, start_idx, end_idx)
-        type(variable_t), intent(in) :: var
+        type(fortarray_t), intent(in) :: var
         integer, intent(in) :: start_idx, end_idx
         integer :: i
         real(real64) :: sum

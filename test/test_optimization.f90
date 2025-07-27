@@ -1,6 +1,6 @@
 program test_optimization
-    use foxel
-    use foxel_slicing
+    use fortarray
+    use fortarray_slicing
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -39,7 +39,7 @@ program test_optimization
 contains
 
     subroutine test_simd_operations()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(10000) :: data1, data2
         integer :: i, iter
         integer(int64) :: start_time, end_time, count_rate
@@ -99,7 +99,7 @@ contains
     end subroutine test_simd_operations
     
     subroutine test_cache_efficiency()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(100000) :: data
         integer :: i, iter, block_size
         integer(int64) :: start_time, end_time, count_rate
@@ -157,7 +157,7 @@ contains
     end subroutine test_cache_efficiency
     
     subroutine test_memory_layout_optimization()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000, 1000) :: data_2d
         integer :: i, j, iter
         integer(int64) :: start_time, end_time, count_rate
@@ -210,7 +210,7 @@ contains
     end subroutine test_memory_layout_optimization
     
     subroutine test_loop_optimization()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(50000) :: data
         integer :: i, iter
         integer(int64) :: start_time, end_time, count_rate
@@ -265,7 +265,7 @@ contains
     end subroutine test_loop_optimization
     
     subroutine test_parallel_scaling_optimization()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(200000) :: data
         integer :: i, iter, threads
         integer(int64) :: start_time, end_time, count_rate
@@ -345,7 +345,7 @@ contains
     end subroutine test_parallel_scaling_optimization
     
     subroutine test_vectorization()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(20000) :: data1, data2
         integer :: i, iter
         integer(int64) :: start_time, end_time, count_rate
@@ -399,7 +399,7 @@ contains
     end subroutine test_vectorization
     
     subroutine test_memory_access_patterns()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(100000) :: data
         integer :: i, iter, stride
         integer(int64) :: start_time, end_time, count_rate
@@ -454,7 +454,7 @@ contains
     end subroutine test_memory_access_patterns
     
     subroutine test_computational_intensity()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(30000) :: data
         integer :: i, iter
         integer(int64) :: start_time, end_time, count_rate
@@ -509,7 +509,7 @@ contains
     end subroutine test_computational_intensity
     
     subroutine test_algorithm_optimization()
-        type(variable_t) :: var, result1, result2
+        type(fortarray_t) :: var, result1, result2
         real(real64), dimension(50000) :: data
         integer :: i, iter
         integer(int64) :: start_time, end_time, count_rate

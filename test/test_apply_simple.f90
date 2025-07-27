@@ -1,5 +1,5 @@
 program test_apply_simple
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -31,7 +31,7 @@ program test_apply_simple
 contains
 
     subroutine test_apply_along_dim()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(6) :: data
         logical :: test_passed
         
@@ -70,7 +70,7 @@ contains
     end subroutine test_apply_along_dim
     
     subroutine test_apply_vectorized()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(4) :: data
         logical :: test_passed
         
@@ -109,7 +109,7 @@ contains
     end subroutine test_apply_vectorized
     
     subroutine test_apply_cumulative()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(4) :: data
         logical :: test_passed
         

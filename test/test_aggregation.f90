@@ -1,5 +1,5 @@
 program test_aggregation
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic
     implicit none
@@ -49,7 +49,7 @@ program test_aggregation
 contains
 
     subroutine test_sum_functions()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(3,4) :: data
         real(real64) :: expected_sum
         integer :: i
@@ -100,7 +100,7 @@ contains
     end subroutine test_sum_functions
     
     subroutine test_mean_functions()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(2,3,4) :: data
         real(real64) :: expected_mean
         integer :: i
@@ -142,7 +142,7 @@ contains
     end subroutine test_mean_functions
     
     subroutine test_min_max_functions()
-        type(variable_t) :: var, min_result, max_result
+        type(fortarray_t) :: var, min_result, max_result
         real(real64), dimension(3,3) :: data
         logical :: test_passed
         
@@ -197,7 +197,7 @@ contains
     end subroutine test_min_max_functions
     
     subroutine test_std_var_functions()
-        type(variable_t) :: var, std_result, var_result
+        type(fortarray_t) :: var, std_result, var_result
         real(real64), dimension(4) :: data
         real(real64) :: expected_mean, expected_var, expected_std
         integer :: i
@@ -252,7 +252,7 @@ contains
     end subroutine test_std_var_functions
     
     subroutine test_median_functions()
-        type(variable_t) :: var_odd, var_even, result
+        type(fortarray_t) :: var_odd, var_even, result
         real(real64), dimension(5) :: data_odd
         real(real64), dimension(6) :: data_even
         logical :: test_passed
@@ -293,7 +293,7 @@ contains
     end subroutine test_median_functions
     
     subroutine test_quantile_functions()
-        type(variable_t) :: var, q25, q50, q75
+        type(fortarray_t) :: var, q25, q50, q75
         real(real64), dimension(100) :: data
         integer :: i
         logical :: test_passed
@@ -340,7 +340,7 @@ contains
     end subroutine test_quantile_functions
     
     subroutine test_aggregation_along_dims()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(2,3,4) :: data
         integer :: i, j, k
         logical :: test_passed
@@ -397,7 +397,7 @@ contains
     end subroutine test_aggregation_along_dims
     
     subroutine test_weighted_mean()
-        type(variable_t) :: var, weights, result
+        type(fortarray_t) :: var, weights, result
         real(real64), dimension(4) :: data_vals, weight_vals
         real(real64) :: expected_weighted_mean
         logical :: test_passed
@@ -437,7 +437,7 @@ contains
     end subroutine test_weighted_mean
     
     subroutine test_weighted_sum()
-        type(variable_t) :: var, weights, result
+        type(fortarray_t) :: var, weights, result
         real(real64), dimension(2,3) :: data_vals, weight_vals
         real(real64) :: expected_weighted_sum
         logical :: test_passed
@@ -478,7 +478,7 @@ contains
     end subroutine test_weighted_sum
     
     subroutine test_missing_data_aggregation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: missing, expected_mean
         logical :: test_passed
@@ -527,7 +527,7 @@ contains
     end subroutine test_missing_data_aggregation
     
     subroutine test_empty_aggregation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(0) :: empty_data
         logical :: test_passed
         
@@ -563,7 +563,7 @@ contains
     end subroutine test_empty_aggregation
     
     subroutine test_scalar_aggregation()
-        type(variable_t) :: scalar_var, result
+        type(fortarray_t) :: scalar_var, result
         real(real64) :: scalar_val = 42.0_real64
         logical :: test_passed
         
@@ -604,7 +604,7 @@ contains
     end subroutine test_scalar_aggregation
     
     subroutine test_multidim_aggregation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(3,4,5) :: data
         integer :: i
         logical :: test_passed
@@ -642,7 +642,7 @@ contains
     end subroutine test_multidim_aggregation
     
     subroutine test_aggregation_preserves_type()
-        type(variable_t) :: var_i32, var_r32, result
+        type(fortarray_t) :: var_i32, var_r32, result
         integer(int32), dimension(4) :: data_i32
         real(real32), dimension(4) :: data_r32
         logical :: test_passed
@@ -683,7 +683,7 @@ contains
     end subroutine test_aggregation_preserves_type
     
     subroutine test_aggregation_performance()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(100, 100, 100) :: large_data
         real(real64) :: start_time, end_time
         integer :: i

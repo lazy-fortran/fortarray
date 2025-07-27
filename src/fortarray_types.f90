@@ -121,7 +121,12 @@ module fortarray_types
         logical :: shape_cached = .false.
         logical :: strides_cached = .false.
     contains
+        ! Finalizer
         final :: variable_finalizer
+        
+        ! ======= XARRAY-COMPATIBLE METHODS (TO BE IMPLEMENTED) =======
+        ! Note: Method implementations will be added in fortarray_methods.f90
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
