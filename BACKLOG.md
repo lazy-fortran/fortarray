@@ -172,11 +172,11 @@
 - [x] Step values in slices
 - [x] Preserve coordinates
 
-### Sprint 16: Interpolation
-- [ ] Linear interpolation
-- [ ] Nearest-neighbor
-- [ ] Higher-order methods
-- [ ] Extrapolation options
+### Sprint 16: Interpolation ✓
+- [x] Linear interpolation
+- [x] Nearest-neighbor
+- [x] Higher-order methods
+- [x] Extrapolation options
 
 ## Phase 5: Computation Engine (Sprint 17-20)
 
