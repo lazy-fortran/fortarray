@@ -6,6 +6,7 @@ module foxel
     use foxel_indexing
     use foxel_datasets
     use foxel_netcdf
+    use foxel_csv
     implicit none
     
     ! Re-export everything from submodules

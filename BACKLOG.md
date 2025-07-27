@@ -106,12 +106,12 @@
 - [x] CF-convention compliance checking
 - [x] Test round-trip fidelity
 
-### Sprint 7: CSV I/O
-- [ ] CSV to 2D variable conversion
-- [ ] Variable to CSV export (2D only)
-- [ ] Handle headers and data types
-- [ ] Support missing values
-- [ ] Test with real CSV files
+### Sprint 7: CSV I/O ✓
+- [x] CSV to 2D variable conversion
+- [x] Variable to CSV export (2D only)
+- [x] Handle headers and data types
+- [x] Support missing values
+- [x] Test with real CSV files
 
 ### Sprint 8: Format Detection
 - [ ] Implement `from_file()` with auto-detection
