@@ -54,13 +54,27 @@
 - [x] Implement deep copy for coordinates
 - [x] All constructor tests passing
 
-### Sprint 4: Basic Indexing
-- [ ] Implement positional indexing for variables
-- [ ] Implement label-based indexing using coordinates
-- [ ] Support multi-dimensional indexing
-- [ ] Handle scalar variable indexing (0D)
-- [ ] Create dataset variable selection methods
-- [ ] Test all indexing combinations
+### Sprint 4: Basic Indexing ✓
+- [x] Implement positional indexing for variables
+  - [x] 1D, 2D, 3D, and N-dimensional positional indexing
+  - [x] Bounds checking and error handling
+  - [x] Optional arguments for clean API
+- [x] Implement label-based indexing using coordinates
+  - [x] String label indexing
+  - [x] Numeric label indexing
+  - [x] Multi-dimensional label indexing
+- [x] Support multi-dimensional indexing
+  - [x] Generic N-dimensional support
+  - [x] Linear index calculation for column-major order
+- [x] Handle scalar variable indexing (0D)
+  - [x] Scalar variable support verified
+- [x] Create dataset variable selection methods
+  - [x] get_variable, has_variable, add_variable, remove_variable
+  - [x] list_variables, select_variables
+  - [x] Comprehensive error handling
+- [x] Test all indexing combinations
+  - [x] All 15 indexing tests passing
+  - [x] All 6 dataset tests passing
 
 ## Phase 2: I/O Operations (Sprint 5-8)
 

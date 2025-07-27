@@ -1679,6 +1679,13 @@ contains
         ds%n_vars = 0
         ds%n_coords = 0
         ds%n_attrs = 0
+        
+        ! Allocate empty arrays
+        allocate(ds%variables(10))  ! Initial capacity
+        allocate(ds%dimensions(0))
+        allocate(ds%attr_keys(0))
+        allocate(ds%attr_values(0))
+        allocate(ds%coord_var_indices(0))
     end function dataset_empty
     
     !> Create dataset from variables
