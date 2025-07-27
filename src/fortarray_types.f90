@@ -3,6 +3,7 @@ module fortarray_types
     implicit none
     private
     
+    
     ! Maximum length for names and attributes
     integer, parameter :: MAX_NAME_LEN = 256
     integer, parameter :: MAX_ATTR_LEN = 1024
@@ -127,6 +128,16 @@ module fortarray_types
         ! ======= XARRAY-COMPATIBLE METHODS (TO BE IMPLEMENTED) =======
         ! Note: Method implementations will be added in fortarray_methods.f90
         
+        ! Selection methods
+        procedure :: sel_point => fortarray_sel_point_r64
+        procedure :: sel_range => fortarray_sel_range_r64
+        procedure :: isel_point => fortarray_isel_point
+        procedure :: isel_range => fortarray_isel_range
+        
+        ! Aggregation methods
+        procedure :: mean => fortarray_mean_all
+        procedure :: sum => fortarray_sum_all
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -182,6 +193,50 @@ module fortarray_types
     public :: DTYPE_REAL32, DTYPE_REAL64, DTYPE_CHAR, DTYPE_LOGICAL
     public :: ATTR_TYPE_STRING, ATTR_TYPE_NUMERIC, ATTR_TYPE_LOGICAL
     public :: attribute_t
+    
+    ! Interface block for external procedures
+    interface
+        module function fortarray_sel_point_r64(this, coord_name, value, method) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in) :: value
+            character(len=*), intent(in), optional :: method
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_point_r64
+        
+        module function fortarray_sel_range_r64(this, coord_name, start_val, stop_val, step_val) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in) :: start_val, stop_val
+            real(real64), intent(in), optional :: step_val
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_range_r64
+        
+        module function fortarray_isel_point(this, dim_name, index) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: dim_name
+            integer, intent(in) :: index
+            type(fortarray_t) :: result_array
+        end function fortarray_isel_point
+        
+        module function fortarray_isel_range(this, dim_name, start_idx, stop_idx, step_idx) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: dim_name
+            integer, intent(in) :: start_idx, stop_idx
+            integer, intent(in), optional :: step_idx
+            type(fortarray_t) :: result_array
+        end function fortarray_isel_range
+        
+        module function fortarray_mean_all(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_mean_all
+        
+        module function fortarray_sum_all(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_sum_all
+    end interface
     
 contains
 
