@@ -128,12 +128,12 @@
 - [x] Optimize common patterns
 - [x] Test all scenarios
 
-### Sprint 10: Arithmetic Operations
-- [ ] Variable arithmetic (+, -, *, /, **)
-- [ ] Scalar-variable operations
-- [ ] Type promotion rules
-- [ ] NaN/missing value handling
-- [ ] Operator overloading
+### Sprint 10: Arithmetic Operations ✓
+- [x] Variable arithmetic (+, -, *, /, **)
+- [x] Scalar-variable operations
+- [x] Type promotion rules
+- [x] NaN/missing value handling
+- [x] Operator overloading
 
 ### Sprint 11: Aggregation Functions
 - [ ] Statistical functions on variables

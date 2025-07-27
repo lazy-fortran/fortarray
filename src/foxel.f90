@@ -9,6 +9,7 @@ module foxel
     use foxel_csv
     use foxel_format_detection
     use foxel_broadcasting
+    use foxel_arithmetic
     implicit none
     
     ! Re-export everything from submodules
