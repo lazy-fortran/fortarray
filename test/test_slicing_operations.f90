@@ -282,7 +282,8 @@ contains
         do i = 1, 12
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y"], shape=[3, 4])
+        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var%shape = [3, 4]
         
         ! Test slice: [2:3, 1:3] 
         result = slice_2d_range(var, 2, 3, 1, 3)
@@ -317,7 +318,8 @@ contains
         do i = 1, 24
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y", "z"], shape=[2, 3, 4])
+        var = variable(data, name="test_data", dim_names=["x", "y", "z"])
+        var%shape = [2, 3, 4]
         
         ! Test slice: [1:2, 2:3, 1:2]
         result = slice_3d_range(var, 1, 2, 2, 3, 1, 2)
@@ -395,7 +397,8 @@ contains
         do i = 1, 12
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y"], shape=[3, 4])
+        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var%shape = [3, 4]
         
         ! Test slicing with broadcasting: [2:3, :]
         result = slice_broadcast(var, 2, 3, 1)
@@ -464,7 +467,8 @@ contains
         do i = 1, 60
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y", "z"], shape=[3, 4, 5])
+        var = variable(data, name="test_data", dim_names=["x", "y", "z"])
+        var%shape = [3, 4, 5]
         
         ! Test complex multidimensional slice
         result = slice_multidim(var)

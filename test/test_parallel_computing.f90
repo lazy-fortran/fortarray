@@ -2,6 +2,7 @@ program test_parallel_computing
     use foxel
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     !$ use omp_lib
+    use ieee_arithmetic, only: ieee_is_nan, ieee_value, ieee_quiet_nan
     implicit none
     
     integer :: n_tests_passed, n_tests_total
@@ -601,7 +602,7 @@ contains
         type(variable_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10000) :: data, coord_vals
-        integer :: i, n_selected
+        integer :: i, n_selected, stat
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -675,7 +676,10 @@ contains
         
         ! Time sequential operation
         call cpu_time(start_time)
-        result = apply_sequential(var, expensive_function)
+        ! Apply function sequentially for baseline  
+        call disable_parallel()
+        result = apply_function(var, expensive_function)
+        call enable_parallel()
         call cpu_time(end_time)
         seq_time = end_time - start_time
         call finalize_variable(result)

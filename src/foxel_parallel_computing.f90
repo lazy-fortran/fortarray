@@ -51,6 +51,8 @@ module foxel_parallel_computing
     ! Parallel I/O
     public :: write_netcdf_parallel
     public :: read_netcdf_parallel
+    public :: select_range_parallel
+    public :: broadcast_add_parallel
     
     ! Scheduling and load balancing
     public :: set_schedule_type
