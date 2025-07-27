@@ -26,6 +26,7 @@ module foxel
     use foxel_plot_types
     use foxel_time_coordinates
     use foxel_time_operations
+    use foxel_optimization
     implicit none
     
     ! Re-export everything from submodules

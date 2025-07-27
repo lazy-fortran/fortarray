@@ -173,39 +173,33 @@ contains
     end subroutine test_coordinate_memory_management
     
     subroutine test_storage_memory_management()
-        type(storage_t) :: storage
+        ! Storage is internal, test with variables instead
+        type(variable_t) :: var
         real(real64), dimension(200) :: test_data
-        integer :: i, iter, stat
+        integer :: i, iter
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
-        write(*,'(A)') "Testing storage memory management..."
+        write(*,'(A)') "Testing storage memory management (via variables)..."
         
         ! Initialize test data
         do i = 1, 200
             test_data(i) = real(i, real64)
         end do
         
-        ! Repeated storage operations
+        ! Repeated variable operations to test storage
         do iter = 1, 200
-            call create_storage(storage, 200, DTYPE_REAL64, stat)
-            if (stat /= 0) then
+            var = variable(test_data, name="storage_test", dim_names=["index"])
+            
+            if (var%n_elements /= 200) then
                 test_passed = .false.
-                write(error_unit,'(A)') "Storage creation failed"
+                write(error_unit,'(A)') "Variable size incorrect"
                 exit
             end if
             
-            storage%values_r64 = test_data
-            
-            if (storage%n_elements /= 200) then
-                test_passed = .false.
-                write(error_unit,'(A)') "Storage size incorrect"
-                exit
-            end if
-            
-            call finalize_storage(storage)
+            call finalize_variable(var)
         end do
         
         if (test_passed) then
@@ -327,7 +321,7 @@ contains
             call add_variable(ds, var)
             
             ! Write
-            call write_netcdf(ds, filename, stat)
+            stat = write_netcdf(filename, ds)
             if (stat /= 0) then
                 test_passed = .false.
                 write(error_unit,'(A)') "I/O write failed in memory test"
@@ -338,7 +332,7 @@ contains
             call finalize_dataset(ds)
             
             ! Read
-            call read_netcdf(ds, filename, stat)
+            ds = read_netcdf(filename, stat=stat)
             if (stat /= 0) then
                 test_passed = .false.
                 write(error_unit,'(A)') "I/O read failed in memory test"
@@ -396,7 +390,7 @@ contains
     end subroutine test_arithmetic_memory_management
     
     subroutine test_aggregation_memory_management()
-        type(variable_t) :: var
+        type(variable_t) :: var, result
         real(real64), dimension(10000) :: data
         real(real64) :: mean_val, sum_val, std_val
         integer :: i, iter
@@ -416,9 +410,17 @@ contains
         
         ! Repeated aggregations
         do iter = 1, 200
-            mean_val = mean(var)
-            sum_val = sum(var)
-            std_val = std(var)
+            result = mean(var)
+            mean_val = result%data%values_r64(1)
+            call finalize_variable(result)
+            
+            result = sum(var)
+            sum_val = result%data%values_r64(1)
+            call finalize_variable(result)
+            
+            result = std(var)
+            std_val = result%data%values_r64(1)
+            call finalize_variable(result)
             
             ! Use values to prevent optimization
             if (mean_val < 0.0_real64) then
