@@ -1,6 +1,7 @@
 module fortarray_format_detection
     use fortarray_types
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_netcdf
     use fortarray_csv
     use fortarray_datasets
@@ -127,7 +128,7 @@ contains
         
         status = 0
         err_msg = ""
-        ds = dataset()
+        ds = new_dataset()
         
         ! Detect file format
         format_type = detect_file_format(filename, status, err_msg)

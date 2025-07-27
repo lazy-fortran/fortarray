@@ -1,7 +1,8 @@
 module fortarray_aggregation
     use fortarray_types
     use fortarray_storage
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic
@@ -188,13 +189,13 @@ contains
         ! Always create scalar result
         select case(orig_dtype)
         case(DTYPE_INT32)
-            var = variable_scalar(int(result_value, int32), name=name)
+            var = variable_scalar_int32(int(result_value, int32), name=name)
         case(DTYPE_INT64)
-            var = variable_scalar(int(result_value, int64), name=name)
+            var = variable_scalar_int64(int(result_value, int64), name=name)
         case(DTYPE_REAL32)
-            var = variable_scalar(real(result_value, real32), name=name)
+            var = variable_scalar_real32(real(result_value, real32), name=name)
         case default
-            var = variable_scalar(result_value, name=name)
+            var = variable_scalar_real64(result_value, name=name)
         end select
         
     end function create_result_variable
@@ -1022,13 +1023,13 @@ contains
         case(1)
             select case(dtype)
             case(DTYPE_INT32)
-                var = variable(int(values(1:var_shape(1)), int32), name=name, dim_names=dim_names)
+                var = new_array(int(values(1:var_shape(1)), int32), name=name, dim_names=dim_names)
             case(DTYPE_INT64)
-                var = variable(int(values(1:var_shape(1)), int64), name=name, dim_names=dim_names)
+                var = new_array(int(values(1:var_shape(1)), int64), name=name, dim_names=dim_names)
             case(DTYPE_REAL32)
-                var = variable(real(values(1:var_shape(1)), real32), name=name, dim_names=dim_names)
+                var = new_array(real(values(1:var_shape(1)), real32), name=name, dim_names=dim_names)
             case default
-                var = variable(values(1:var_shape(1)), name=name, dim_names=dim_names)
+                var = new_array(values(1:var_shape(1)), name=name, dim_names=dim_names)
             end select
         case default
             ! For all dimensions >= 2, create manually

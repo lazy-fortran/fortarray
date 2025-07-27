@@ -1,7 +1,8 @@
 module fortarray_missing_data
     use fortarray_types
     use fortarray_storage
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic
@@ -149,7 +150,7 @@ contains
             result = create_real64_variable(result_values, true_values%shape, &
                                           true_values%dim_names, "where_result")
         else
-            result = variable_scalar(result_values(1), name="where_result")
+            result = variable_scalar_real64(result_values(1), name="where_result")
         end if
         
     end function where_mask_values
@@ -183,7 +184,7 @@ contains
             result = create_real64_variable(result_values, true_values%shape, &
                                           true_values%dim_names, "where_result")
         else
-            result = variable_scalar(result_values(1), name="where_result")
+            result = variable_scalar_real64(result_values(1), name="where_result")
         end if
         
     end function where_mask_scalar
@@ -208,7 +209,7 @@ contains
             result = create_real64_variable(result_values, var%shape, &
                                           var%dim_names, var%name // "_filled")
         else
-            result = variable_scalar(result_values(1), name=var%name // "_filled")
+            result = variable_scalar_real64(result_values(1), name=var%name // "_filled")
         end if
         
     end function fillna_constant_r64
@@ -297,7 +298,7 @@ contains
             result = create_real64_variable(values, var%shape, &
                                           var%dim_names, var%name // "_filled")
         else
-            result = variable_scalar(values(1), name=var%name // "_filled")
+            result = variable_scalar_real64(values(1), name=var%name // "_filled")
         end if
         
     end function fillna_method
@@ -343,11 +344,11 @@ contains
             
             ! Create result variable
             if (var%n_dims == 1) then
-                result = variable(clean_values, name=var%name // "_dropna", &
+                result = new_array(clean_values, name=var%name // "_dropna", &
                                 dim_names=var%dim_names)
             else
                 ! For flattened multi-dim, return 1D
-                result = variable(clean_values, name=var%name // "_dropna", &
+                result = new_array(clean_values, name=var%name // "_dropna", &
                                 dim_names=["index"])
             end if
         end if

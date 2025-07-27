@@ -2,7 +2,7 @@ module fortarray_netcdf
     use fortarray_types
     use fortarray_memory
     use fortarray_storage
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, variable_scalar_real64
     use fortarray_datasets
     use netcdf
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
@@ -305,25 +305,25 @@ contains
                 allocate(data_r64(1))
                 status = nf90_get_var(ncid, varid, data_r64(1))
                 if (status == NF90_NOERR) then
-                    var = variable_scalar(data_r64(1), name=trim(name))
+                    var = variable_scalar_real64(data_r64(1), name=trim(name))
                 end if
             case(NF90_FLOAT)
                 allocate(data_r32(1))
                 status = nf90_get_var(ncid, varid, data_r32(1))
                 if (status == NF90_NOERR) then
-                    var = variable_scalar(real(data_r32(1), real64), name=trim(name))
+                    var = variable_scalar_real64(real(data_r32(1), real64), name=trim(name))
                 end if
             case(NF90_INT)
                 allocate(data_i32(1))
                 status = nf90_get_var(ncid, varid, data_i32(1))
                 if (status == NF90_NOERR) then
-                    var = variable_scalar(real(data_i32(1), real64), name=trim(name))
+                    var = variable_scalar_real64(real(data_i32(1), real64), name=trim(name))
                 end if
             case(NF90_INT64)
                 allocate(data_i64(1))
                 status = nf90_get_var(ncid, varid, data_i64(1))
                 if (status == NF90_NOERR) then
-                    var = variable_scalar(real(data_i64(1), real64), name=trim(name))
+                    var = variable_scalar_real64(real(data_i64(1), real64), name=trim(name))
                 end if
             case default
                 status = NC_ERROR_TYPE
@@ -408,13 +408,13 @@ contains
             if (status == NF90_NOERR) then
                 select case(ndims)
                 case(1)
-                    var = variable(data_r64(1:var_shape(1)), name=trim(name), dim_names=dim_names)
+                    var = new_array(data_r64(1:var_shape(1)), name=trim(name), dim_names=dim_names)
                 case(2)
                     block
                         real(real64), dimension(:,:), allocatable :: data_2d
                         allocate(data_2d(var_shape(1), var_shape(2)))
                         data_2d = reshape(data_r64, [var_shape(1), var_shape(2)])
-                        var = variable(data_2d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_2d, name=trim(name), dim_names=dim_names)
                         deallocate(data_2d)
                     end block
                 case(3)
@@ -422,7 +422,7 @@ contains
                         real(real64), dimension(:,:,:), allocatable :: data_3d
                         allocate(data_3d(var_shape(1), var_shape(2), var_shape(3)))
                         data_3d = reshape(data_r64, [var_shape(1), var_shape(2), var_shape(3)])
-                        var = variable(data_3d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_3d, name=trim(name), dim_names=dim_names)
                         deallocate(data_3d)
                     end block
                 case default
@@ -475,13 +475,13 @@ contains
             if (status == NF90_NOERR) then
                 select case(ndims)
                 case(1)
-                    var = variable(data_r32(1:var_shape(1)), name=trim(name), dim_names=dim_names)
+                    var = new_array(data_r32(1:var_shape(1)), name=trim(name), dim_names=dim_names)
                 case(2)
                     block
                         real(real32), dimension(:,:), allocatable :: data_2d
                         allocate(data_2d(var_shape(1), var_shape(2)))
                         data_2d = reshape(data_r32, [var_shape(1), var_shape(2)])
-                        var = variable(data_2d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_2d, name=trim(name), dim_names=dim_names)
                         deallocate(data_2d)
                     end block
                 case(3)
@@ -489,7 +489,7 @@ contains
                         real(real32), dimension(:,:,:), allocatable :: data_3d
                         allocate(data_3d(var_shape(1), var_shape(2), var_shape(3)))
                         data_3d = reshape(data_r32, [var_shape(1), var_shape(2), var_shape(3)])
-                        var = variable(data_3d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_3d, name=trim(name), dim_names=dim_names)
                         deallocate(data_3d)
                     end block
                 case default
@@ -541,13 +541,13 @@ contains
             if (status == NF90_NOERR) then
                 select case(ndims)
                 case(1)
-                    var = variable(data_i32(1:var_shape(1)), name=trim(name), dim_names=dim_names)
+                    var = new_array(data_i32(1:var_shape(1)), name=trim(name), dim_names=dim_names)
                 case(2)
                     block
                         integer(int32), dimension(:,:), allocatable :: data_2d
                         allocate(data_2d(var_shape(1), var_shape(2)))
                         data_2d = reshape(data_i32, [var_shape(1), var_shape(2)])
-                        var = variable(data_2d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_2d, name=trim(name), dim_names=dim_names)
                         deallocate(data_2d)
                     end block
                 case(3)
@@ -555,7 +555,7 @@ contains
                         integer(int32), dimension(:,:,:), allocatable :: data_3d
                         allocate(data_3d(var_shape(1), var_shape(2), var_shape(3)))
                         data_3d = reshape(data_i32, [var_shape(1), var_shape(2), var_shape(3)])
-                        var = variable(data_3d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_3d, name=trim(name), dim_names=dim_names)
                         deallocate(data_3d)
                     end block
                 case default
@@ -607,13 +607,13 @@ contains
             if (status == NF90_NOERR) then
                 select case(ndims)
                 case(1)
-                    var = variable(data_i64(1:var_shape(1)), name=trim(name), dim_names=dim_names)
+                    var = new_array(data_i64(1:var_shape(1)), name=trim(name), dim_names=dim_names)
                 case(2)
                     block
                         integer(int64), dimension(:,:), allocatable :: data_2d
                         allocate(data_2d(var_shape(1), var_shape(2)))
                         data_2d = reshape(data_i64, [var_shape(1), var_shape(2)])
-                        var = variable(data_2d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_2d, name=trim(name), dim_names=dim_names)
                         deallocate(data_2d)
                     end block
                 case(3)
@@ -621,7 +621,7 @@ contains
                         integer(int64), dimension(:,:,:), allocatable :: data_3d
                         allocate(data_3d(var_shape(1), var_shape(2), var_shape(3)))
                         data_3d = reshape(data_i64, [var_shape(1), var_shape(2), var_shape(3)])
-                        var = variable(data_3d, name=trim(name), dim_names=dim_names)
+                        var = new_array(data_3d, name=trim(name), dim_names=dim_names)
                         deallocate(data_3d)
                     end block
                 case default

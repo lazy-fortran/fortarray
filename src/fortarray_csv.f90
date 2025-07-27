@@ -1,6 +1,6 @@
 module fortarray_csv
     use fortarray_types
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array
     use fortarray_storage
     use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
@@ -171,7 +171,7 @@ contains
             end do
             
             ! Create variable with numeric data - use generic dimension names to avoid length issues
-            var = variable(data_r64, name=trim(filename), dim_names=["rows", "cols"])
+            var = new_array(data_r64, name=trim(filename), dim_names=["rows", "cols"])
             
         else
             ! String data handling - not fully implemented for this sprint

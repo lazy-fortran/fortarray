@@ -15,8 +15,9 @@ module fortarray_constructors
     integer, parameter :: CONSTRUCTOR_ERROR_VALIDATION = -5
     integer, parameter :: CONSTRUCTOR_ERROR_IO = -6
     
-    ! Generic variable constructor interface
-    interface variable
+    ! XARRAY-COMPATIBLE CONSTRUCTOR INTERFACE
+    ! new_array() - replaces variable() interface (NO BACKWARD COMPATIBILITY)
+    interface new_array
         module procedure variable_from_real64_1d
         module procedure variable_from_real64_2d
         module procedure variable_from_real64_3d
@@ -32,85 +33,33 @@ module fortarray_constructors
         module procedure variable_from_logical_1d
         module procedure variable_from_logical_2d
         module procedure variable_from_logical_3d
-    end interface variable
+    end interface new_array
     
-    ! Legacy dataframe interface for compatibility
-    interface dataframe
-        module procedure dataframe_from_real64_1d
-        module procedure dataframe_from_real64_2d
-        module procedure dataframe_from_real64_3d
-        module procedure dataframe_from_real32_1d
-        module procedure dataframe_from_real32_2d
-        module procedure dataframe_from_real32_3d
-        module procedure dataframe_from_int32_1d
-        module procedure dataframe_from_int32_2d
-        module procedure dataframe_from_int32_3d
-        module procedure dataframe_from_int64_1d
-        module procedure dataframe_from_int64_2d
-        module procedure dataframe_from_int64_3d
-    end interface dataframe
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR dataframe interface
     
-    ! Generic from_array interface
-    interface variable_from_array
-        module procedure variable_from_real64_1d_simple
-        module procedure variable_from_real64_2d_simple
-        module procedure variable_from_real64_3d_simple
-        module procedure variable_from_real32_1d_simple
-        module procedure variable_from_real32_2d_simple
-        module procedure variable_from_real32_3d_simple
-        module procedure variable_from_int32_1d_simple
-        module procedure variable_from_int32_2d_simple
-        module procedure variable_from_int32_3d_simple
-        module procedure variable_from_int64_1d_simple
-        module procedure variable_from_int64_2d_simple
-        module procedure variable_from_int64_3d_simple
-    end interface variable_from_array
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR variable_from_array interface
+    ! Use new_array() instead
     
-    ! Legacy interface
-    interface dataframe_from_array
-        module procedure variable_from_real64_1d_simple
-        module procedure variable_from_real64_2d_simple
-        module procedure variable_from_real64_3d_simple
-        module procedure variable_from_real32_1d_simple
-        module procedure variable_from_real32_2d_simple
-        module procedure variable_from_real32_3d_simple
-        module procedure variable_from_int32_1d_simple
-        module procedure variable_from_int32_2d_simple
-        module procedure variable_from_int32_3d_simple
-        module procedure variable_from_int64_1d_simple
-        module procedure variable_from_int64_2d_simple
-        module procedure variable_from_int64_3d_simple
-    end interface dataframe_from_array
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR dataframe_from_array interface
     
-    ! Generic scalar constructor
-    interface variable_scalar
-        module procedure variable_scalar_real64
-        module procedure variable_scalar_real32
-        module procedure variable_scalar_int32
-        module procedure variable_scalar_int64
-    end interface variable_scalar
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR variable_scalar interface
+    ! Use new_array() for scalars (0D arrays)
     
-    ! Legacy interface
-    interface dataframe_scalar
-        module procedure variable_scalar_real64
-        module procedure variable_scalar_real32
-        module procedure variable_scalar_int32
-        module procedure variable_scalar_int64
-    end interface dataframe_scalar
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR dataframe_scalar interface
     
-    ! Dataset constructor
-    interface dataset
+    ! XARRAY-COMPATIBLE DATASET CONSTRUCTOR INTERFACE
+    ! new_dataset() - replaces dataset() interface (NO BACKWARD COMPATIBILITY)
+    interface new_dataset
         module procedure dataset_empty
         module procedure dataset_from_variables
-    end interface dataset
+    end interface new_dataset
     
-    ! Public interfaces
-    public :: variable, dataframe  ! dataframe for backward compatibility
-    public :: variable_from_array, dataframe_from_array
-    public :: variable_from_csv, dataframe_from_csv
-    public :: variable_empty, dataframe_empty
-    public :: variable_scalar, dataframe_scalar
-    public :: dataset
+    ! XARRAY-COMPATIBLE PUBLIC INTERFACES (NO BACKWARD COMPATIBILITY)
+    public :: new_array, new_dataset  ! Main xarray-style constructors
+    public :: variable_from_csv  ! CSV support (dataframe_from_csv DELETED)
+    public :: variable_empty  ! Low-level constructor (dataframe_empty DELETED)
+    public :: variable_scalar_real64, variable_scalar_real32  ! Scalar constructors
+    public :: variable_scalar_int32, variable_scalar_int64
     public :: create_coordinate
     public :: validate_dimension_names
     public :: validate_coordinates
@@ -452,17 +401,7 @@ contains
         if (status /= 0) var%initialized = .false.
     end function variable_empty
     
-    ! Legacy name
-    function dataframe_empty(dim_names, shape, dtype, stat, error_msg) result(df)
-        character(len=*), dimension(:), intent(in) :: dim_names
-        integer, dimension(:), intent(in) :: shape
-        character(len=*), intent(in), optional :: dtype
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_empty(dim_names, shape, dtype, stat, error_msg)
-    end function dataframe_empty
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR dataframe_empty
     
     !> Create variable from 1D real64 array
     function variable_from_real64_1d(data, dim_names, coords, name, &
@@ -1663,14 +1602,7 @@ contains
         if (status /= 0) var%initialized = .false.
     end function variable_from_csv
     
-    function dataframe_from_csv(filename, stat, error_msg) result(df)
-        character(len=*), intent(in) :: filename
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_csv(filename, stat, error_msg)
-    end function dataframe_from_csv
+    ! DELETED - NO BACKWARD COMPATIBILITY FOR dataframe_from_csv
     
     !> Create empty dataset
     function dataset_empty() result(ds)
@@ -1721,186 +1653,8 @@ contains
         if (present(stat)) stat = status
     end function dataset_from_variables
     
-    ! Legacy wrapper functions
-    function dataframe_from_real64_1d(data, dim_names, coords, name, &
-                                     check_monotonic, stat, error_msg) result(df)
-        real(real64), dimension(:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_real64_1d(data, dim_names, coords, name, &
-                                        check_monotonic, stat, error_msg)
-    end function dataframe_from_real64_1d
-    
-    function dataframe_from_real64_2d(data, dim_names, coords, name, &
-                                     check_monotonic, stat, error_msg) result(df)
-        real(real64), dimension(:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_real64_2d(data, dim_names, coords, name, &
-                                        check_monotonic, stat, error_msg)
-    end function dataframe_from_real64_2d
-    
-    function dataframe_from_real64_3d(data, dim_names, coords, name, &
-                                     check_monotonic, stat, error_msg) result(df)
-        real(real64), dimension(:,:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_real64_3d(data, dim_names, coords, name, &
-                                        check_monotonic, stat, error_msg)
-    end function dataframe_from_real64_3d
-    
-    function dataframe_from_real32_1d(data, dim_names, coords, name, &
-                                     check_monotonic, stat, error_msg) result(df)
-        real(real32), dimension(:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_real32_1d(data, dim_names, coords, name, &
-                                        check_monotonic, stat, error_msg)
-    end function dataframe_from_real32_1d
-    
-    function dataframe_from_real32_2d(data, dim_names, coords, name, &
-                                     check_monotonic, stat, error_msg) result(df)
-        real(real32), dimension(:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_real32_2d(data, dim_names, coords, name, &
-                                        check_monotonic, stat, error_msg)
-    end function dataframe_from_real32_2d
-    
-    function dataframe_from_real32_3d(data, dim_names, coords, name, &
-                                     check_monotonic, stat, error_msg) result(df)
-        real(real32), dimension(:,:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_real32_3d(data, dim_names, coords, name, &
-                                        check_monotonic, stat, error_msg)
-    end function dataframe_from_real32_3d
-    
-    function dataframe_from_int32_1d(data, dim_names, coords, name, &
-                                    check_monotonic, stat, error_msg) result(df)
-        integer(int32), dimension(:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_int32_1d(data, dim_names, coords, name, &
-                                       check_monotonic, stat, error_msg)
-    end function dataframe_from_int32_1d
-    
-    function dataframe_from_int32_2d(data, dim_names, coords, name, &
-                                    check_monotonic, stat, error_msg) result(df)
-        integer(int32), dimension(:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_int32_2d(data, dim_names, coords, name, &
-                                       check_monotonic, stat, error_msg)
-    end function dataframe_from_int32_2d
-    
-    function dataframe_from_int32_3d(data, dim_names, coords, name, &
-                                    check_monotonic, stat, error_msg) result(df)
-        integer(int32), dimension(:,:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_int32_3d(data, dim_names, coords, name, &
-                                       check_monotonic, stat, error_msg)
-    end function dataframe_from_int32_3d
-    
-    function dataframe_from_int64_1d(data, dim_names, coords, name, &
-                                    check_monotonic, stat, error_msg) result(df)
-        integer(int64), dimension(:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_int64_1d(data, dim_names, coords, name, &
-                                       check_monotonic, stat, error_msg)
-    end function dataframe_from_int64_1d
-    
-    function dataframe_from_int64_2d(data, dim_names, coords, name, &
-                                    check_monotonic, stat, error_msg) result(df)
-        integer(int64), dimension(:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_int64_2d(data, dim_names, coords, name, &
-                                       check_monotonic, stat, error_msg)
-    end function dataframe_from_int64_2d
-    
-    function dataframe_from_int64_3d(data, dim_names, coords, name, &
-                                    check_monotonic, stat, error_msg) result(df)
-        integer(int64), dimension(:,:,:), intent(in) :: data
-        character(len=*), dimension(:), intent(in), optional :: dim_names
-        type(coordinate_t), dimension(:), intent(in), optional :: coords
-        character(len=*), intent(in), optional :: name
-        logical, intent(in), optional :: check_monotonic
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        type(dataframe_t) :: df
-        
-        df%var = variable_from_int64_3d(data, dim_names, coords, name, &
-                                       check_monotonic, stat, error_msg)
-    end function dataframe_from_int64_3d
+    ! DELETED ALL LEGACY DATAFRAME WRAPPER FUNCTIONS - NO BACKWARD COMPATIBILITY
+    ! ALL dataframe_from_* functions removed - use new_array() instead
 
     !======= Logical Constructors =======!
     

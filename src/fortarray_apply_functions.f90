@@ -1,7 +1,8 @@
 module fortarray_apply_functions
     use fortarray_types
     use fortarray_storage
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_memory
     use fortarray_aggregation
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
@@ -172,7 +173,7 @@ contains
         end do
         
         ! Create result variable
-        result = variable(result_values, name=var%name//"_func", dim_names=var%dim_names)
+        result = new_array(result_values, name=var%name//"_func", dim_names=var%dim_names)
         if (allocated(var%shape)) then
             if (allocated(result%shape)) deallocate(result%shape)
             allocate(result%shape(size(var%shape)))
@@ -233,7 +234,7 @@ contains
         end select
         
         ! Create result variable
-        result = variable(result_values, name=var%name//"_"//trim(operation), dim_names=var%dim_names)
+        result = new_array(result_values, name=var%name//"_"//trim(operation), dim_names=var%dim_names)
         if (allocated(var%shape)) then
             if (allocated(result%shape)) deallocate(result%shape)
             allocate(result%shape(size(var%shape)))
@@ -275,7 +276,7 @@ contains
         end select
         
         ! Create result variable
-        result = variable(result_values, name=var%name//"_"//trim(operation), dim_names=var%dim_names)
+        result = new_array(result_values, name=var%name//"_"//trim(operation), dim_names=var%dim_names)
         if (allocated(var%shape)) then
             if (allocated(result%shape)) deallocate(result%shape)
             allocate(result%shape(size(var%shape)))
