@@ -2,6 +2,7 @@ program test_constructors
     use foxel_types
     use foxel_constructors
     use foxel_storage
+    use foxel_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -35,7 +36,8 @@ program test_constructors
 contains
 
     subroutine test_basic_constructor()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
+        type(dataframe_t) :: df  ! Legacy
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
         type(coordinate_t), dimension(2) :: coords
@@ -52,15 +54,17 @@ contains
         
         ! Create coordinates
         call create_coordinate(coords(1), 10, "real64", stat)
+        coords(1)%name = "time"
         coords(1)%values_r64 = [(real(i, real64), i=1,10)]
         
         call create_coordinate(coords(2), 5, "char", stat, char_len=10)
+        coords(2)%name = "station"
         coords(2)%values_char = ["Station_1 ", "Station_2 ", "Station_3 ", &
                                  "Station_4 ", "Station_5 "]
         
-        ! Create dataframe
-        df = dataframe(data_2d, dim_names=dim_names, coords=coords, &
-                      var_name="temperature", stat=stat, error_msg=error_msg)
+        ! Create variable
+        var = variable(data_2d, dim_names=dim_names, coords=coords, &
+                      name="temperature", stat=stat, error_msg=error_msg)
         
         if (stat /= 0) then
             test_passed = .false.
@@ -68,15 +72,22 @@ contains
         end if
         
         ! Verify construction
-        if (df%n_dims /= 2) test_passed = .false.
-        if (df%shape(1) /= 10 .or. df%shape(2) /= 5) test_passed = .false.
-        if (df%n_elements /= 50) test_passed = .false.
-        if (trim(df%var_name) /= "temperature") test_passed = .false.
-        if (.not. df%initialized) test_passed = .false.
+        if (var%n_dims /= 2) test_passed = .false.
+        if (var%shape(1) /= 10 .or. var%shape(2) /= 5) test_passed = .false.
+        if (var%n_elements /= 50) test_passed = .false.
+        if (trim(var%name) /= "temperature") test_passed = .false.
+        if (.not. var%initialized) test_passed = .false.
         
         ! Verify coordinates were copied
-        if (df%coords(1)%length /= 10) test_passed = .false.
-        if (df%coords(2)%length /= 5) test_passed = .false.
+        if (var%coords(1)%length /= 10) test_passed = .false.
+        if (var%coords(2)%length /= 5) test_passed = .false.
+        
+        ! Test legacy constructor
+        df = dataframe(data_2d, dim_names=dim_names, coords=coords, &
+                      name="temperature_legacy", stat=stat, error_msg=error_msg)
+        
+        if (stat /= 0) test_passed = .false.
+        if (trim(df%var%name) /= "temperature_legacy") test_passed = .false.
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
@@ -86,13 +97,14 @@ contains
         end if
         
         ! Clean up
+        call finalize_variable(var)
         call finalize_dataframe(df)
         call finalize_coordinate(coords(1))
         call finalize_coordinate(coords(2))
     end subroutine test_basic_constructor
     
     subroutine test_constructor_validation()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
         type(coordinate_t), dimension(2) :: coords
@@ -104,13 +116,13 @@ contains
         test_passed = .true.
         
         ! Test with mismatched dimensions
-        dim_names = ["x", "y"]
+        dim_names = ["x ", "y "]
         
         ! Create wrong-sized coordinates
         call create_coordinate(coords(1), 10, "real64", stat)
         call create_coordinate(coords(2), 10, "real64", stat)  ! Wrong size!
         
-        df = dataframe(data_2d, dim_names=dim_names, coords=coords, &
+        var = variable(data_2d, dim_names=dim_names, coords=coords, &
                       stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
@@ -131,7 +143,7 @@ contains
     end subroutine test_constructor_validation
     
     subroutine test_dimension_validation()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64), dimension(10, 5, 3) :: data_3d
         character(len=20), dimension(3) :: dim_names
         character(len=256) :: error_msg
@@ -142,9 +154,9 @@ contains
         test_passed = .true.
         
         ! Test duplicate dimension names
-        dim_names = ["time", "time", "level"]  ! Duplicate!
+        dim_names = ["time ", "time ", "level"]  ! Duplicate!
         
-        df = dataframe(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = variable(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.  ! Should have failed
@@ -158,9 +170,9 @@ contains
         end if
         
         ! Test invalid dimension names
-        dim_names = ["time", "123abc", "level"]  ! Invalid identifier
+        dim_names = ["time  ", "123abc", "level "]  ! Invalid identifier
         
-        df = dataframe(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = variable(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.  ! Should have failed
@@ -175,7 +187,7 @@ contains
     end subroutine test_dimension_validation
     
     subroutine test_coordinate_validation()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
         type(coordinate_t), dimension(2) :: coords
@@ -186,7 +198,7 @@ contains
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
-        dim_names = ["x", "y"]
+        dim_names = ["x ", "y "]
         
         ! Create non-monotonic coordinate
         call create_coordinate(coords(1), 10, "real64", stat)
@@ -200,19 +212,19 @@ contains
         coords(2)%is_monotonic = .true.
         
         ! Constructor with check_monotonic=.true. should validate
-        df = dataframe(data_2d, dim_names=dim_names, coords=coords, &
+        var = variable(data_2d, dim_names=dim_names, coords=coords, &
                       check_monotonic=.true., stat=stat, error_msg=error_msg)
         
         ! For now, we might allow non-monotonic coords with a warning
         ! But let's verify the coordinate was properly copied
         if (stat == 0) then
-            if (df%coords(1)%is_monotonic) then
+            if (var%coords(1)%is_monotonic) then
                 test_passed = .false.  ! Should preserve the flag
             end if
         end if
         
         ! Clean up
-        call finalize_dataframe(df)
+        call finalize_variable(var)
         call finalize_coordinate(coords(1))
         call finalize_coordinate(coords(2))
         
@@ -225,7 +237,7 @@ contains
     end subroutine test_coordinate_validation
     
     subroutine test_shape_validation()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64), dimension(:,:), allocatable :: data_2d
         character(len=20), dimension(2) :: dim_names
         character(len=256) :: error_msg
@@ -237,9 +249,9 @@ contains
         
         ! Test with zero-sized dimension
         allocate(data_2d(10, 0))  ! Zero columns!
-        dim_names = ["rows", "cols"]
+        dim_names = ["rows ", "cols "]
         
-        df = dataframe(data_2d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = variable(data_2d, dim_names=dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.  ! Should reject zero-sized dimensions
@@ -256,7 +268,7 @@ contains
     end subroutine test_shape_validation
     
     subroutine test_from_array_constructors()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64), dimension(10, 5) :: data_2d
         real(real32), dimension(20) :: data_1d
         integer(int32), dimension(3, 3, 3) :: data_3d
@@ -268,33 +280,40 @@ contains
         
         ! Test 1D array constructor
         call random_number(data_1d)
-        df = dataframe_from_array(data_1d, dim_name="samples", stat=stat)
+        var = variable_from_array(data_1d, dim_name="samples", stat=stat)
         
-        if (stat /= 0) test_passed = .false.
-        if (df%n_dims /= 1) test_passed = .false.
-        if (df%shape(1) /= 20) test_passed = .false.
-        if (trim(df%dim_names(1)) /= "samples") test_passed = .false.
-        call finalize_dataframe(df)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A,I0)') "1D array constructor failed with stat=", stat
+        end if
+        if (.not. var%initialized) then
+            test_passed = .false.
+            write(error_unit,'(A)') "1D variable not initialized"
+        end if
+        if (var%n_dims /= 1) test_passed = .false.
+        if (var%shape(1) /= 20) test_passed = .false.
+        if (trim(var%dim_names(1)) /= "samples") test_passed = .false.
+        call finalize_variable(var)
         
         ! Test 2D array constructor with auto-generated names
         call random_number(data_2d)
-        df = dataframe_from_array(data_2d, stat=stat)
+        var = variable_from_array(data_2d, stat=stat)
         
         if (stat /= 0) test_passed = .false.
-        if (df%n_dims /= 2) test_passed = .false.
-        if (df%shape(1) /= 10 .or. df%shape(2) /= 5) test_passed = .false.
+        if (var%n_dims /= 2) test_passed = .false.
+        if (var%shape(1) /= 10 .or. var%shape(2) /= 5) test_passed = .false.
         ! Should have auto-generated dimension names
-        if (len_trim(df%dim_names(1)) == 0) test_passed = .false.
-        call finalize_dataframe(df)
+        if (len_trim(var%dim_names(1)) == 0) test_passed = .false.
+        call finalize_variable(var)
         
         ! Test 3D integer array
         data_3d = reshape([(i, i=1,27)], [3, 3, 3])
-        df = dataframe_from_array(data_3d, stat=stat)
+        var = variable_from_array(data_3d, stat=stat)
         
         if (stat /= 0) test_passed = .false.
-        if (df%n_dims /= 3) test_passed = .false.
-        if (df%data%dtype /= 1) test_passed = .false.  ! Should be int32
-        call finalize_dataframe(df)
+        if (var%n_dims /= 3) test_passed = .false.
+        if (var%data%dtype /= DTYPE_INT32) test_passed = .false.
+        call finalize_variable(var)
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
@@ -305,7 +324,7 @@ contains
     end subroutine test_from_array_constructors
     
     subroutine test_from_csv_constructor()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         character(len=256) :: error_msg
         logical :: test_passed
         integer :: stat, unit
@@ -322,23 +341,35 @@ contains
         close(unit)
         
         ! Load from CSV
-        df = dataframe_from_csv("test_data.csv", stat=stat, error_msg=error_msg)
+        var = variable_from_csv("test_data.csv", stat=stat, error_msg=error_msg)
         
         if (stat /= 0) then
             test_passed = .false.
             write(error_unit,'(A)') "CSV load failed: " // trim(error_msg)
         else
             ! Verify data
-            if (df%n_dims /= 2) test_passed = .false.  ! rows x columns
-            if (df%shape(1) /= 3) test_passed = .false.  ! 3 rows
-            if (df%shape(2) /= 3) test_passed = .false.  ! 3 columns
+            if (var%n_dims /= 2) then
+                test_passed = .false.
+                write(error_unit,'(A,I0)') "Wrong n_dims: ", var%n_dims
+            end if
+            if (var%shape(1) /= 3) then
+                test_passed = .false.
+                write(error_unit,'(A,I0)') "Wrong shape(1): ", var%shape(1)
+            end if
+            if (var%shape(2) /= 3) then
+                test_passed = .false.
+                write(error_unit,'(A,I0)') "Wrong shape(2): ", var%shape(2)
+            end if
             
             ! Check column names were read
-            if (df%n_attrs < 3) test_passed = .false.
+            if (var%n_attrs < 3) then
+                test_passed = .false.
+                write(error_unit,'(A,I0)') "Wrong n_attrs: ", var%n_attrs
+            end if
         end if
         
         ! Clean up
-        call finalize_dataframe(df)
+        call finalize_variable(var)
         open(newunit=unit, file="test_data.csv", status="old")
         close(unit, status="delete")
         
@@ -351,7 +382,7 @@ contains
     end subroutine test_from_csv_constructor
     
     subroutine test_empty_constructor()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         character(len=20), dimension(2) :: dim_names
         integer, dimension(2) :: shape
         logical :: test_passed
@@ -360,23 +391,23 @@ contains
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
-        ! Create empty dataframe with specified dimensions
-        dim_names = ["time", "vars"]
+        ! Create empty variable with specified dimensions
+        dim_names = ["time ", "vars "]
         shape = [100, 5]
         
-        df = dataframe_empty(dim_names, shape, dtype="real64", stat=stat)
+        var = variable_empty(dim_names, shape, dtype="real64", stat=stat)
         
         if (stat /= 0) test_passed = .false.
-        if (.not. df%initialized) test_passed = .false.
-        if (df%n_dims /= 2) test_passed = .false.
-        if (any(df%shape /= shape)) test_passed = .false.
-        if (df%data%dtype /= 4) test_passed = .false.  ! real64
-        if (df%data%n_elements /= 500) test_passed = .false.
+        if (.not. var%initialized) test_passed = .false.
+        if (var%n_dims /= 2) test_passed = .false.
+        if (any(var%shape /= shape)) test_passed = .false.
+        if (var%data%dtype /= DTYPE_REAL64) test_passed = .false.
+        if (var%data%n_elements /= 500) test_passed = .false.
         
         ! Data should be initialized to zero
-        if (any(df%data%values_r64 /= 0.0_real64)) test_passed = .false.
+        if (any(abs(var%data%values_r64) > epsilon(1.0_real64))) test_passed = .false.
         
-        call finalize_dataframe(df)
+        call finalize_variable(var)
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
@@ -387,7 +418,7 @@ contains
     end subroutine test_empty_constructor
     
     subroutine test_scalar_constructor()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64) :: scalar_value
         logical :: test_passed
         integer :: stat
@@ -395,20 +426,20 @@ contains
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
-        ! Create scalar dataframe
+        ! Create scalar variable
         scalar_value = 42.0_real64
-        df = dataframe_scalar(scalar_value, var_name="answer", stat=stat)
+        var = variable_scalar(scalar_value, name="answer", stat=stat)
         
         if (stat /= 0) test_passed = .false.
-        if (df%n_dims /= 0) test_passed = .false.  ! Scalar has 0 dimensions
-        if (df%n_elements /= 1) test_passed = .false.
-        if (allocated(df%shape)) test_passed = .false.  ! No shape for scalar
-        if (trim(df%var_name) /= "answer") test_passed = .false.
-        if (abs(df%data%values_r64(1) - 42.0_real64) > epsilon(1.0_real64)) then
+        if (var%n_dims /= 0) test_passed = .false.  ! Scalar has 0 dimensions
+        if (var%n_elements /= 1) test_passed = .false.
+        if (allocated(var%shape)) test_passed = .false.  ! No shape for scalar
+        if (trim(var%name) /= "answer") test_passed = .false.
+        if (abs(var%data%values_r64(1) - 42.0_real64) > epsilon(1.0_real64)) then
             test_passed = .false.
         end if
         
-        call finalize_dataframe(df)
+        call finalize_variable(var)
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
@@ -419,7 +450,7 @@ contains
     end subroutine test_scalar_constructor
     
     subroutine test_error_messages()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
         real(real64), dimension(5, 5) :: data_2d
         character(len=20), dimension(3) :: dim_names  ! Wrong size!
         character(len=256) :: error_msg
@@ -430,8 +461,8 @@ contains
         test_passed = .true.
         
         ! Test dimension count mismatch
-        dim_names = ["x", "y", "z"]
-        df = dataframe(data_2d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        dim_names = ["x ", "y ", "z "]
+        var = variable(data_2d, dim_names=dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.
@@ -450,7 +481,8 @@ contains
     end subroutine test_error_messages
     
     subroutine test_edge_cases()
-        type(dataframe_t) :: df
+        type(variable_t) :: var
+        type(dataset_t) :: ds
         real(real64), dimension(:), allocatable :: data_1d
         real(real64), dimension(1, 1) :: single_element
         logical :: test_passed
@@ -459,26 +491,31 @@ contains
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
-        ! Test single element dataframe
+        ! Test single element variable
         single_element(1,1) = 3.14_real64
-        df = dataframe_from_array(single_element, stat=stat)
+        var = variable_from_array(single_element, stat=stat)
         
         if (stat /= 0) test_passed = .false.
-        if (df%n_elements /= 1) test_passed = .false.
-        if (abs(df%data%values_r64(1) - 3.14_real64) > epsilon(1.0_real64)) then
+        if (var%n_elements /= 1) test_passed = .false.
+        if (abs(var%data%values_r64(1) - 3.14_real64) > epsilon(1.0_real64)) then
             test_passed = .false.
         end if
-        call finalize_dataframe(df)
+        call finalize_variable(var)
         
         ! Test large array (but not too large for testing)
         allocate(data_1d(100000))
         call random_number(data_1d)
-        df = dataframe_from_array(data_1d, dim_name="large", stat=stat)
+        var = variable_from_array(data_1d, dim_name="large", stat=stat)
         
         if (stat /= 0) test_passed = .false.
-        if (df%shape(1) /= 100000) test_passed = .false.
-        call finalize_dataframe(df)
+        if (var%shape(1) /= 100000) test_passed = .false.
+        call finalize_variable(var)
         deallocate(data_1d)
+        
+        ! Test dataset constructor
+        ds = dataset()
+        if (.not. ds%initialized) test_passed = .false.
+        if (ds%n_vars /= 0) test_passed = .false.
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1

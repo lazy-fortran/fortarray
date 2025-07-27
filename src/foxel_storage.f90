@@ -82,7 +82,7 @@ contains
         
         ! Allocate based on type
         select case(dtype)
-        case(1)  ! int32
+        case(DTYPE_INT32)
             allocate(storage%values_i32(n_elements), stat=stat)
             if (stat /= 0) then
                 stat = STORAGE_ERROR_ALLOCATION
@@ -90,7 +90,7 @@ contains
             end if
             storage%values_i32 = 0_int32
             
-        case(2)  ! int64
+        case(DTYPE_INT64)
             allocate(storage%values_i64(n_elements), stat=stat)
             if (stat /= 0) then
                 stat = STORAGE_ERROR_ALLOCATION
@@ -98,7 +98,7 @@ contains
             end if
             storage%values_i64 = 0_int64
             
-        case(3)  ! real32
+        case(DTYPE_REAL32)
             allocate(storage%values_r32(n_elements), stat=stat)
             if (stat /= 0) then
                 stat = STORAGE_ERROR_ALLOCATION
@@ -106,7 +106,7 @@ contains
             end if
             storage%values_r32 = 0.0_real32
             
-        case(4)  ! real64
+        case(DTYPE_REAL64)
             allocate(storage%values_r64(n_elements), stat=stat)
             if (stat /= 0) then
                 stat = STORAGE_ERROR_ALLOCATION
@@ -114,7 +114,7 @@ contains
             end if
             storage%values_r64 = 0.0_real64
             
-        case(5)  ! char
+        case(DTYPE_CHAR)
             clen = 80  ! default
             if (present(char_len)) clen = char_len
             allocate(character(len=clen) :: storage%values_char(n_elements), stat=stat)
@@ -134,15 +134,15 @@ contains
         if (.not. storage%initialized) return
         
         select case(storage%dtype)
-        case(1)
+        case(DTYPE_INT32)
             if (allocated(storage%values_i32)) deallocate(storage%values_i32)
-        case(2)
+        case(DTYPE_INT64)
             if (allocated(storage%values_i64)) deallocate(storage%values_i64)
-        case(3)
+        case(DTYPE_REAL32)
             if (allocated(storage%values_r32)) deallocate(storage%values_r32)
-        case(4)
+        case(DTYPE_REAL64)
             if (allocated(storage%values_r64)) deallocate(storage%values_r64)
-        case(5)
+        case(DTYPE_CHAR)
             if (allocated(storage%values_char)) deallocate(storage%values_char)
         end select
         
@@ -610,13 +610,13 @@ contains
         end if
         
         select case(storage%dtype)
-        case(1)  ! int32
+        case(DTYPE_INT32)  ! int32
             value = storage%values_i32(index)
-        case(2)  ! int64
+        case(DTYPE_INT64)  ! int64
             value = int(storage%values_i64(index), int32)
-        case(3)  ! real32
+        case(DTYPE_REAL32)  ! real32
             value = int(storage%values_r32(index), int32)
-        case(4)  ! real64
+        case(DTYPE_REAL64)  ! real64
             value = int(storage%values_r64(index), int32)
         case default
             stat = STORAGE_ERROR_CONVERSION
@@ -638,13 +638,13 @@ contains
         end if
         
         select case(storage%dtype)
-        case(1)  ! int32
+        case(DTYPE_INT32)  ! int32
             value = int(storage%values_i32(index), int64)
-        case(2)  ! int64
+        case(DTYPE_INT64)  ! int64
             value = storage%values_i64(index)
-        case(3)  ! real32
+        case(DTYPE_REAL32)  ! real32
             value = int(storage%values_r32(index), int64)
-        case(4)  ! real64
+        case(DTYPE_REAL64)  ! real64
             value = int(storage%values_r64(index), int64)
         case default
             stat = STORAGE_ERROR_CONVERSION
@@ -666,13 +666,13 @@ contains
         end if
         
         select case(storage%dtype)
-        case(1)  ! int32
+        case(DTYPE_INT32)  ! int32
             value = real(storage%values_i32(index), real32)
-        case(2)  ! int64
+        case(DTYPE_INT64)  ! int64
             value = real(storage%values_i64(index), real32)
-        case(3)  ! real32
+        case(DTYPE_REAL32)  ! real32
             value = storage%values_r32(index)
-        case(4)  ! real64
+        case(DTYPE_REAL64)  ! real64
             value = real(storage%values_r64(index), real32)
         case default
             stat = STORAGE_ERROR_CONVERSION
@@ -694,13 +694,13 @@ contains
         end if
         
         select case(storage%dtype)
-        case(1)  ! int32
+        case(DTYPE_INT32)  ! int32
             value = real(storage%values_i32(index), real64)
-        case(2)  ! int64
+        case(DTYPE_INT64)  ! int64
             value = real(storage%values_i64(index), real64)
-        case(3)  ! real32
+        case(DTYPE_REAL32)  ! real32
             value = real(storage%values_r32(index), real64)
-        case(4)  ! real64
+        case(DTYPE_REAL64)  ! real64
             value = storage%values_r64(index)
         case default
             stat = STORAGE_ERROR_CONVERSION
@@ -731,31 +731,31 @@ contains
         
         ! Convert values
         select case(dtype_out)
-        case(1)  ! to int32
+        case(DTYPE_INT32)  ! to int32
             do i = 1, storage_in%n_elements
                 call get_value_converted(storage_in, i, storage_out%values_i32(i), stat)
                 if (stat /= 0) return
             end do
             
-        case(2)  ! to int64
+        case(DTYPE_INT64)  ! to int64
             do i = 1, storage_in%n_elements
                 call get_value_converted(storage_in, i, storage_out%values_i64(i), stat)
                 if (stat /= 0) return
             end do
             
-        case(3)  ! to real32
+        case(DTYPE_REAL32)  ! to real32
             do i = 1, storage_in%n_elements
                 call get_value_converted(storage_in, i, storage_out%values_r32(i), stat)
                 if (stat /= 0) return
             end do
             
-        case(4)  ! to real64
+        case(DTYPE_REAL64)  ! to real64
             do i = 1, storage_in%n_elements
                 call get_value_converted(storage_in, i, storage_out%values_r64(i), stat)
                 if (stat /= 0) return
             end do
             
-        case(5)  ! to char
+        case(DTYPE_CHAR)  ! to char
             stat = STORAGE_ERROR_CONVERSION  ! Not implemented
             return
         end select
@@ -777,16 +777,22 @@ contains
         character(len=10) :: name
         
         select case(dtype)
-        case(1)
+        case(DTYPE_INT8)
+            name = "int8"
+        case(DTYPE_INT16)
+            name = "int16"
+        case(DTYPE_INT32)
             name = "int32"
-        case(2)
+        case(DTYPE_INT64)
             name = "int64"
-        case(3)
+        case(DTYPE_REAL32)
             name = "real32"
-        case(4)
+        case(DTYPE_REAL64)
             name = "real64"
-        case(5)
+        case(DTYPE_CHAR)
             name = "char"
+        case(DTYPE_LOGICAL)
+            name = "logical"
         case default
             name = "unknown"
         end select
@@ -798,16 +804,22 @@ contains
         integer :: dtype
         
         select case(trim(adjustl(name)))
+        case("int8", "i8", "integer8")
+            dtype = DTYPE_INT8
+        case("int16", "i16", "integer16")
+            dtype = DTYPE_INT16
         case("int32", "i32", "integer32")
-            dtype = 1
+            dtype = DTYPE_INT32
         case("int64", "i64", "integer64")
-            dtype = 2
+            dtype = DTYPE_INT64
         case("real32", "r32", "float", "single")
-            dtype = 3
+            dtype = DTYPE_REAL32
         case("real64", "r64", "double")
-            dtype = 4
+            dtype = DTYPE_REAL64
         case("char", "character", "string")
-            dtype = 5
+            dtype = DTYPE_CHAR
+        case("logical", "bool", "boolean")
+            dtype = DTYPE_LOGICAL
         case default
             dtype = 0  ! Unknown
         end select

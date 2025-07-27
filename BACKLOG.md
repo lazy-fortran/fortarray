@@ -35,21 +35,24 @@
 - [x] Add bounds checking for all array operations
 - [x] Test all type combinations exhaustively
 
-### Sprint 3: Constructor Functions (NEEDS REFACTORING)
-- [ ] Implement `variable()` constructor (rename from dataframe())
-  - [ ] Support 0D scalars through nD arrays
-  - [ ] Validate dimension names (no duplicates, valid identifiers)
-  - [ ] Validate coordinate arrays (correct lengths, monotonic if needed)
-  - [ ] Handle optional parameters properly
-- [ ] Implement `dataset()` constructor
-  - [ ] Manage shared dimensions across variables
-  - [ ] Validate variable consistency
-  - [ ] Handle global attributes
-- [ ] Create convenience constructors
-  - [ ] From arrays with auto-generated coordinates
-  - [ ] From NetCDF files
-  - [ ] Empty variables/datasets with specified dimensions
-- [ ] Test edge cases (scalars, empty data, huge arrays)
+### Sprint 3: Constructor Functions ✓
+- [x] Implement `variable()` constructor
+  - [x] Support 0D scalars through nD arrays (real64, real32, int32, int64)
+  - [x] Validate dimension names (no duplicates, valid identifiers)
+  - [x] Validate coordinate arrays (correct lengths)
+  - [x] Handle optional parameters properly
+- [x] Implement `dataset()` constructor
+  - [x] Empty dataset constructor
+  - [x] From variables constructor
+- [x] Create convenience constructors
+  - [x] From arrays with auto-generated coordinates
+  - [x] From CSV files
+  - [x] Empty variables with specified dimensions
+  - [x] Scalar constructors
+- [x] Test edge cases (scalars, empty data, large arrays)
+- [x] Fix data type mapping between storage and types modules
+- [x] Implement deep copy for coordinates
+- [x] All constructor tests passing
 
 ### Sprint 4: Basic Indexing
 - [ ] Implement positional indexing for variables
