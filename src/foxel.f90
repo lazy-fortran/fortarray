@@ -23,6 +23,7 @@ module foxel
     use foxel_chunked_operations
     use foxel_parallel_computing
     use foxel_fortplot_integration
+    use foxel_plot_types
     implicit none
     
     ! Re-export everything from submodules
