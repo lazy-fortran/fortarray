@@ -14,6 +14,7 @@ module foxel
     use foxel_missing_data
     use foxel_coordinate_selection
     use foxel_boolean_indexing
+    use foxel_slicing
     implicit none
     
     ! Re-export everything from submodules
