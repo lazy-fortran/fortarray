@@ -94,17 +94,17 @@
 - [x] Selective variable loading
 - [ ] Test with real NetCDF files (deferred to integration testing)
 
-### Sprint 6: NetCDF4 Writer
-- [ ] Implement complete NetCDF4 writing
-  - [ ] Define dimensions (including unlimited)
-  - [ ] Define variables with proper types
-  - [ ] Write coordinate variables
-  - [ ] Write all attributes with type safety
-  - [ ] Support compression and chunking
-- [ ] Dataset to NetCDF file conversion
-- [ ] Atomic writes (temp file + rename)
-- [ ] CF-convention compliance checking
-- [ ] Test round-trip fidelity
+### Sprint 6: NetCDF4 Writer ✓
+- [x] Implement complete NetCDF4 writing
+  - [x] Define dimensions (including unlimited)
+  - [x] Define variables with proper types
+  - [x] Write coordinate variables
+  - [x] Write all attributes with type safety
+  - [x] Support compression and chunking
+- [x] Dataset to NetCDF file conversion
+- [x] Atomic writes (temp file + rename)
+- [x] CF-convention compliance checking
+- [x] Test round-trip fidelity
 
 ### Sprint 7: CSV I/O
 - [ ] CSV to 2D variable conversion

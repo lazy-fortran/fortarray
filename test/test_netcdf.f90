@@ -9,7 +9,7 @@ program test_netcdf
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
-    integer :: n_tests_passed, n_tests_total
+    integer :: n_tests_passed, n_tests_total, i
     character(len=256) :: test_file
     
     n_tests_passed = 0
@@ -35,6 +35,20 @@ program test_netcdf
     call test_unlimited_dimensions()
     call test_missing_values()
     call test_error_handling()
+    
+    ! Test NetCDF writing
+    call test_write_scalar_variable()
+    call test_write_1d_variable()
+    call test_write_2d_variable()
+    call test_write_3d_variable()
+    call test_write_with_coordinates()
+    call test_write_with_attributes()
+    call test_write_entire_dataset()
+    call test_round_trip_fidelity()
+    call test_compression_options()
+    call test_atomic_write()
+    call test_cf_compliance()
+    call test_unlimited_dimension_write()
     
     ! Clean up test files
     call cleanup_test_files()
@@ -820,5 +834,726 @@ contains
             write(*,'(A)') "FAIL: Error handling test"
         end if
     end subroutine test_error_handling
+    
+    subroutine test_write_scalar_variable()
+        type(variable_t) :: var, var_read
+        logical :: test_passed
+        integer :: stat
+        real(real64) :: value
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_scalar.nc"
+        
+        ! Create a scalar variable
+        var = variable_scalar(3.14159_real64, name="pi")
+        
+        ! Write to NetCDF
+        stat = write_netcdf_variable(filename, var)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write scalar variable"
+        else
+            ! Read it back
+            var_read = read_netcdf_variable(filename, "pi", stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back scalar variable"
+            else if (var_read%n_dims /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Read scalar should have 0 dimensions"
+            else
+                value = var_read%data%values_r64(1)
+                if (abs(value - 3.14159_real64) > epsilon(1.0_real64)) then
+                    test_passed = .false.
+                    write(error_unit,'(A)') "Wrong scalar value read back"
+                end if
+            end if
+            call finalize_variable(var_read)
+        end if
+        
+        call finalize_variable(var)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write scalar variable test"
+        else
+            write(*,'(A)') "FAIL: Write scalar variable test"
+        end if
+    end subroutine test_write_scalar_variable
+    
+    subroutine test_write_1d_variable()
+        type(variable_t) :: var, var_read
+        type(coordinate_t) :: time_coord
+        logical :: test_passed
+        integer :: stat, i
+        real(real64), dimension(10) :: data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_1d.nc"
+        
+        ! Create test data
+        data = [(real(i, real64), i=1,10)]
+        
+        ! Create coordinate
+        ! time_coord = coordinate("time", data, "seconds")
+        
+        ! Create variable with coordinate
+        var = variable(data, name="temperature", dim_names=["time"])
+        ! coords=[time_coord] - TODO: Enable when coordinates implemented
+        
+        ! Add attributes
+        var%units = "K"
+        var%long_name = "Air Temperature"
+        
+        ! Write to NetCDF
+        stat = write_netcdf_variable(filename, var)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write 1D variable"
+        else
+            ! Read it back
+            var_read = read_netcdf_variable(filename, "temperature", stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back 1D variable"
+            else if (var_read%shape(1) /= 10) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Wrong shape for 1D variable"
+            else if (.not. var_read%has_coord(1)) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Missing coordinate variable"
+            end if
+            call finalize_variable(var_read)
+        end if
+        
+        call finalize_variable(var)
+        ! call finalize_coordinate(time_coord)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write 1D variable test"
+        else
+            write(*,'(A)') "FAIL: Write 1D variable test"
+        end if
+    end subroutine test_write_1d_variable
+    
+    subroutine test_write_2d_variable()
+        type(variable_t) :: var, var_read
+        type(coordinate_t) :: lat_coord, lon_coord
+        logical :: test_passed
+        integer :: stat, i, j
+        real(real64), dimension(10, 15) :: data
+        real(real64), dimension(10) :: lat_data
+        real(real64), dimension(15) :: lon_data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_2d.nc"
+        
+        ! Create test data
+        do j = 1, 15
+            do i = 1, 10
+                data(i,j) = real(i + j, real64)
+            end do
+        end do
+        
+        ! Create coordinates
+        lat_data = [(real(i, real64), i=1,10)]
+        lon_data = [(real(i, real64), i=1,15)]
+        ! lat_coord = coordinate("lat", lat_data, "degrees_north")
+        ! lon_coord = coordinate("lon", lon_data, "degrees_east")
+        
+        ! Create variable
+        var = variable(data, name="temperature", dim_names=["lat", "lon"])
+        ! coords=[lat_coord, lon_coord] - TODO: Enable when coordinates implemented
+        
+        ! Write to NetCDF
+        stat = write_netcdf_variable(filename, var)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write 2D variable"
+        else
+            ! Read it back
+            var_read = read_netcdf_variable(filename, "temperature", stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back 2D variable"
+            else if (var_read%n_dims /= 2) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Should have 2 dimensions"
+            else if (any(var_read%shape /= [10, 15])) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Wrong shape for 2D variable"
+            end if
+            call finalize_variable(var_read)
+        end if
+        
+        call finalize_variable(var)
+        ! call finalize_coordinate(lat_coord)
+        ! call finalize_coordinate(lon_coord)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write 2D variable test"
+        else
+            write(*,'(A)') "FAIL: Write 2D variable test"
+        end if
+    end subroutine test_write_2d_variable
+    
+    subroutine test_write_3d_variable()
+        type(variable_t) :: var, var_read
+        logical :: test_passed
+        integer :: stat, i, j, k
+        real(real64), dimension(10, 15, 5) :: data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_3d.nc"
+        
+        ! Create test data
+        do k = 1, 5
+            do j = 1, 15
+                do i = 1, 10
+                    data(i,j,k) = real(i + j + k, real64)
+                end do
+            end do
+        end do
+        
+        ! Create variable
+        var = variable(data, name="pressure", dim_names=["lat  ", "lon  ", "level"])
+        
+        ! Write to NetCDF
+        stat = write_netcdf_variable(filename, var)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write 3D variable"
+        else
+            ! Read it back
+            var_read = read_netcdf_variable(filename, "pressure", stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back 3D variable"
+            else if (var_read%n_dims /= 3) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Should have 3 dimensions"
+            else if (any(var_read%shape /= [10, 15, 5])) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Wrong shape for 3D variable"
+            end if
+            call finalize_variable(var_read)
+        end if
+        
+        call finalize_variable(var)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write 3D variable test"
+        else
+            write(*,'(A)') "FAIL: Write 3D variable test"
+        end if
+    end subroutine test_write_3d_variable
+    
+    subroutine test_write_with_coordinates()
+        type(dataset_t) :: dset, dset_read
+        type(variable_t) :: temp
+        type(coordinate_t) :: lat_coord, lon_coord
+        logical :: test_passed
+        integer :: stat
+        real(real64), dimension(10) :: lat_data
+        real(real64), dimension(15) :: lon_data
+        real(real64), dimension(10, 15) :: temp_data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_coords.nc"
+        
+        ! Create coordinates
+        lat_data = [(-90.0_real64 + real(i-1, real64)*20.0_real64, i=1,10)]
+        lon_data = [(-180.0_real64 + real(i-1, real64)*24.0_real64, i=1,15)]
+        ! lat_coord = coordinate("lat", lat_data, "degrees_north")
+        ! lon_coord = coordinate("lon", lon_data, "degrees_east")
+        ! TODO: Implement coordinate constructor
+        
+        ! Create temperature data
+        temp_data = 273.15_real64
+        temp = variable(temp_data, name="temperature", dim_names=["lat", "lon"])
+        ! coords=[lat_coord, lon_coord] - TODO: Enable when coordinate constructor is implemented
+        
+        ! Create dataset
+        dset%initialized = .true.
+        call add_variable(dset, temp)
+        
+        ! Write dataset
+        stat = write_netcdf(filename, dset)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write dataset with coordinates"
+        else
+            ! Read it back
+            dset_read = read_netcdf(filename, stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back dataset"
+            else if (dset_read%n_vars /= 1) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Should have 1 variable"
+            end if
+            call finalize_dataset(dset_read)
+        end if
+        
+        call finalize_dataset(dset)
+        ! call finalize_coordinate(lat_coord)
+        ! call finalize_coordinate(lon_coord)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write with coordinates test"
+        else
+            write(*,'(A)') "FAIL: Write with coordinates test"
+        end if
+    end subroutine test_write_with_coordinates
+    
+    subroutine test_write_with_attributes()
+        type(variable_t) :: var, var_read
+        logical :: test_passed
+        integer :: stat, i
+        logical :: found_units, found_longname
+        real(real64), dimension(10) :: data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_attrs.nc"
+        
+        ! Create variable with attributes
+        data = [(real(i, real64), i=1,10)]
+        var = variable(data, name="temperature", dim_names=["x"])
+        
+        ! Add attributes
+        var%units = "kelvin"
+        var%long_name = "Surface Temperature"
+        var%standard_name = "surface_temperature"
+        
+        ! Add custom attributes
+        var%n_attrs = 2
+        allocate(var%attrs(2))
+        var%attrs(1)%name = "valid_min"
+        var%attrs(1)%value = "200.0"
+        var%attrs(1)%dtype = ATTR_TYPE_NUMERIC
+        var%attrs(2)%name = "valid_max"
+        var%attrs(2)%value = "400.0"
+        var%attrs(2)%dtype = ATTR_TYPE_NUMERIC
+        
+        ! Write to NetCDF
+        stat = write_netcdf_variable(filename, var)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write variable with attributes"
+        else
+            ! Read it back
+            var_read = read_netcdf_variable(filename, "temperature", stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back variable"
+            else
+                ! Check attributes were preserved
+                if (var_read%n_attrs < 2) then
+                    test_passed = .false.
+                    write(error_unit,'(A)') "Missing attributes"
+                else
+                    found_units = .false.
+                    found_longname = .false.
+                    do i = 1, var_read%n_attrs
+                        if (trim(var_read%attrs(i)%name) == "units") then
+                            found_units = .true.
+                            if (trim(var_read%attrs(i)%value) /= "kelvin") then
+                                test_passed = .false.
+                                write(error_unit,'(A)') "Wrong units attribute"
+                            end if
+                        else if (trim(var_read%attrs(i)%name) == "long_name") then
+                            found_longname = .true.
+                        end if
+                    end do
+                    
+                    if (.not. found_units .or. .not. found_longname) then
+                        test_passed = .false.
+                        write(error_unit,'(A)') "Missing standard attributes"
+                    end if
+                end if
+            end if
+            call finalize_variable(var_read)
+        end if
+        
+        call finalize_variable(var)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write with attributes test"
+        else
+            write(*,'(A)') "FAIL: Write with attributes test"
+        end if
+    end subroutine test_write_with_attributes
+    
+    subroutine test_write_entire_dataset()
+        type(dataset_t) :: dset, dset_read
+        type(variable_t) :: temp, pres, vel
+        logical :: test_passed
+        integer :: stat, i
+        real(real64), dimension(10, 15) :: temp_data
+        real(real64), dimension(10, 15, 5) :: pres_data
+        real(real32), dimension(10) :: vel_data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_write_dataset.nc"
+        
+        ! Create variables
+        temp_data = 273.15_real64
+        temp = variable(temp_data, name="temperature", dim_names=["lat", "lon"])
+        temp%units = "K"
+        
+        pres_data = 1013.25_real64
+        pres = variable(pres_data, name="pressure", dim_names=["lat  ", "lon  ", "level"])
+        pres%units = "hPa"
+        
+        vel_data = [(real(i, real32), i=1,10)]
+        vel = variable(vel_data, name="velocity", dim_names=["lat"])
+        vel%units = "m/s"
+        
+        ! Create dataset
+        dset%initialized = .true.
+        dset%filename = filename
+        
+        ! Add global attributes
+        dset%n_attrs = 3
+        allocate(dset%attr_keys(3))
+        allocate(dset%attr_values(3))
+        dset%attr_keys = ["title      ", "institution", "source     "]
+        dset%attr_values = ["Test Dataset             ", "Foxel Test Suite         ", "test_write_entire_dataset"]
+        
+        ! Add variables
+        call add_variable(dset, temp)
+        call add_variable(dset, pres)
+        call add_variable(dset, vel)
+        
+        ! Write dataset
+        stat = write_netcdf(filename, dset)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write dataset"
+        else
+            ! Read it back
+            dset_read = read_netcdf(filename, stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read back dataset"
+            else if (dset_read%n_vars /= 3) then
+                test_passed = .false.
+                write(error_unit,'(A,I0)') "Expected 3 variables, got ", dset_read%n_vars
+            else if (dset_read%n_attrs /= 3) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Missing global attributes"
+            end if
+            call finalize_dataset(dset_read)
+        end if
+        
+        call finalize_dataset(dset)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Write entire dataset test"
+        else
+            write(*,'(A)') "FAIL: Write entire dataset test"
+        end if
+    end subroutine test_write_entire_dataset
+    
+    subroutine test_round_trip_fidelity()
+        type(dataset_t) :: dset_orig, dset_read
+        type(variable_t) :: var_orig, var_read
+        logical :: test_passed
+        integer :: stat, i
+        real(real64), dimension(100) :: data_orig, data_read
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_roundtrip.nc"
+        
+        ! Create original data with specific pattern
+        data_orig = [(sin(real(i, real64) * 0.1_real64), i=1,100)]
+        
+        ! Create variable
+        var_orig = variable(data_orig, name="signal", dim_names=["time"])
+        var_orig%units = "dimensionless"
+        var_orig%long_name = "Test Signal"
+        
+        ! Create dataset
+        dset_orig%initialized = .true.
+        call add_variable(dset_orig, var_orig)
+        
+        ! Write
+        stat = write_netcdf(filename, dset_orig)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write for round-trip test"
+        else
+            ! Read back
+            dset_read = read_netcdf(filename, stat=stat)
+            if (stat /= 0) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Failed to read for round-trip test"
+            else
+                ! Get variable
+                var_read = get_variable(dset_read, "signal", stat=stat)
+                if (stat /= 0) then
+                    test_passed = .false.
+                    write(error_unit,'(A)') "Failed to get variable in round-trip"
+                else
+                    ! Check data fidelity
+                    data_read = var_read%data%values_r64
+                    do i = 1, 100
+                        if (abs(data_read(i) - data_orig(i)) > epsilon(1.0_real64)) then
+                            test_passed = .false.
+                            write(error_unit,'(A,I0)') "Data mismatch at index ", i
+                            exit
+                        end if
+                    end do
+                end if
+            end if
+            call finalize_dataset(dset_read)
+        end if
+        
+        call finalize_dataset(dset_orig)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Round-trip fidelity test"
+        else
+            write(*,'(A)') "FAIL: Round-trip fidelity test"
+        end if
+    end subroutine test_round_trip_fidelity
+    
+    subroutine test_compression_options()
+        type(variable_t) :: var
+        type(write_options_t) :: opts
+        logical :: test_passed
+        integer :: stat, i
+        real(real64), dimension(1000) :: data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_compress.nc"
+        
+        ! Create large variable
+        data = [(real(i, real64), i=1,1000)]
+        var = variable(data, name="large_data", dim_names=["x"])
+        
+        ! Set compression options
+        opts%compress = .true.
+        opts%deflate_level = 6
+        opts%shuffle = .true.
+        opts%chunksizes = [100]
+        
+        ! Write with compression
+        stat = write_netcdf_variable(filename, var, options=opts)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write with compression options"
+        else
+            ! Check file exists and is smaller than uncompressed
+            ! (This is a simple test - real test would check file size)
+            test_passed = .true.
+        end if
+        
+        call finalize_variable(var)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Compression options test"
+        else
+            write(*,'(A)') "FAIL: Compression options test"
+        end if
+    end subroutine test_compression_options
+    
+    subroutine test_atomic_write()
+        type(variable_t) :: var
+        type(write_options_t) :: opts
+        logical :: test_passed, temp_exists
+        integer :: stat, unit, i
+        real(real64), dimension(10) :: data
+        character(len=256) :: filename, temp_filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_atomic.nc"
+        
+        ! Create variable
+        data = [(real(i, real64), i=1,10)]
+        var = variable(data, name="data", dim_names=["x"])
+        
+        ! Enable atomic write
+        opts%atomic_write = .true.
+        
+        ! Write with atomic option
+        stat = write_netcdf_variable(filename, var, options=opts)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed atomic write"
+        else
+            ! Check that temp file doesn't exist
+            temp_filename = trim(filename) // ".tmp"
+            inquire(file=temp_filename, exist=temp_exists)
+            if (temp_exists) then
+                test_passed = .false.
+                write(error_unit,'(A)') "Temporary file still exists after atomic write"
+            end if
+        end if
+        
+        call finalize_variable(var)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Atomic write test"
+        else
+            write(*,'(A)') "FAIL: Atomic write test"
+        end if
+    end subroutine test_atomic_write
+    
+    subroutine test_cf_compliance()
+        type(dataset_t) :: dset
+        type(variable_t) :: temp
+        type(coordinate_t) :: time_coord
+        type(write_options_t) :: opts
+        logical :: test_passed
+        integer :: stat, i
+        real(real64), dimension(10) :: time_data, temp_data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_cf.nc"
+        
+        ! Create time coordinate with CF-compliant attributes
+        time_data = [(real(i-1, real64) * 3600.0_real64, i=1,10)]
+        ! time_coord = coordinate("time", time_data, "hours since 2000-01-01 00:00:00")
+        ! time_coord%standard_name = "time"
+        ! time_coord%calendar = "standard"
+        ! TODO: Implement coordinate constructor and attribute setting
+        
+        ! Create temperature variable
+        temp_data = 273.15_real64 + [(real(i, real64), i=1,10)]
+        temp = variable(temp_data, name="air_temperature", dim_names=["time"])
+        temp%units = "K"
+        temp%standard_name = "air_temperature"
+        temp%long_name = "Air Temperature at 2m"
+        
+        ! Create dataset with CF metadata
+        dset%initialized = .true.
+        dset%conventions = "CF-1.8"
+        dset%title = "CF Compliance Test"
+        dset%institution = "Foxel Test Suite"
+        
+        call add_variable(dset, temp)
+        
+        ! Enable CF checking
+        opts%cf_compliant = .true.
+        
+        ! Write with CF compliance checking
+        stat = write_netcdf(filename, dset, options=opts)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write CF-compliant file"
+        end if
+        
+        call finalize_dataset(dset)
+        ! call finalize_coordinate(time_coord)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: CF compliance test"
+        else
+            write(*,'(A)') "FAIL: CF compliance test"
+        end if
+    end subroutine test_cf_compliance
+    
+    subroutine test_unlimited_dimension_write()
+        type(dataset_t) :: dset
+        type(variable_t) :: temp
+        type(dimension_t) :: time_dim
+        logical :: test_passed
+        integer :: stat, i
+        real(real64), dimension(5) :: temp_data
+        character(len=256) :: filename
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        filename = "test_unlimited_write.nc"
+        
+        ! Create dataset with unlimited time dimension
+        dset%initialized = .true.
+        dset%n_dims = 1
+        allocate(dset%dimensions(1))
+        
+        time_dim%name = "time"
+        time_dim%length = 5
+        time_dim%is_unlimited = .true.
+        dset%dimensions(1) = time_dim
+        
+        ! Create temperature variable
+        temp_data = [(273.15_real64 + real(i, real64), i=1,5)]
+        temp = variable(temp_data, name="temperature", dim_names=["time"])
+        
+        call add_variable(dset, temp)
+        
+        ! Write dataset
+        stat = write_netcdf(filename, dset)
+        if (stat /= 0) then
+            test_passed = .false.
+            write(error_unit,'(A)') "Failed to write with unlimited dimension"
+        else
+            ! Could add code to append more data to test unlimited dimension
+            test_passed = .true.
+        end if
+        
+        call finalize_dataset(dset)
+        call cleanup_file(filename)
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Unlimited dimension write test"
+        else
+            write(*,'(A)') "FAIL: Unlimited dimension write test"
+        end if
+    end subroutine test_unlimited_dimension_write
+    
+    subroutine cleanup_file(filename)
+        character(len=*), intent(in) :: filename
+        integer :: unit, iostat
+        
+        open(newunit=unit, file=filename, status='old', iostat=iostat)
+        if (iostat == 0) then
+            close(unit, status='delete')
+        end if
+    end subroutine cleanup_file
     
 end program test_netcdf

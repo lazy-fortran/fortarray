@@ -19,6 +19,21 @@ module foxel_netcdf
     integer, parameter :: NC_ERROR_TYPE = -6
     integer, parameter :: NC_ERROR_MEMORY = -7
     integer, parameter :: NC_ERROR_GROUPS = -8
+    integer, parameter :: NC_ERROR_WRITE = -9
+    integer, parameter :: NC_ERROR_CREATE = -10
+    
+    ! Write options type for NetCDF writing
+    type :: write_options_t
+        logical :: compress = .false.
+        integer :: deflate_level = 6
+        logical :: shuffle = .false.
+        logical :: fletcher32 = .false.
+        integer, dimension(:), allocatable :: chunksizes
+        logical :: unlimited_dims = .false.
+        logical :: cf_compliant = .true.
+        logical :: atomic_write = .true.
+        character(len=256) :: temp_suffix = ".tmp"
+    end type write_options_t
     
     ! Public interfaces
     public :: read_netcdf
@@ -27,9 +42,13 @@ module foxel_netcdf
     public :: list_netcdf_variables
     public :: list_netcdf_dimensions
     public :: list_netcdf_attributes
+    public :: write_netcdf
+    public :: write_netcdf_variable
+    public :: write_options_t
     public :: NC_SUCCESS, NC_ERROR_OPEN, NC_ERROR_READ
     public :: NC_ERROR_DIMS, NC_ERROR_VARS, NC_ERROR_ATTRS
     public :: NC_ERROR_TYPE, NC_ERROR_MEMORY, NC_ERROR_GROUPS
+    public :: NC_ERROR_WRITE, NC_ERROR_CREATE
     
 contains
 
@@ -1101,5 +1120,786 @@ contains
         if (present(stat)) stat = status
         if (present(error_msg)) error_msg = err_msg
     end function list_netcdf_attributes
+    
+    !> Write a single variable to NetCDF file
+    function write_netcdf_variable(filename, var, options, stat, error_msg) result(status)
+        character(len=*), intent(in) :: filename
+        type(variable_t), intent(in) :: var
+        type(write_options_t), intent(in), optional :: options
+        integer, intent(out), optional :: stat
+        character(len=*), intent(out), optional :: error_msg
+        integer :: status
+        
+        integer :: ncid, dimids(var%n_dims), varid, i
+        character(len=256) :: err_msg, temp_filename, final_filename
+        type(write_options_t) :: opts
+        logical :: temp_file_created
+        
+        status = NC_SUCCESS
+        err_msg = ""
+        temp_file_created = .false.
+        
+        ! Set default options
+        if (present(options)) then
+            opts = options
+        end if
+        
+        ! Determine final filename and temp filename for atomic writes
+        final_filename = trim(filename)
+        if (opts%atomic_write) then
+            temp_filename = trim(filename) // trim(opts%temp_suffix)
+        else
+            temp_filename = trim(filename)
+        end if
+        
+        ! Create NetCDF file
+        status = nf90_create(temp_filename, NF90_NETCDF4, ncid)
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_CREATE
+            write(err_msg, '(A,A,A,A)') "Failed to create NetCDF file '", trim(temp_filename), "': ", &
+                                       trim(nf90_strerror(status))
+            goto 999
+        end if
+        temp_file_created = .true.
+        
+        ! Define dimensions
+        do i = 1, var%n_dims
+            if (opts%unlimited_dims .and. i == var%n_dims) then
+                ! Make the last dimension unlimited
+                status = nf90_def_dim(ncid, trim(var%dim_names(i)), NF90_UNLIMITED, dimids(i))
+            else
+                status = nf90_def_dim(ncid, trim(var%dim_names(i)), var%shape(i), dimids(i))
+            end if
+            if (status /= NF90_NOERR) then
+                status = NC_ERROR_DIMS
+                write(err_msg, '(A,A,A)') "Failed to define dimension '", trim(var%dim_names(i)), "'"
+                goto 998
+            end if
+        end do
+        
+        ! Define variable
+        status = define_netcdf_variable(ncid, var, dimids, opts, varid)
+        if (status /= NC_SUCCESS) then
+            err_msg = "Failed to define variable"
+            goto 998
+        end if
+        
+        ! Write CF-compliant global attributes
+        if (opts%cf_compliant) then
+            call write_cf_global_attributes(ncid)
+        end if
+        
+        ! End define mode
+        status = nf90_enddef(ncid)
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_WRITE
+            err_msg = "Failed to end define mode"
+            goto 998
+        end if
+        
+        ! Write coordinate variables
+        call write_coordinate_variables(ncid, var, dimids)
+        
+        ! Write variable data
+        status = write_variable_data(ncid, varid, var)
+        if (status /= NC_SUCCESS) then
+            err_msg = "Failed to write variable data"
+            goto 998
+        end if
+        
+        ! Write variable attributes
+        call write_variable_attributes(ncid, varid, var)
+        
+        ! Close file
+        status = nf90_close(ncid)
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_WRITE
+            err_msg = "Failed to close NetCDF file"
+            goto 999
+        end if
+        
+        ! Atomic rename for atomic writes
+        if (opts%atomic_write) then
+            call rename_file(temp_filename, final_filename, status)
+            if (status /= 0) then
+                status = NC_ERROR_WRITE
+                err_msg = "Failed to atomically rename temporary file"
+                goto 999
+            end if
+        end if
+        
+        goto 999
+        
+998     continue
+        ! Close file on error
+        status = nf90_close(ncid)
+        
+999     continue
+        ! Clean up temporary file on error
+        if (temp_file_created .and. opts%atomic_write .and. status /= NC_SUCCESS) then
+            call delete_file(temp_filename)
+        end if
+        
+        if (present(stat)) stat = status
+        if (present(error_msg)) error_msg = err_msg
+        
+    end function write_netcdf_variable
+    
+    !> Write entire dataset to NetCDF file
+    function write_netcdf(filename, dset, options, stat, error_msg) result(status)
+        character(len=*), intent(in) :: filename
+        type(dataset_t), intent(in) :: dset
+        type(write_options_t), intent(in), optional :: options
+        integer, intent(out), optional :: stat
+        character(len=*), intent(out), optional :: error_msg
+        integer :: status
+        
+        integer :: ncid, i, j, varid
+        integer, dimension(:), allocatable :: dimids
+        character(len=256) :: err_msg, temp_filename, final_filename
+        type(write_options_t) :: opts
+        logical :: temp_file_created
+        integer, dimension(:), allocatable :: var_dimids
+        
+        status = NC_SUCCESS
+        err_msg = ""
+        temp_file_created = .false.
+        
+        ! Check dataset is initialized
+        if (.not. dset%initialized) then
+            status = NC_ERROR_VARS
+            err_msg = "Dataset not initialized"
+            goto 999
+        end if
+        
+        ! Set default options
+        if (present(options)) then
+            opts = options
+        end if
+        
+        ! Determine final filename and temp filename for atomic writes
+        final_filename = trim(filename)
+        if (opts%atomic_write) then
+            temp_filename = trim(filename) // trim(opts%temp_suffix)
+        else
+            temp_filename = trim(filename)
+        end if
+        
+        ! Create NetCDF file
+        status = nf90_create(temp_filename, NF90_NETCDF4, ncid)
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_CREATE
+            write(err_msg, '(A,A,A,A)') "Failed to create NetCDF file '", trim(temp_filename), "': ", &
+                                       trim(nf90_strerror(status))
+            goto 999
+        end if
+        temp_file_created = .true.
+        
+        ! Define all dimensions from dataset
+        allocate(dimids(dset%n_dims))
+        do i = 1, dset%n_dims
+            if (dset%dimensions(i)%is_unlimited) then
+                status = nf90_def_dim(ncid, trim(dset%dimensions(i)%name), NF90_UNLIMITED, dimids(i))
+            else
+                status = nf90_def_dim(ncid, trim(dset%dimensions(i)%name), &
+                                     dset%dimensions(i)%length, dimids(i))
+            end if
+            if (status /= NF90_NOERR) then
+                status = NC_ERROR_DIMS
+                write(err_msg, '(A,A,A)') "Failed to define dimension '", &
+                                         trim(dset%dimensions(i)%name), "'"
+                goto 998
+            end if
+        end do
+        
+        ! Define all variables
+        do i = 1, dset%n_vars
+            if (.not. dset%variables(i)%initialized) cycle
+            
+            ! Map variable dimensions to dimids
+            allocate(var_dimids(dset%variables(i)%n_dims))
+            do j = 1, dset%variables(i)%n_dims
+                var_dimids(j) = find_dimension_id(dset%variables(i)%dim_names(j), dset, dimids)
+                if (var_dimids(j) == -1) then
+                    status = NC_ERROR_DIMS
+                    write(err_msg, '(A,A,A)') "Dimension '", trim(dset%variables(i)%dim_names(j)), &
+                                             "' not found in dataset"
+                    deallocate(var_dimids)
+                    goto 998
+                end if
+            end do
+            
+            ! Define variable
+            status = define_netcdf_variable(ncid, dset%variables(i), var_dimids, opts, varid)
+            if (status /= NC_SUCCESS) then
+                write(err_msg, '(A,A,A)') "Failed to define variable '", &
+                                         trim(dset%variables(i)%name), "'"
+                deallocate(var_dimids)
+                goto 998
+            end if
+            
+            deallocate(var_dimids)
+        end do
+        
+        ! Write global attributes
+        call write_global_attributes(ncid, dset, opts)
+        
+        ! End define mode
+        status = nf90_enddef(ncid)
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_WRITE
+            err_msg = "Failed to end define mode"
+            goto 998
+        end if
+        
+        ! Write all variables
+        do i = 1, dset%n_vars
+            if (.not. dset%variables(i)%initialized) cycle
+            
+            ! Get variable ID
+            status = nf90_inq_varid(ncid, trim(dset%variables(i)%name), varid)
+            if (status /= NF90_NOERR) cycle
+            
+            ! Write coordinate variables
+            call write_coordinate_variables(ncid, dset%variables(i), dimids)
+            
+            ! Write variable data
+            status = write_variable_data(ncid, varid, dset%variables(i))
+            if (status /= NC_SUCCESS) then
+                write(err_msg, '(A,A,A)') "Failed to write data for variable '", &
+                                         trim(dset%variables(i)%name), "'"
+                goto 998
+            end if
+            
+            ! Write variable attributes
+            call write_variable_attributes(ncid, varid, dset%variables(i))
+        end do
+        
+        ! Close file
+        status = nf90_close(ncid)
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_WRITE
+            err_msg = "Failed to close NetCDF file"
+            goto 999
+        end if
+        
+        ! Atomic rename for atomic writes
+        if (opts%atomic_write) then
+            call rename_file(temp_filename, final_filename, status)
+            if (status /= 0) then
+                status = NC_ERROR_WRITE
+                err_msg = "Failed to atomically rename temporary file"
+                goto 999
+            end if
+        end if
+        
+        goto 999
+        
+998     continue
+        ! Close file on error
+        status = nf90_close(ncid)
+        
+999     continue
+        ! Clean up temporary file on error
+        if (temp_file_created .and. opts%atomic_write .and. status /= NC_SUCCESS) then
+            call delete_file(temp_filename)
+        end if
+        if (allocated(dimids)) deallocate(dimids)
+        
+        if (present(stat)) stat = status
+        if (present(error_msg)) error_msg = err_msg
+        
+    end function write_netcdf
+    
+    !> Define a NetCDF variable with compression options
+    function define_netcdf_variable(ncid, var, dimids, opts, varid) result(status)
+        integer, intent(in) :: ncid
+        type(variable_t), intent(in) :: var
+        integer, dimension(:), intent(in) :: dimids
+        type(write_options_t), intent(in) :: opts
+        integer, intent(out) :: varid
+        integer :: status
+        
+        integer :: xtype
+        
+        ! Determine NetCDF type
+        select case(var%data%dtype)
+        case(DTYPE_REAL64)
+            xtype = NF90_DOUBLE
+        case(DTYPE_REAL32)
+            xtype = NF90_FLOAT
+        case(DTYPE_INT64)
+            xtype = NF90_INT64
+        case(DTYPE_INT32)
+            xtype = NF90_INT
+        case default
+            status = NC_ERROR_TYPE
+            return
+        end select
+        
+        ! Define variable
+        if (var%n_dims == 0) then
+            ! Scalar variable
+            status = nf90_def_var(ncid, trim(var%name), xtype, varid)
+        else
+            ! Multi-dimensional variable
+            status = nf90_def_var(ncid, trim(var%name), xtype, dimids, varid)
+        end if
+        
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_VARS
+            return
+        end if
+        
+        ! Set compression options
+        if (opts%compress .and. var%n_dims > 0) then
+            ! Set chunking
+            if (allocated(opts%chunksizes) .and. size(opts%chunksizes) == var%n_dims) then
+                status = nf90_def_var_chunking(ncid, varid, NF90_CHUNKED, opts%chunksizes)
+            else
+                ! Default chunking - use full shape but limit to reasonable size
+                block
+                    integer, dimension(var%n_dims) :: default_chunks
+                    integer :: i, max_chunk_size
+                    max_chunk_size = 1000
+                    do i = 1, var%n_dims
+                        default_chunks(i) = min(var%shape(i), max_chunk_size)
+                    end do
+                    status = nf90_def_var_chunking(ncid, varid, NF90_CHUNKED, default_chunks)
+                end block
+            end if
+            
+            if (status /= NF90_NOERR) then
+                status = NC_ERROR_WRITE
+                return
+            end if
+            
+            ! Set deflate compression
+            status = nf90_def_var_deflate(ncid, varid, shuffle=merge(1, 0, opts%shuffle), &
+                                         deflate=1, deflate_level=opts%deflate_level)
+            if (status /= NF90_NOERR) then
+                status = NC_ERROR_WRITE
+                return
+            end if
+            
+            ! Set fletcher32 checksum if requested
+            if (opts%fletcher32) then
+                status = nf90_def_var_fletcher32(ncid, varid, 1)
+                if (status /= NF90_NOERR) then
+                    status = NC_ERROR_WRITE
+                    return
+                end if
+            end if
+        end if
+        
+        status = NC_SUCCESS
+        
+    end function define_netcdf_variable
+    
+    !> Write variable data to NetCDF file
+    function write_variable_data(ncid, varid, var) result(status)
+        integer, intent(in) :: ncid, varid
+        type(variable_t), intent(in) :: var
+        integer :: status
+        
+        ! Handle scalar variables
+        if (var%n_dims == 0) then
+            select case(var%data%dtype)
+            case(DTYPE_REAL64)
+                status = nf90_put_var(ncid, varid, var%data%values_r64(1))
+            case(DTYPE_REAL32)
+                status = nf90_put_var(ncid, varid, var%data%values_r32(1))
+            case(DTYPE_INT64)
+                status = nf90_put_var(ncid, varid, var%data%values_i64(1))
+            case(DTYPE_INT32)
+                status = nf90_put_var(ncid, varid, var%data%values_i32(1))
+            case default
+                status = NC_ERROR_TYPE
+                return
+            end select
+        else
+            ! Multi-dimensional variables
+            select case(var%data%dtype)
+            case(DTYPE_REAL64)
+                select case(var%n_dims)
+                case(1)
+                    status = nf90_put_var(ncid, varid, var%data%values_r64(1:var%shape(1)))
+                case(2)
+                    block
+                        real(real64), dimension(:,:), allocatable :: data_2d
+                        allocate(data_2d(var%shape(1), var%shape(2)))
+                        data_2d = reshape(var%data%values_r64(1:var%n_elements), [var%shape(1), var%shape(2)])
+                        status = nf90_put_var(ncid, varid, data_2d)
+                        deallocate(data_2d)
+                    end block
+                case(3)
+                    block
+                        real(real64), dimension(:,:,:), allocatable :: data_3d
+                        allocate(data_3d(var%shape(1), var%shape(2), var%shape(3)))
+                        data_3d = reshape(var%data%values_r64(1:var%n_elements), [var%shape(1), var%shape(2), var%shape(3)])
+                        status = nf90_put_var(ncid, varid, data_3d)
+                        deallocate(data_3d)
+                    end block
+                case default
+                    ! For >3D, use start/count
+                    block
+                        integer, dimension(var%n_dims) :: start, count
+                        start = 1
+                        count = var%shape
+                        status = nf90_put_var(ncid, varid, var%data%values_r64(1:var%n_elements), &
+                                             start=start, count=count)
+                    end block
+                end select
+                
+            case(DTYPE_REAL32)
+                select case(var%n_dims)
+                case(1)
+                    status = nf90_put_var(ncid, varid, var%data%values_r32(1:var%shape(1)))
+                case(2)
+                    block
+                        real(real32), dimension(:,:), allocatable :: data_2d
+                        allocate(data_2d(var%shape(1), var%shape(2)))
+                        data_2d = reshape(var%data%values_r32(1:var%n_elements), [var%shape(1), var%shape(2)])
+                        status = nf90_put_var(ncid, varid, data_2d)
+                        deallocate(data_2d)
+                    end block
+                case(3)
+                    block
+                        real(real32), dimension(:,:,:), allocatable :: data_3d
+                        allocate(data_3d(var%shape(1), var%shape(2), var%shape(3)))
+                        data_3d = reshape(var%data%values_r32(1:var%n_elements), [var%shape(1), var%shape(2), var%shape(3)])
+                        status = nf90_put_var(ncid, varid, data_3d)
+                        deallocate(data_3d)
+                    end block
+                case default
+                    block
+                        integer, dimension(var%n_dims) :: start, count
+                        start = 1
+                        count = var%shape
+                        status = nf90_put_var(ncid, varid, var%data%values_r32(1:var%n_elements), &
+                                             start=start, count=count)
+                    end block
+                end select
+                
+            case(DTYPE_INT64)
+                select case(var%n_dims)
+                case(1)
+                    status = nf90_put_var(ncid, varid, var%data%values_i64(1:var%shape(1)))
+                case(2)
+                    block
+                        integer(int64), dimension(:,:), allocatable :: data_2d
+                        allocate(data_2d(var%shape(1), var%shape(2)))
+                        data_2d = reshape(var%data%values_i64(1:var%n_elements), [var%shape(1), var%shape(2)])
+                        status = nf90_put_var(ncid, varid, data_2d)
+                        deallocate(data_2d)
+                    end block
+                case(3)
+                    block
+                        integer(int64), dimension(:,:,:), allocatable :: data_3d
+                        allocate(data_3d(var%shape(1), var%shape(2), var%shape(3)))
+                        data_3d = reshape(var%data%values_i64(1:var%n_elements), [var%shape(1), var%shape(2), var%shape(3)])
+                        status = nf90_put_var(ncid, varid, data_3d)
+                        deallocate(data_3d)
+                    end block
+                case default
+                    block
+                        integer, dimension(var%n_dims) :: start, count
+                        start = 1
+                        count = var%shape
+                        status = nf90_put_var(ncid, varid, var%data%values_i64(1:var%n_elements), &
+                                             start=start, count=count)
+                    end block
+                end select
+                
+            case(DTYPE_INT32)
+                select case(var%n_dims)
+                case(1)
+                    status = nf90_put_var(ncid, varid, var%data%values_i32(1:var%shape(1)))
+                case(2)
+                    block
+                        integer(int32), dimension(:,:), allocatable :: data_2d
+                        allocate(data_2d(var%shape(1), var%shape(2)))
+                        data_2d = reshape(var%data%values_i32(1:var%n_elements), [var%shape(1), var%shape(2)])
+                        status = nf90_put_var(ncid, varid, data_2d)
+                        deallocate(data_2d)
+                    end block
+                case(3)
+                    block
+                        integer(int32), dimension(:,:,:), allocatable :: data_3d
+                        allocate(data_3d(var%shape(1), var%shape(2), var%shape(3)))
+                        data_3d = reshape(var%data%values_i32(1:var%n_elements), [var%shape(1), var%shape(2), var%shape(3)])
+                        status = nf90_put_var(ncid, varid, data_3d)
+                        deallocate(data_3d)
+                    end block
+                case default
+                    block
+                        integer, dimension(var%n_dims) :: start, count
+                        start = 1
+                        count = var%shape
+                        status = nf90_put_var(ncid, varid, var%data%values_i32(1:var%n_elements), &
+                                             start=start, count=count)
+                    end block
+                end select
+                
+            case default
+                status = NC_ERROR_TYPE
+                return
+            end select
+        end if
+        
+        if (status /= NF90_NOERR) then
+            status = NC_ERROR_WRITE
+        else
+            status = NC_SUCCESS
+        end if
+        
+    end function write_variable_data
+    
+    !> Write variable attributes
+    subroutine write_variable_attributes(ncid, varid, var)
+        integer, intent(in) :: ncid, varid
+        type(variable_t), intent(in) :: var
+        
+        integer :: i, status
+        real(real64) :: r64_val
+        integer(int32) :: i32_val
+        
+        ! Write standard variable attributes if present
+        if (len_trim(var%units) > 0) then
+            status = nf90_put_att(ncid, varid, "units", trim(var%units))
+        end if
+        
+        if (len_trim(var%long_name) > 0) then
+            status = nf90_put_att(ncid, varid, "long_name", trim(var%long_name))
+        end if
+        
+        if (len_trim(var%standard_name) > 0) then
+            status = nf90_put_att(ncid, varid, "standard_name", trim(var%standard_name))
+        end if
+        
+        ! Write custom attributes
+        do i = 1, var%n_attrs
+            select case(var%attrs(i)%dtype)
+            case(ATTR_TYPE_STRING)
+                status = nf90_put_att(ncid, varid, trim(var%attrs(i)%name), trim(var%attrs(i)%value))
+            case(ATTR_TYPE_NUMERIC)
+                ! Try to parse as number
+                read(var%attrs(i)%value, *, iostat=status) r64_val
+                if (status == 0) then
+                    ! Check if it's an integer
+                    if (abs(r64_val - real(int(r64_val), real64)) < 1e-10) then
+                        i32_val = int(r64_val, int32)
+                        status = nf90_put_att(ncid, varid, trim(var%attrs(i)%name), i32_val)
+                    else
+                        status = nf90_put_att(ncid, varid, trim(var%attrs(i)%name), r64_val)
+                    end if
+                else
+                    ! Fall back to string
+                    status = nf90_put_att(ncid, varid, trim(var%attrs(i)%name), trim(var%attrs(i)%value))
+                end if
+            end select
+        end do
+        
+    end subroutine write_variable_attributes
+    
+    !> Write coordinate variables
+    subroutine write_coordinate_variables(ncid, var, dimids)
+        integer, intent(in) :: ncid
+        type(variable_t), intent(in) :: var
+        integer, dimension(:), intent(in) :: dimids
+        
+        integer :: i, coord_varid, status
+        
+        ! Write coordinate variables
+        do i = 1, var%n_dims
+            if (var%has_coord(i) .and. var%coords(i)%initialized) then
+                ! Check if coordinate variable already exists
+                status = nf90_inq_varid(ncid, trim(var%coords(i)%name), coord_varid)
+                if (status /= NF90_NOERR) then
+                    ! Define coordinate variable
+                    select case(var%coords(i)%dtype)
+                    case(DTYPE_REAL64)
+                        status = nf90_def_var(ncid, trim(var%coords(i)%name), NF90_DOUBLE, &
+                                             [dimids(i)], coord_varid)
+                    case(DTYPE_REAL32)
+                        status = nf90_def_var(ncid, trim(var%coords(i)%name), NF90_FLOAT, &
+                                             [dimids(i)], coord_varid)
+                    case(DTYPE_INT64)
+                        status = nf90_def_var(ncid, trim(var%coords(i)%name), NF90_INT64, &
+                                             [dimids(i)], coord_varid)
+                    case(DTYPE_INT32)
+                        status = nf90_def_var(ncid, trim(var%coords(i)%name), NF90_INT, &
+                                             [dimids(i)], coord_varid)
+                    end select
+                    
+                    if (status /= NF90_NOERR) cycle
+                    
+                    ! Write coordinate data
+                    select case(var%coords(i)%dtype)
+                    case(DTYPE_REAL64)
+                        status = nf90_put_var(ncid, coord_varid, var%coords(i)%values_r64)
+                    case(DTYPE_REAL32)
+                        status = nf90_put_var(ncid, coord_varid, var%coords(i)%values_r32)
+                    case(DTYPE_INT64)
+                        status = nf90_put_var(ncid, coord_varid, var%coords(i)%values_i64)
+                    case(DTYPE_INT32)
+                        status = nf90_put_var(ncid, coord_varid, var%coords(i)%values_i32)
+                    end select
+                    
+                    ! Write coordinate attributes
+                    ! Coordinates attributes are handled via the attribute array
+                    call write_coordinate_attributes(ncid, coord_varid, var%coords(i))
+                end if
+            end if
+        end do
+        
+    end subroutine write_coordinate_variables
+    
+    !> Write CF-compliant global attributes
+    subroutine write_cf_global_attributes(ncid)
+        integer, intent(in) :: ncid
+        
+        integer :: status
+        character(len=32) :: time_str
+        
+        ! CF Conventions version
+        status = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", "CF-1.8")
+        
+        ! Creation time
+        call get_iso_time(time_str)
+        status = nf90_put_att(ncid, NF90_GLOBAL, "history", &
+                             trim(time_str) // " Created by Foxel library")
+        
+        ! Creator
+        status = nf90_put_att(ncid, NF90_GLOBAL, "creator_name", "Foxel")
+        status = nf90_put_att(ncid, NF90_GLOBAL, "creator_type", "software")
+        
+    end subroutine write_cf_global_attributes
+    
+    !> Write global attributes from dataset
+    subroutine write_global_attributes(ncid, dset, opts)
+        integer, intent(in) :: ncid
+        type(dataset_t), intent(in) :: dset
+        type(write_options_t), intent(in) :: opts
+        
+        integer :: i, status
+        real(real64) :: r64_val
+        integer(int32) :: i32_val
+        
+        ! Write CF attributes if requested
+        if (opts%cf_compliant) then
+            call write_cf_global_attributes(ncid)
+        end if
+        
+        ! Write dataset global attributes
+        do i = 1, dset%n_attrs
+            ! Try to parse as number first
+            read(dset%attr_values(i), *, iostat=status) r64_val
+            if (status == 0) then
+                ! Check if it's an integer
+                if (abs(r64_val - real(int(r64_val), real64)) < 1e-10) then
+                    i32_val = int(r64_val, int32)
+                    status = nf90_put_att(ncid, NF90_GLOBAL, trim(dset%attr_keys(i)), i32_val)
+                else
+                    status = nf90_put_att(ncid, NF90_GLOBAL, trim(dset%attr_keys(i)), r64_val)
+                end if
+            else
+                ! Write as string
+                status = nf90_put_att(ncid, NF90_GLOBAL, trim(dset%attr_keys(i)), &
+                                     trim(dset%attr_values(i)))
+            end if
+        end do
+        
+    end subroutine write_global_attributes
+    
+    !> Find dimension ID by name
+    function find_dimension_id(dim_name, dset, dimids) result(dimid)
+        character(len=*), intent(in) :: dim_name
+        type(dataset_t), intent(in) :: dset
+        integer, dimension(:), intent(in) :: dimids
+        integer :: dimid
+        
+        integer :: i
+        
+        dimid = -1
+        do i = 1, dset%n_dims
+            if (trim(dset%dimensions(i)%name) == trim(dim_name)) then
+                dimid = dimids(i)
+                return
+            end if
+        end do
+        
+    end function find_dimension_id
+    
+    !> Get current time in ISO format
+    subroutine get_iso_time(time_str)
+        character(len=*), intent(out) :: time_str
+        
+        integer :: date_time(8)
+        
+        call date_and_time(values=date_time)
+        write(time_str, '(I4.4,"-",I2.2,"-",I2.2,"T",I2.2,":",I2.2,":",I2.2)') &
+            date_time(1), date_time(2), date_time(3), date_time(5), date_time(6), date_time(7)
+        
+    end subroutine get_iso_time
+    
+    !> Rename file (atomic operation)
+    subroutine rename_file(old_name, new_name, status)
+        character(len=*), intent(in) :: old_name, new_name
+        integer, intent(out) :: status
+        
+        ! Use system rename command
+        character(len=512) :: cmd
+        
+        write(cmd, '(A,A,A,A)') 'mv "', trim(old_name), '" "', trim(new_name), '"'
+        call execute_command_line(cmd, exitstat=status, wait=.true.)
+        
+    end subroutine rename_file
+    
+    !> Delete file
+    subroutine delete_file(filename)
+        character(len=*), intent(in) :: filename
+        
+        character(len=512) :: cmd
+        integer :: status
+        
+        write(cmd, '(A,A,A)') 'rm -f "', trim(filename), '"'
+        call execute_command_line(cmd, exitstat=status, wait=.true.)
+        
+    end subroutine delete_file
+    
+    !> Write coordinate attributes
+    subroutine write_coordinate_attributes(ncid, varid, coord)
+        integer, intent(in) :: ncid, varid
+        type(coordinate_t), intent(in) :: coord
+        
+        integer :: i, status
+        real(real64) :: r64_val
+        integer(int32) :: i32_val
+        
+        ! Write coordinate attributes
+        do i = 1, coord%n_attrs
+            select case(coord%attrs(i)%dtype)
+            case(ATTR_TYPE_STRING)
+                status = nf90_put_att(ncid, varid, trim(coord%attrs(i)%name), trim(coord%attrs(i)%value))
+            case(ATTR_TYPE_NUMERIC)
+                ! Try to parse as number
+                read(coord%attrs(i)%value, *, iostat=status) r64_val
+                if (status == 0) then
+                    ! Check if it's an integer
+                    if (abs(r64_val - real(int(r64_val), real64)) < 1e-10) then
+                        i32_val = int(r64_val, int32)
+                        status = nf90_put_att(ncid, varid, trim(coord%attrs(i)%name), i32_val)
+                    else
+                        status = nf90_put_att(ncid, varid, trim(coord%attrs(i)%name), r64_val)
+                    end if
+                else
+                    ! Fall back to string
+                    status = nf90_put_att(ncid, varid, trim(coord%attrs(i)%name), trim(coord%attrs(i)%value))
+                end if
+            end select
+        end do
+        
+    end subroutine write_coordinate_attributes
     
 end module foxel_netcdf
