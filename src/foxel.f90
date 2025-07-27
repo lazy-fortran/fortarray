@@ -21,6 +21,7 @@ module foxel
     use foxel_apply_functions
     use foxel_lazy_evaluation
     use foxel_chunked_operations
+    use foxel_parallel_computing
     implicit none
     
     ! Re-export everything from submodules
