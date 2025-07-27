@@ -4,12 +4,13 @@ module foxel_coordinate_selection
     use foxel_constructors
     use foxel_memory
     use foxel_indexing
+    use foxel_slicing
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     private
     
     ! Public functions
-    public :: sel, sel_range, loc
+    public :: sel, sel_range, sel_between, isel, loc
     public :: METHOD_EXACT, METHOD_NEAREST
     
     ! Selection method constants
@@ -119,6 +120,51 @@ contains
         end if
         
     end function sel_range
+    
+    !> Select between coordinate values (inclusive)
+    function sel_between(var, time, time_end, x, x_end, y, y_end, z, z_end) result(result)
+        type(variable_t), intent(in) :: var
+        real(real64), intent(in), optional :: time, time_end
+        real(real64), intent(in), optional :: x, x_end
+        real(real64), intent(in), optional :: y, y_end
+        real(real64), intent(in), optional :: z, z_end
+        type(variable_t) :: result
+        
+        ! Use sel_range with appropriate dimension
+        if (present(time) .and. present(time_end)) then
+            ! Find time dimension
+            result = sel_range(var, x=[time, time_end])
+        else if (present(x) .and. present(x_end)) then
+            result = sel_range(var, x=[x, x_end])
+        else if (present(y) .and. present(y_end)) then
+            result = sel_range(var, y=[y, y_end])
+        else if (present(z) .and. present(z_end)) then
+            result = sel_range(var, z=[z, z_end])
+        else
+            ! No range specified, return original
+            result = var
+        end if
+        
+    end function sel_between
+    
+    !> Integer location based selection (positional indexing)
+    function isel(var, x, y, z) result(result)
+        type(variable_t), intent(in) :: var
+        integer, intent(in), optional :: x, y, z
+        type(variable_t) :: result
+        
+        ! Use slice function from foxel_slicing
+        if (present(x) .and. present(y) .and. present(z)) then
+            result = slice(var, create_index(x), create_index(y), create_index(z))
+        else if (present(x) .and. present(y)) then
+            result = slice(var, create_index(x), create_index(y))
+        else if (present(x)) then
+            result = slice(var, create_index(x))
+        else
+            result = var
+        end if
+        
+    end function isel
     
     !> Get index for coordinate value
     function loc(var, value, dim, method, tolerance) result(idx)

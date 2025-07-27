@@ -44,11 +44,13 @@ contains
         data = [10.0_real64, 20.0_real64, 30.0_real64, 40.0_real64, 50.0_real64]
         coord_vals = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
         
-        x_coord = create_coordinate(coord_vals, "x")
+        call create_coordinate(x_coord, size(coord_vals), "real64", idx)
+        x_coord%name = "x"
+        x_coord%values_r64 = coord_vals
         var = variable(data, name="test_data", dim_names=["x"], coords=[x_coord])
         
         ! Test basic location finding
-        idx = loc(var, x=3.0_real64)
+        idx = loc(var, 3.0_real64, 1)
         
         if (idx /= 3) then
             test_passed = .false.
@@ -91,7 +93,9 @@ contains
         data = [(real(i, real64), i=1,10)]
         coord_vals = [(real(i*10, real64), i=1,10)]
         
-        x_coord = create_coordinate(coord_vals, "x")
+        call create_coordinate(x_coord, size(coord_vals), "real64", i)
+        x_coord%name = "x"
+        x_coord%values_r64 = coord_vals
         var = variable(data, name="test_data", dim_names=["x"], coords=[x_coord])
         
         ! Find indices for range manually
@@ -141,7 +145,9 @@ contains
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
         coord_vals = [10.0_real64, 25.0_real64, 30.0_real64, 50.0_real64, 100.0_real64]
         
-        x_coord = create_coordinate(coord_vals, "x")
+        call create_coordinate(x_coord, size(coord_vals), "real64", i)
+        x_coord%name = "x"
+        x_coord%values_r64 = coord_vals
         var = variable(data, name="test_data", dim_names=["x"], coords=[x_coord])
         
         ! Find nearest to 27.0 manually
@@ -164,7 +170,7 @@ contains
         end if
         
         ! Test with method="nearest"
-        idx = loc(var, x=target, method="nearest")
+        idx = loc(var, target, 1, method="nearest")
         
         if (idx /= nearest_idx) then
             test_passed = .false.
