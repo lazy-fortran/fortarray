@@ -166,11 +166,11 @@
 - [x] Conditional selection
 - [x] Multi-condition support
 
-### Sprint 15: Slicing Operations
-- [ ] Implement slice syntax
-- [ ] Support negative indices
-- [ ] Step values in slices
-- [ ] Preserve coordinates
+### Sprint 15: Slicing Operations ✓
+- [x] Implement slice syntax
+- [x] Support negative indices
+- [x] Step values in slices
+- [x] Preserve coordinates
 
 ### Sprint 16: Interpolation
 - [ ] Linear interpolation
