@@ -8,6 +8,7 @@ module foxel
     use foxel_netcdf
     use foxel_csv
     use foxel_format_detection
+    use foxel_broadcasting
     implicit none
     
     ! Re-export everything from submodules
