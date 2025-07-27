@@ -131,10 +131,10 @@ call europe%to_netcdf('europe_temperature.nc')
 
 ## Documentation
 
-- [User Guide](docs/user_guide.md) - Getting started and examples
-- [API Reference](docs/api_reference.md) - Complete API documentation
-- [NetCDF Primer](docs/netcdf_primer.md) - Understanding the data model
-- [Migration Guide](docs/migration.md) - Coming from xarray/CDO/NCL
+- **[Getting Started Guide](docs/getting_started.md)** - Learn the basics with examples
+- **[API Reference](docs/api_reference.md)** - Complete function documentation  
+- **[Example Gallery](docs/examples/)** - Practical usage examples
+- **[Migration Guides](docs/migration_guides.md)** - Transition from CDO/NCL/xarray/MATLAB
 
 ## Testing
 
