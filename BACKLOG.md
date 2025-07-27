@@ -180,11 +180,11 @@
 
 ## Phase 5: Computation Engine (Sprint 17-20)
 
-### Sprint 17: Apply Functions
-- [ ] Apply along dimensions
-- [ ] User-defined functions
-- [ ] Vectorized operations
-- [ ] Result type inference
+### Sprint 17: Apply Functions ✓
+- [x] Apply along dimensions
+- [x] User-defined functions
+- [x] Vectorized operations
+- [x] Result type inference
 
 ### Sprint 18: Lazy Evaluation
 - [ ] Computation graph
