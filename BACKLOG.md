@@ -254,11 +254,11 @@
 - [x] Example gallery
 - [x] Migration guides
 
-### Sprint 28: Developer Docs
-- [ ] Architecture overview
-- [ ] Contributing guide
-- [ ] Performance guide
-- [ ] Extension guide
+### Sprint 28: Developer Docs ✓
+- [x] Architecture overview
+- [x] Contributing guide
+- [x] Performance guide
+- [x] Extension guide
 
 ## Acceptance Criteria
 1. **Functionality**: Correct behavior for all cases
