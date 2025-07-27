@@ -16,6 +16,7 @@ module foxel
     use foxel_boolean_indexing
     use foxel_slicing
     use foxel_interpolation
+    use foxel_apply_functions
     implicit none
     
     ! Re-export everything from submodules
