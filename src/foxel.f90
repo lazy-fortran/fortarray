@@ -22,6 +22,7 @@ module foxel
     use foxel_lazy_evaluation
     use foxel_chunked_operations
     use foxel_parallel_computing
+    use foxel_fortplot_integration
     implicit none
     
     ! Re-export everything from submodules
