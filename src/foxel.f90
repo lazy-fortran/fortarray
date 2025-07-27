@@ -13,6 +13,7 @@ module foxel
     use foxel_aggregation
     use foxel_missing_data
     use foxel_coordinate_selection
+    use foxel_boolean_indexing
     implicit none
     
     ! Re-export everything from submodules

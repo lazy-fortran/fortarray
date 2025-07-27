@@ -160,11 +160,11 @@
 - [x] Multi-dimensional selection
 - [x] Performance optimization
 
-### Sprint 14: Boolean Indexing
-- [ ] Create boolean masks
-- [ ] Apply masks to variables
-- [ ] Conditional selection
-- [ ] Multi-condition support
+### Sprint 14: Boolean Indexing ✓
+- [x] Create boolean masks
+- [x] Apply masks to variables
+- [x] Conditional selection
+- [x] Multi-condition support
 
 ### Sprint 15: Slicing Operations
 - [ ] Implement slice syntax
