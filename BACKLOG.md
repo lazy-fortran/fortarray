@@ -153,12 +153,12 @@
 
 ## Phase 4: Advanced Indexing (Sprint 13-16)
 
-### Sprint 13: Coordinate-based Selection
-- [ ] Select by coordinate values
-- [ ] Range selection (inclusive)
-- [ ] Nearest-neighbor selection
-- [ ] Multi-dimensional selection
-- [ ] Performance optimization
+### Sprint 13: Coordinate-based Selection ✓
+- [x] Select by coordinate values
+- [x] Range selection (inclusive)
+- [x] Nearest-neighbor selection
+- [x] Multi-dimensional selection
+- [x] Performance optimization
 
 ### Sprint 14: Boolean Indexing
 - [ ] Create boolean masks
