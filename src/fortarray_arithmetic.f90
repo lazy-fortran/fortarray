@@ -1,7 +1,8 @@
 module fortarray_arithmetic
     use fortarray_types
     use fortarray_storage
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_memory
     use fortarray_broadcasting
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
@@ -66,18 +67,18 @@ contains
         ! Create variable based on number of dimensions
         select case(ndims)
         case(1)
-            var = variable(values(1:shape(1)), name=name, dim_names=dim_names)
+            var = new_array(values(1:shape(1)), name=name, dim_names=dim_names)
         case(2)
             block
                 real(real64), dimension(shape(1), shape(2)) :: temp
                 temp = reshape(values, [shape(1), shape(2)])
-                var = variable(temp, name=name, dim_names=dim_names)
+                var = new_array(temp, name=name, dim_names=dim_names)
             end block
         case(3)
             block
                 real(real64), dimension(shape(1), shape(2), shape(3)) :: temp
                 temp = reshape(values, [shape(1), shape(2), shape(3)])
-                var = variable(temp, name=name, dim_names=dim_names)
+                var = new_array(temp, name=name, dim_names=dim_names)
             end block
         case default
             ! For higher dimensions, create manually
@@ -201,7 +202,7 @@ contains
                 result = create_variable_with_shape(result_values, result_name, var2%shape)
             else
                 ! Both are scalars
-                result = variable_scalar(result_values(1), name=result_name)
+                result = variable_scalar_real64(result_values(1), name=result_name)
             end if
         end if
         
@@ -226,7 +227,7 @@ contains
         if (allocated(var%shape)) then
             result = create_variable_with_shape(result_values, result_name, var%shape)
         else
-            result = variable_scalar(result_values(1), name=result_name)
+            result = variable_scalar_real64(result_values(1), name=result_name)
         end if
         
     end function var_scalar_operation
@@ -250,7 +251,7 @@ contains
         if (allocated(var%shape)) then
             result = create_variable_with_shape(result_values, result_name, var%shape)
         else
-            result = variable_scalar(result_values(1), name=result_name)
+            result = variable_scalar_real64(result_values(1), name=result_name)
         end if
         
     end function scalar_var_operation

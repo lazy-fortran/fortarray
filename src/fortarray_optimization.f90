@@ -7,7 +7,8 @@ module fortarray_optimization
     use fortarray_parallel_computing
     use fortarray_arithmetic
     use fortarray_aggregation
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_lazy_evaluation
     use fortarray_chunked_operations
     implicit none
@@ -305,7 +306,7 @@ contains
             end do
         end if
         
-        result_var = variable(result_data, name="vectorized_add_result", dim_names=var1%dim_names)
+        result_var = new_array(result_data, name="vectorized_add_result", dim_names=var1%dim_names)
         
         call stop_profiler("vectorized_add")
     end function vectorized_add
@@ -333,7 +334,7 @@ contains
             end do
         end if
         
-        result_var = variable(result_data, name="vectorized_multiply_result", dim_names=var1%dim_names)
+        result_var = new_array(result_data, name="vectorized_multiply_result", dim_names=var1%dim_names)
         
         call stop_profiler("vectorized_multiply")
     end function vectorized_multiply
@@ -362,7 +363,7 @@ contains
             end do
         end if
         
-        result_var = variable(result_data, name="vectorized_fma_result", dim_names=var1%dim_names)
+        result_var = new_array(result_data, name="vectorized_fma_result", dim_names=var1%dim_names)
         
         call stop_profiler("vectorized_fma")
     end function vectorized_fma

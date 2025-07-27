@@ -2,7 +2,8 @@ module fortarray_time_operations
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use fortarray_types
     use fortarray_storage
-    use fortarray_constructors
+    use fortarray_constructors, only: new_array, new_dataset, &
+        variable_scalar_real64, variable_scalar_real32, variable_scalar_int32, variable_scalar_int64
     use fortarray_indexing
     use fortarray_coordinate_selection
     use fortarray_interpolation
@@ -237,7 +238,7 @@ contains
                     daily_data(i) = 0.0_real64
                 end if
             end do
-            output = variable(daily_data, name=trim(var%name)//"_daily_mean", dim_names=["time"])
+            output = new_array(daily_data, name=trim(var%name)//"_daily_mean", dim_names=["time"])
             
         case("max")
             do i = 1, n_days
@@ -258,7 +259,7 @@ contains
                 
                 daily_data(i) = max_val
             end do
-            output = variable(daily_data, name=trim(var%name)//"_daily_max", dim_names=["time"])
+            output = new_array(daily_data, name=trim(var%name)//"_daily_max", dim_names=["time"])
             
         case("interpolate")
             ! For upsampling - approximate 365 days
@@ -307,7 +308,7 @@ contains
                 end if
             end do
             
-            output = variable(monthly_data, name=trim(var%name)//"_monthly", dim_names=["time"])
+            output = new_array(monthly_data, name=trim(var%name)//"_monthly", dim_names=["time"])
             
         case default
             output = var
@@ -365,7 +366,7 @@ contains
             result_data = 0.0_real64
         end select
         
-        output = variable(result_data, name=trim(var%name)//"_rolling_mean", dim_names=var%dim_names)
+        output = new_array(result_data, name=trim(var%name)//"_rolling_mean", dim_names=var%dim_names)
         
         deallocate(result_data)
         
@@ -398,7 +399,7 @@ contains
             result_data = 0.0_real64
         end select
         
-        output = variable(result_data, name=trim(var%name)//"_rolling_sum", dim_names=var%dim_names)
+        output = new_array(result_data, name=trim(var%name)//"_rolling_sum", dim_names=var%dim_names)
         
         deallocate(result_data)
         
@@ -457,7 +458,7 @@ contains
         seasonal_data(3) = mean_subset(var, 2*days_per_season+1, 3*days_per_season)  ! JJA
         seasonal_data(4) = mean_subset(var, 3*days_per_season+1, var%n_elements)  ! SON
         
-        output = variable(seasonal_data, name=trim(var%name)//"_seasonal", dim_names=["season"])
+        output = new_array(seasonal_data, name=trim(var%name)//"_seasonal", dim_names=["season"])
         
     end function seasonal_mean
     
@@ -499,7 +500,7 @@ contains
             shifted_data = 0.0_real64
         end select
         
-        output = variable(shifted_data, name=trim(var%name)//"_shifted", dim_names=var%dim_names)
+        output = new_array(shifted_data, name=trim(var%name)//"_shifted", dim_names=var%dim_names)
         
         deallocate(shifted_data)
         
@@ -529,7 +530,7 @@ contains
             end select
         end if
         
-        output = variable(diff_data, name=trim(var%name)//"_diff", dim_names=var%dim_names)
+        output = new_array(diff_data, name=trim(var%name)//"_diff", dim_names=var%dim_names)
         
         deallocate(diff_data)
         
@@ -558,7 +559,7 @@ contains
             cumsum_data = 0.0_real64
         end select
         
-        output = variable(cumsum_data, name=trim(var%name)//"_cumsum", dim_names=var%dim_names)
+        output = new_array(cumsum_data, name=trim(var%name)//"_cumsum", dim_names=var%dim_names)
         
         deallocate(cumsum_data)
         
@@ -642,7 +643,7 @@ contains
             daily_data = 0.0_real64
         end select
         
-        output = variable(daily_data, name=trim(var%name)//"_daily", dim_names=["time"])
+        output = new_array(daily_data, name=trim(var%name)//"_daily", dim_names=["time"])
         
         deallocate(daily_data)
         
