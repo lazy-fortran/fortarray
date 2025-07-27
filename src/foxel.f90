@@ -12,6 +12,7 @@ module foxel
     use foxel_arithmetic
     use foxel_aggregation
     use foxel_missing_data
+    use foxel_coordinate_selection
     implicit none
     
     ! Re-export everything from submodules
