@@ -88,14 +88,14 @@ contains
             lon_coord%initialized = .true.
         end if
         
-        ! Create variables
-        temp_var = variable(temp_data, name="temperature", &
-                           dim_names=["time"], units="degrees_C", &
-                           standard_name="air_temperature")
+        ! Create variables (simplified)
+        temp_var = variable(temp_data, name="temperature", dim_names=["time"])
+        temp_var%units = "degrees_C"
+        temp_var%standard_name = "air_temperature"
         
-        precip_var = variable(precip_data, name="precipitation", &
-                             dim_names=["time"], units="mm/day", &
-                             standard_name="precipitation_flux")
+        precip_var = variable(precip_data, name="precipitation", dim_names=["time"])
+        precip_var%units = "mm/day"
+        precip_var%standard_name = "precipitation_flux"
         
         ! Add coordinates
         if (.not. allocated(temp_var%coords)) allocate(temp_var%coords(1))
@@ -123,14 +123,14 @@ contains
         
         ! Write to file
         test_file = "test_integration.nc"
-        call write_netcdf(ds, test_file, stat)
+        stat = write_netcdf(test_file, ds)
         if (stat /= 0) then
             test_passed = .false.
             write(error_unit,'(A)') "Failed to write integration test file"
         end if
         
         ! Read back
-        call read_netcdf(ds_loaded, test_file, stat)
+        ds_loaded = read_netcdf(test_file, stat=stat)
         if (stat /= 0) then
             test_passed = .false.
             write(error_unit,'(A)') "Failed to read integration test file"

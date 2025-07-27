@@ -120,7 +120,7 @@ contains
         
         ! Benchmark write
         call system_clock(start_time, count_rate)
-        call write_netcdf(ds, filename, stat)
+        stat = write_netcdf(filename, ds)
         call system_clock(end_time)
         
         if (stat /= 0) then
@@ -135,7 +135,7 @@ contains
         
         ! Benchmark read
         call system_clock(start_time, count_rate)
-        call read_netcdf(ds, filename, stat)
+        ds = read_netcdf(filename, stat=stat)
         call system_clock(end_time)
         
         if (stat /= 0) then
@@ -158,7 +158,7 @@ contains
     end subroutine benchmark_io_operations
     
     subroutine benchmark_aggregation_operations()
-        type(variable_t) :: var
+        type(variable_t) :: var, result
         real(real64), dimension(1000000) :: data  ! 1M elements
         real(real64) :: mean_val, sum_val, std_val
         integer :: i
@@ -180,7 +180,9 @@ contains
         
         ! Benchmark mean
         call system_clock(start_time, count_rate)
-        mean_val = mean(var)
+        result = mean(var)
+        mean_val = result%data%values_r64(1)
+        call finalize_variable(result)
         call system_clock(end_time)
         
         elapsed_time = real(end_time - start_time, real64) / real(count_rate, real64)
@@ -188,7 +190,9 @@ contains
         
         ! Benchmark sum
         call system_clock(start_time, count_rate)
-        sum_val = sum(var)
+        result = sum(var)
+        sum_val = result%data%values_r64(1)
+        call finalize_variable(result)
         call system_clock(end_time)
         
         elapsed_time = real(end_time - start_time, real64) / real(count_rate, real64)
@@ -196,7 +200,9 @@ contains
         
         ! Benchmark standard deviation
         call system_clock(start_time, count_rate)
-        std_val = std(var)
+        result = std(var)
+        std_val = result%data%values_r64(1)
+        call finalize_variable(result)
         call system_clock(end_time)
         
         elapsed_time = real(end_time - start_time, real64) / real(count_rate, real64)
@@ -213,12 +219,12 @@ contains
     end subroutine benchmark_aggregation_operations
     
     subroutine benchmark_parallel_scaling()
-        type(variable_t) :: var
+        type(variable_t) :: var, serial_sum, parallel_sum
         real(real64), dimension(1000000) :: data  ! 1M elements
         real(real64) :: sum_val
-        integer :: i, threads
+        integer :: i, threads, original_threads
         integer(int64) :: start_time, end_time, count_rate
-        real(real64) :: elapsed_time, serial_time, parallel_time
+        real(real64) :: elapsed_time, serial_time, parallel_time, serial_result, parallel_result
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -236,7 +242,7 @@ contains
         ! Serial benchmark
         call set_num_threads(1)
         call system_clock(start_time, count_rate)
-        sum_val = sum(var)
+        serial_sum = sum(var)
         call system_clock(end_time)
         
         serial_time = real(end_time - start_time, real64) / real(count_rate, real64)
@@ -245,7 +251,7 @@ contains
         ! Parallel benchmark
         call set_num_threads(24)
         call system_clock(start_time, count_rate)
-        sum_val = sum(var)
+        parallel_sum = sum(var)
         call system_clock(end_time)
         
         parallel_time = real(end_time - start_time, real64) / real(count_rate, real64)
@@ -292,11 +298,11 @@ contains
         var = variable(data, name="chunk_test", dim_names=["index"])
         
         ! Set chunk size
-        call set_chunk_size(var, 10000)  ! 10K chunks
+        call set_chunk_size(10000)  ! 10K chunks
         
         ! Benchmark chunked operation
         call system_clock(start_time, count_rate)
-        result = apply_along_chunks(var, "mean")
+        result = mean_chunked(var)
         call system_clock(end_time)
         
         elapsed_time = real(end_time - start_time, real64) / real(count_rate, real64)
