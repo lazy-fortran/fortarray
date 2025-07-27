@@ -1,9 +1,9 @@
-name = "foxel"
+name = "fortarray"
 version = "0.1.0"
 license = "MIT"
-author = "Foxel Contributors"
+author = "FortArray Contributors"
 maintainer = "krystophny@github"
-copyright = "2025 Foxel Contributors"
+copyright = "2025 FortArray Contributors"
 
 [build]
 auto-executables = true
