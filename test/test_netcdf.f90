@@ -1,10 +1,10 @@
 program test_netcdf
-    use foxel_types
-    use foxel_constructors
-    use foxel_datasets
-    use foxel_netcdf
-    use foxel_indexing
-    use foxel_memory
+    use fortarray_types
+    use fortarray_constructors
+    use fortarray_datasets
+    use fortarray_netcdf
+    use fortarray_indexing
+    use fortarray_memory
     use netcdf
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
@@ -190,7 +190,7 @@ contains
     end subroutine cleanup_test_files
     
     subroutine test_read_scalar_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat
         character(len=256) :: error_msg
@@ -226,7 +226,7 @@ contains
     end subroutine test_read_scalar_variable
     
     subroutine test_read_1d_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat, i
         real(real64) :: value, expected
@@ -276,7 +276,7 @@ contains
     end subroutine test_read_1d_variable
     
     subroutine test_read_2d_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat
         real(real64) :: value, expected
@@ -332,7 +332,7 @@ contains
     end subroutine test_read_2d_variable
     
     subroutine test_read_3d_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat
         real(real64) :: value, expected
@@ -374,7 +374,7 @@ contains
     end subroutine test_read_3d_variable
     
     subroutine test_read_with_coordinates()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(label_index_t) :: label_idx
         logical :: test_passed
         integer :: stat, i
@@ -422,7 +422,7 @@ contains
     end subroutine test_read_with_coordinates
     
     subroutine test_read_with_attributes()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat, i
         logical :: found_units, found_longname
@@ -475,7 +475,7 @@ contains
     
     subroutine test_read_entire_dataset()
         type(dataset_t) :: dset
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat
         
@@ -749,7 +749,7 @@ contains
     end subroutine test_unlimited_dimensions
     
     subroutine test_missing_values()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: stat, i
         logical :: found_missing_attr
@@ -797,7 +797,7 @@ contains
     end subroutine test_missing_values
     
     subroutine test_error_handling()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataset_t) :: dset
         logical :: test_passed
         integer :: stat
@@ -836,7 +836,7 @@ contains
     end subroutine test_error_handling
     
     subroutine test_write_scalar_variable()
-        type(variable_t) :: var, var_read
+        type(fortarray_t) :: var, var_read
         logical :: test_passed
         integer :: stat
         real(real64) :: value
@@ -885,7 +885,7 @@ contains
     end subroutine test_write_scalar_variable
     
     subroutine test_write_1d_variable()
-        type(variable_t) :: var, var_read
+        type(fortarray_t) :: var, var_read
         type(coordinate_t) :: time_coord
         logical :: test_passed
         integer :: stat, i
@@ -944,7 +944,7 @@ contains
     end subroutine test_write_1d_variable
     
     subroutine test_write_2d_variable()
-        type(variable_t) :: var, var_read
+        type(fortarray_t) :: var, var_read
         type(coordinate_t) :: lat_coord, lon_coord
         logical :: test_passed
         integer :: stat, i, j
@@ -1009,7 +1009,7 @@ contains
     end subroutine test_write_2d_variable
     
     subroutine test_write_3d_variable()
-        type(variable_t) :: var, var_read
+        type(fortarray_t) :: var, var_read
         logical :: test_passed
         integer :: stat, i, j, k
         real(real64), dimension(10, 15, 5) :: data
@@ -1065,7 +1065,7 @@ contains
     
     subroutine test_write_with_coordinates()
         type(dataset_t) :: dset, dset_read
-        type(variable_t) :: temp
+        type(fortarray_t) :: temp
         type(coordinate_t) :: lat_coord, lon_coord
         logical :: test_passed
         integer :: stat
@@ -1126,7 +1126,7 @@ contains
     end subroutine test_write_with_coordinates
     
     subroutine test_write_with_attributes()
-        type(variable_t) :: var, var_read
+        type(fortarray_t) :: var, var_read
         logical :: test_passed
         integer :: stat, i
         logical :: found_units, found_longname
@@ -1209,7 +1209,7 @@ contains
     
     subroutine test_write_entire_dataset()
         type(dataset_t) :: dset, dset_read
-        type(variable_t) :: temp, pres, vel
+        type(fortarray_t) :: temp, pres, vel
         logical :: test_passed
         integer :: stat, i
         real(real64), dimension(10, 15) :: temp_data
@@ -1284,7 +1284,7 @@ contains
     
     subroutine test_round_trip_fidelity()
         type(dataset_t) :: dset_orig, dset_read
-        type(variable_t) :: var_orig, var_read
+        type(fortarray_t) :: var_orig, var_read
         logical :: test_passed
         integer :: stat, i
         real(real64), dimension(100) :: data_orig, data_read
@@ -1350,7 +1350,7 @@ contains
     end subroutine test_round_trip_fidelity
     
     subroutine test_compression_options()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(write_options_t) :: opts
         logical :: test_passed
         integer :: stat, i
@@ -1394,7 +1394,7 @@ contains
     end subroutine test_compression_options
     
     subroutine test_atomic_write()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(write_options_t) :: opts
         logical :: test_passed, temp_exists
         integer :: stat, unit, i
@@ -1440,7 +1440,7 @@ contains
     
     subroutine test_cf_compliance()
         type(dataset_t) :: dset
-        type(variable_t) :: temp
+        type(fortarray_t) :: temp
         type(coordinate_t) :: time_coord
         type(write_options_t) :: opts
         logical :: test_passed
@@ -1498,7 +1498,7 @@ contains
     
     subroutine test_unlimited_dimension_write()
         type(dataset_t) :: dset
-        type(variable_t) :: temp
+        type(fortarray_t) :: temp
         type(dimension_t) :: time_dim
         logical :: test_passed
         integer :: stat, i

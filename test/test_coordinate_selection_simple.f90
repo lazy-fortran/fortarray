@@ -1,5 +1,5 @@
 program test_coordinate_selection_simple
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -31,7 +31,7 @@ program test_coordinate_selection_simple
 contains
 
     subroutine test_basic_selection()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         integer :: idx
@@ -80,7 +80,7 @@ contains
     end subroutine test_basic_selection
     
     subroutine test_range_selection()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10) :: data, coord_vals
         integer :: i, start_idx, end_idx
@@ -130,7 +130,7 @@ contains
     end subroutine test_range_selection
     
     subroutine test_nearest_selection()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         integer :: idx

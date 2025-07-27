@@ -1,8 +1,8 @@
 program test_csv
-    use foxel_types
-    use foxel_constructors
-    use foxel_csv
-    use foxel_memory
+    use fortarray_types
+    use fortarray_constructors
+    use fortarray_csv
+    use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -125,7 +125,7 @@ contains
     end subroutine cleanup_test_csv_files
     
     subroutine test_read_simple_csv()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -167,7 +167,7 @@ contains
     end subroutine test_read_simple_csv
     
     subroutine test_read_csv_with_header()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(csv_options_t) :: opts
         integer :: stat
         logical :: test_passed
@@ -197,7 +197,7 @@ contains
     end subroutine test_read_csv_with_header
     
     subroutine test_read_csv_without_header()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(csv_options_t) :: opts
         integer :: stat
         logical :: test_passed
@@ -231,7 +231,7 @@ contains
     end subroutine test_read_csv_without_header
     
     subroutine test_read_csv_with_missing_values()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -267,7 +267,7 @@ contains
     end subroutine test_read_csv_with_missing_values
     
     subroutine test_write_csv_from_variable()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(3,2) :: data
         integer :: stat
         logical :: test_passed, file_exists
@@ -306,7 +306,7 @@ contains
     end subroutine test_write_csv_from_variable
     
     subroutine test_write_csv_with_header()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(csv_options_t) :: opts
         real(real64), dimension(2,3) :: data
         integer :: stat, unit
@@ -353,7 +353,7 @@ contains
     end subroutine test_write_csv_with_header
     
     subroutine test_write_csv_with_missing_values()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(2,2) :: data
         integer :: stat
         logical :: test_passed
@@ -388,7 +388,7 @@ contains
     end subroutine test_write_csv_with_missing_values
     
     subroutine test_round_trip_csv()
-        type(variable_t) :: var_orig, var_read
+        type(fortarray_t) :: var_orig, var_read
         real(real64), dimension(3,2) :: data
         integer :: stat
         logical :: test_passed
@@ -443,7 +443,7 @@ contains
     end subroutine test_round_trip_csv
     
     subroutine test_csv_error_handling()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -475,7 +475,7 @@ contains
     end subroutine test_csv_error_handling
     
     subroutine test_different_delimiters()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(csv_options_t) :: opts
         integer :: stat
         logical :: test_passed
@@ -511,7 +511,7 @@ contains
     end subroutine test_different_delimiters
     
     subroutine test_quoted_fields()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         
@@ -544,7 +544,7 @@ contains
     end subroutine test_quoted_fields
     
     subroutine test_empty_file_handling()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         integer :: stat
         logical :: test_passed
         

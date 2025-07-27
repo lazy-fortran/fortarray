@@ -1,5 +1,5 @@
 program test_boolean_indexing_simple
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -31,7 +31,7 @@ program test_boolean_indexing_simple
 contains
 
     subroutine test_create_logical_mask()
-        type(variable_t) :: var, mask
+        type(fortarray_t) :: var, mask
         real(real64), dimension(5) :: data
         logical, dimension(5) :: mask_data
         logical :: test_passed
@@ -68,7 +68,7 @@ contains
     end subroutine test_create_logical_mask
     
     subroutine test_apply_basic_mask()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(5) :: data
         logical, dimension(5) :: mask_data
         logical :: test_passed
@@ -111,7 +111,7 @@ contains
     end subroutine test_apply_basic_mask
     
     subroutine test_mask_with_fill_value()
-        type(variable_t) :: var, mask, result
+        type(fortarray_t) :: var, mask, result
         real(real64), dimension(5) :: data
         logical, dimension(5) :: mask_data
         logical :: test_passed

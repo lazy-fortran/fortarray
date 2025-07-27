@@ -1,5 +1,5 @@
 program test_time_coordinates
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -277,7 +277,7 @@ contains
     end subroutine test_datetime_parsing
     
     subroutine test_time_bounds()
-        type(variable_t) :: time_var, time_bounds_var
+        type(fortarray_t) :: time_var, time_bounds_var
         real(real64), dimension(12) :: time_data
         real(real64), dimension(24) :: bounds_data  ! 2 x 12
         integer :: i
@@ -436,7 +436,7 @@ contains
     end subroutine test_time_coordinate_creation
     
     subroutine test_time_variable_metadata()
-        type(variable_t) :: temp_var
+        type(fortarray_t) :: temp_var
         real(real64), dimension(365) :: temp_data
         logical :: has_time_dim
         logical :: test_passed

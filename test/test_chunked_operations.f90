@@ -1,5 +1,5 @@
 program test_chunked_operations
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -43,7 +43,7 @@ program test_chunked_operations
 contains
 
     subroutine test_chunk_definition()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(chunk_info_t) :: chunk_info
         real(real64), dimension(10000) :: data
         integer :: i
@@ -90,9 +90,9 @@ contains
     end subroutine test_chunk_definition
     
     subroutine test_chunk_iteration()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(chunk_iterator_t) :: iterator
-        type(variable_t) :: chunk
+        type(fortarray_t) :: chunk
         real(real64), dimension(100) :: data
         integer :: i, chunk_count
         logical :: test_passed
@@ -144,7 +144,7 @@ contains
     end subroutine test_chunk_iteration
     
     subroutine test_chunk_processing()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(chunked_operation_t) :: op
         real(real64), dimension(1000) :: data
         integer :: i
@@ -194,7 +194,7 @@ contains
     end subroutine test_chunk_processing
     
     subroutine test_out_of_core_operations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(out_of_core_config_t) :: config
         real(real64), dimension(10000) :: data
         character(len=256) :: temp_file
@@ -245,7 +245,7 @@ contains
     end subroutine test_out_of_core_operations
     
     subroutine test_chunked_aggregations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5000) :: data
         integer :: i
         logical :: test_passed
@@ -295,7 +295,7 @@ contains
     end subroutine test_chunked_aggregations
     
     subroutine test_chunked_arithmetic()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(1000) :: data1, data2
         integer :: i
         logical :: test_passed
@@ -346,7 +346,7 @@ contains
     end subroutine test_chunked_arithmetic
     
     subroutine test_chunk_boundary_handling()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(97) :: data  ! Prime number size
         integer :: i
         logical :: test_passed
@@ -386,7 +386,7 @@ contains
     end subroutine test_chunk_boundary_handling
     
     subroutine test_multidimensional_chunking()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(chunk_info_t) :: chunk_info
         real(real64), dimension(100, 100) :: data
         integer :: i, j
@@ -433,7 +433,7 @@ contains
     end subroutine test_multidimensional_chunking
     
     subroutine test_adaptive_chunk_sizing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(adaptive_chunk_config_t) :: config
         integer :: optimal_size
         real(real64), dimension(10000) :: data
@@ -480,9 +480,9 @@ contains
     end subroutine test_adaptive_chunk_sizing
     
     subroutine test_chunk_caching()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(chunk_cache_t) :: cache
-        type(variable_t) :: chunk1, chunk2
+        type(fortarray_t) :: chunk1, chunk2
         real(real64), dimension(1000) :: data
         integer :: i
         logical :: test_passed
@@ -531,7 +531,7 @@ contains
     end subroutine test_chunk_caching
     
     subroutine test_parallel_chunk_processing()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(parallel_chunk_config_t) :: config
         real(real64), dimension(4000) :: data
         integer :: i
@@ -581,7 +581,7 @@ contains
     end subroutine test_parallel_chunk_processing
     
     subroutine test_chunk_memory_management()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(memory_monitor_t) :: monitor
         integer :: initial_memory, peak_memory
         real(real64), dimension(10000) :: data
@@ -626,7 +626,7 @@ contains
     end subroutine test_chunk_memory_management
     
     subroutine test_chunked_io_operations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(chunked_io_config_t) :: config
         character(len=256) :: filename
         real(real64), dimension(5000) :: data
@@ -684,7 +684,7 @@ contains
     end subroutine test_chunked_io_operations
     
     subroutine test_chunk_performance()
-        type(variable_t) :: var, result1, result2
+        type(fortarray_t) :: var, result1, result2
         real(real64), dimension(100000) :: data
         real(real64) :: start_time, end_time, chunked_time, regular_time
         integer :: i
@@ -736,7 +736,7 @@ contains
     end subroutine test_chunk_performance
     
     subroutine test_chunk_error_handling()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(chunk_info_t) :: chunk_info
         real(real64), dimension(100) :: data
         integer :: i, stat
@@ -803,8 +803,8 @@ contains
     
     !> Apply sqrt elementwise
     function apply_sqrt(var) result(result)
-        type(variable_t), intent(in) :: var
-        type(variable_t) :: result
+        type(fortarray_t), intent(in) :: var
+        type(fortarray_t) :: result
         integer :: i
         
         ! Create result variable

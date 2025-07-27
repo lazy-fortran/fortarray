@@ -1,8 +1,8 @@
 program test_datasets
-    use foxel_types
-    use foxel_constructors
-    use foxel_datasets
-    use foxel_memory
+    use fortarray_types
+    use fortarray_constructors
+    use fortarray_datasets
+    use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -28,7 +28,7 @@ contains
 
     subroutine test_add_get_variable()
         type(dataset_t) :: dset
-        type(variable_t) :: var1, var2, var_retrieved
+        type(fortarray_t) :: var1, var2, var_retrieved
         real(real64), dimension(5) :: data1
         real(real64), dimension(3,3) :: data2
         logical :: test_passed
@@ -102,7 +102,7 @@ contains
     
     subroutine test_has_variable()
         type(dataset_t) :: dset
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -150,7 +150,7 @@ contains
     
     subroutine test_remove_variable()
         type(dataset_t) :: dset
-        type(variable_t) :: var1, var2
+        type(fortarray_t) :: var1, var2
         real(real64), dimension(5) :: data
         logical :: test_passed
         integer :: stat
@@ -220,7 +220,7 @@ contains
     
     subroutine test_list_variables()
         type(dataset_t) :: dset
-        type(variable_t) :: var1, var2, var3
+        type(fortarray_t) :: var1, var2, var3
         real(real64), dimension(5) :: data
         character(len=MAX_NAME_LEN), dimension(:), allocatable :: names
         logical :: test_passed
@@ -288,7 +288,7 @@ contains
     
     subroutine test_select_variables()
         type(dataset_t) :: dset, subset
-        type(variable_t) :: var1, var2, var3, var_check
+        type(fortarray_t) :: var1, var2, var3, var_check
         real(real64), dimension(5) :: data
         character(len=MAX_NAME_LEN), dimension(2) :: select_names
         logical :: test_passed
@@ -366,7 +366,7 @@ contains
     
     subroutine test_error_handling()
         type(dataset_t) :: dset, uninit_dset
-        type(variable_t) :: var, uninit_var
+        type(fortarray_t) :: var, uninit_var
         real(real64), dimension(5) :: data
         character(len=MAX_NAME_LEN), dimension(1) :: bad_names
         logical :: test_passed

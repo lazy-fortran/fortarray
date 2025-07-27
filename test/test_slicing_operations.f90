@@ -1,5 +1,5 @@
 program test_slicing_operations
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -43,7 +43,7 @@ program test_slicing_operations
 contains
 
     subroutine test_basic_slice_syntax()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(10) :: data
         integer :: i
         logical :: test_passed
@@ -86,7 +86,7 @@ contains
     end subroutine test_basic_slice_syntax
     
     subroutine test_negative_indices()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(10) :: data
         integer :: i
         logical :: test_passed
@@ -128,7 +128,7 @@ contains
     end subroutine test_negative_indices
     
     subroutine test_step_values()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(10) :: data
         integer :: i
         logical :: test_passed
@@ -171,7 +171,7 @@ contains
     end subroutine test_step_values
     
     subroutine test_slice_preserve_coordinates()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(10) :: data, coord_vals
         integer :: i, stat
@@ -233,7 +233,7 @@ contains
     end subroutine test_slice_preserve_coordinates
     
     subroutine test_slice_1d_array()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -270,7 +270,7 @@ contains
     end subroutine test_slice_1d_array
     
     subroutine test_slice_2d_array()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(12) :: data
         integer :: i
         logical :: test_passed
@@ -306,7 +306,7 @@ contains
     end subroutine test_slice_2d_array
     
     subroutine test_slice_3d_array()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(24) :: data
         integer :: i
         logical :: test_passed
@@ -342,7 +342,7 @@ contains
     end subroutine test_slice_3d_array
     
     subroutine test_slice_edge_cases()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -385,7 +385,7 @@ contains
     end subroutine test_slice_edge_cases
     
     subroutine test_slice_with_broadcasting()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(12) :: data
         integer :: i
         logical :: test_passed
@@ -421,7 +421,7 @@ contains
     end subroutine test_slice_with_broadcasting
     
     subroutine test_slice_performance()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(1000) :: data
         integer :: i
         logical :: test_passed
@@ -455,7 +455,7 @@ contains
     end subroutine test_slice_performance
     
     subroutine test_slice_multidimensional()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(60) :: data
         integer :: i
         logical :: test_passed
@@ -491,7 +491,7 @@ contains
     end subroutine test_slice_multidimensional
     
     subroutine test_slice_bounds_checking()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -522,7 +522,7 @@ contains
     end subroutine test_slice_bounds_checking
     
     subroutine test_slice_empty_result()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -552,7 +552,7 @@ contains
     end subroutine test_slice_empty_result
     
     subroutine test_slice_coordinate_update()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data, coord_vals
         integer :: stat
@@ -602,7 +602,7 @@ contains
     end subroutine test_slice_coordinate_update
     
     subroutine test_slice_attributes_preservation()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         

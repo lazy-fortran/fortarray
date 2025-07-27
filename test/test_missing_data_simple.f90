@@ -1,5 +1,5 @@
 program test_missing_data_simple
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic
     implicit none
@@ -32,7 +32,7 @@ program test_missing_data_simple
 contains
 
     subroutine test_isnull_basic()
-        type(variable_t) :: var, null_mask
+        type(fortarray_t) :: var, null_mask
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -71,7 +71,7 @@ contains
     end subroutine test_isnull_basic
     
     subroutine test_fillna_basic()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed
@@ -110,7 +110,7 @@ contains
     end subroutine test_fillna_basic
     
     subroutine test_dropna_basic()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         real(real64) :: missing
         logical :: test_passed

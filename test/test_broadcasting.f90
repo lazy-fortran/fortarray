@@ -1,5 +1,5 @@
 program test_broadcasting
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -36,7 +36,7 @@ program test_broadcasting
 contains
 
     subroutine test_dimension_alignment()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(3,4) :: data1
         real(real64), dimension(3,4) :: data2
         integer :: i, j
@@ -78,7 +78,7 @@ contains
     end subroutine test_dimension_alignment
     
     subroutine test_scalar_broadcasting()
-        type(variable_t) :: scalar_var, array_var, result
+        type(fortarray_t) :: scalar_var, array_var, result
         real(real64) :: scalar_val = 5.0_real64
         real(real64), dimension(3,4) :: array_data
         integer :: i
@@ -127,7 +127,7 @@ contains
     end subroutine test_scalar_broadcasting
     
     subroutine test_1d_broadcasting()
-        type(variable_t) :: vec_var, mat_var, result
+        type(fortarray_t) :: vec_var, mat_var, result
         real(real64), dimension(4) :: vec_data
         real(real64), dimension(3,4) :: mat_data
         integer :: i
@@ -181,7 +181,7 @@ contains
     end subroutine test_1d_broadcasting
     
     subroutine test_2d_broadcasting()
-        type(variable_t) :: mat1, mat2, result
+        type(fortarray_t) :: mat1, mat2, result
         real(real64), dimension(1,4) :: data1
         real(real64), dimension(3,4) :: data2
         integer :: i
@@ -223,7 +223,7 @@ contains
     end subroutine test_2d_broadcasting
     
     subroutine test_multi_dimensional_broadcasting()
-        type(variable_t) :: var1, var2, var3, result
+        type(fortarray_t) :: var1, var2, var3, result
         real(real64), dimension(1,3,1) :: data1
         real(real64), dimension(2,1,4) :: data2
         real(real64), dimension(2,3,4) :: expected_shape_data
@@ -266,7 +266,7 @@ contains
     end subroutine test_multi_dimensional_broadcasting
     
     subroutine test_broadcasting_errors()
-        type(variable_t) :: var1, var2
+        type(fortarray_t) :: var1, var2
         real(real64), dimension(3,4) :: data1
         real(real64), dimension(5,6) :: data2
         integer :: i
@@ -300,7 +300,7 @@ contains
     end subroutine test_broadcasting_errors
     
     subroutine test_broadcasting_with_missing_dims()
-        type(variable_t) :: var1d, var3d, result
+        type(fortarray_t) :: var1d, var3d, result
         real(real64), dimension(4) :: data1d
         real(real64), dimension(2,3,4) :: data3d
         integer :: i
@@ -342,7 +342,7 @@ contains
     end subroutine test_broadcasting_with_missing_dims
     
     subroutine test_broadcasting_optimization()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(1000,1) :: data1
         real(real64), dimension(1,1000) :: data2
         integer :: i

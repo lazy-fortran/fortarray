@@ -1,278 +1,410 @@
-# Foxel Development Backlog
+# FortArray Development Backlog
 
 ## Development Principles
 - **NO SHORTCUTS**: Every feature must be fully implemented with proper error handling
 - **NO SIMPLIFICATIONS**: Full functionality as described, no "minimal viable" versions
 - **NO CHEATING**: Proper algorithms, no placeholder implementations
+- **NO CODE DUPLICATION**: NEVER create duplicate functionality - MOVE or DELETE old code when replacing
+- **NO DEAD CODE**: ALWAYS remove obsolete functions, modules, and procedures when implementing new ones
+- **NO BACKWARD COMPATIBILITY**: DELETE old APIs completely when implementing new xarray-compatible ones
+- **CLEAN BREAKS**: Old function names, old modules, old interfaces - DELETE them all
+- **CLEAN REFACTORING**: When adding new methods, MIGRATE existing functionality then DELETE old interfaces
 - **COMPLETE TESTING**: Every public API must have comprehensive tests
 - **FULL DOCUMENTATION**: Every module, type, and procedure must be documented
 - **NETCDF COMPLIANCE**: Follow NetCDF data model and CF conventions
+- **XARRAY COMPATIBILITY**: Achieve 85%+ API similarity to xarray while maintaining Fortran performance
 
-## Architecture Refactoring (IMMEDIATE PRIORITY)
+## Architecture Transformation (IMMEDIATE PRIORITY)
 
-### Sprint 0: Refactor to NetCDF Model ✓
-- [x] Rename `dataframe_t` to `variable_t` throughout codebase
-- [x] Update all references from "dataframe" to "variable"
-- [x] Create `dataset_t` type for multi-variable collections
-- [x] Update module names to reflect NetCDF terminology
-- [x] Refactor tests to use new type names
-- [x] Update all documentation
+### Sprint 0: Global Rename Foxel → FortArray ✅ COMPLETED
+- [x] Rename all modules from `foxel_*` to `fortarray_*`
+- [x] Rename `variable_t` to `fortarray_t` throughout codebase
+- [x] Update all references from "foxel" to "fortarray" (case insensitive)
+- [x] Update documentation and README
+- [x] Update repository name and URLs
+- [x] Update all import statements and module names
+- [x] Test compilation and basic functionality
+- [x] Commit and push changes
 
-## Phase 1: Core Data Structures (Sprint 1-4)
+### Sprint 0.5: Critical Analysis and Implementation Planning ✅ COMPLETED
+- [x] **CRITICAL**: Review XARRAY.md plan for oversimplifications
+- [x] **CRITICAL**: Identify gaps between current `fortarray_t` and planned xarray API
+- [x] **CRITICAL**: Assess Fortran-specific implementation challenges:
+  - [x] Method chaining memory management
+  - [x] Performance implications of multiple method overloads
+  - [x] Coordinate lookup optimization needs
+  - [x] Broadcasting compatibility with new selection methods
+- [x] **CRITICAL**: Design concrete implementation for:
+  - [x] `slice_t` type for range operations
+  - [x] Generic coordinate comparison (string, numeric, datetime)
+  - [x] Efficient nearest-neighbor selection algorithms
+  - [x] Method chaining temporary object management
+- [x] Plan performance benchmarking strategy vs current implementation
+- [x] Update sprint priorities based on complexity analysis
 
-### Sprint 1: Basic Type Definitions ✓
-- [x] Define core types (now as variable_t with NetCDF semantics)
-- [x] Refactor to variable_t with NetCDF semantics
-- [x] Add dimension_t type for named dimensions
-- [x] Add dataset_t type for variable collections
-- [x] Update finalizers for new types
-- [x] Refactor test suite for new type names
+## 🚨 CRITICAL FINDINGS FROM ANALYSIS 🚨
 
-### Sprint 2: Generic Data Storage ✓ (COMPATIBLE)
-- [x] Implement generic interfaces for data types
-- [x] Create type-specific storage modules
-- [x] Implement proper type conversion routines
-- [x] Add bounds checking for all array operations
-- [x] Test all type combinations exhaustively
+### **Major Oversimplifications Found in XARRAY.md:**
+1. **MISSING**: Current `fortarray_t` has ZERO xarray-compatible methods
+2. **MISSING**: No constructor framework (`new_array`, `new_dataset`)  
+3. **CONFLICT**: Existing selection API uses position-based, not name-based coordinates
+4. **MISSING**: No plot accessor in `fortarray_t` type
+5. **UNDERESTIMATED**: Method chaining requires complete memory management redesign
 
-### Sprint 3: Constructor Functions ✓
-- [x] Implement `variable()` constructor
-  - [x] Support 0D scalars through nD arrays (real64, real32, int32, int64)
-  - [x] Validate dimension names (no duplicates, valid identifiers)
-  - [x] Validate coordinate arrays (correct lengths)
-  - [x] Handle optional parameters properly
-- [x] Implement `dataset()` constructor
-  - [x] Empty dataset constructor
-  - [x] From variables constructor
-- [x] Create convenience constructors
-  - [x] From arrays with auto-generated coordinates
-  - [x] From CSV files
-  - [x] Empty variables with specified dimensions
-  - [x] Scalar constructors
-- [x] Test edge cases (scalars, empty data, large arrays)
-- [x] Fix data type mapping between storage and types modules
-- [x] Implement deep copy for coordinates
-- [x] All constructor tests passing
+### **Implementation Complexity Severely Underestimated:**
+- **High Complexity** (6+ months): Method chaining, plot integration, groupby
+- **Medium Complexity** (2-3 months): Adding xarray methods, constructors, selection API  
+- **Low Complexity** (2-4 weeks): Basic aggregations, data access
 
-### Sprint 4: Basic Indexing ✓
-- [x] Implement positional indexing for variables
-  - [x] 1D, 2D, 3D, and N-dimensional positional indexing
-  - [x] Bounds checking and error handling
-  - [x] Optional arguments for clean API
-- [x] Implement label-based indexing using coordinates
-  - [x] String label indexing
-  - [x] Numeric label indexing
-  - [x] Multi-dimensional label indexing
-- [x] Support multi-dimensional indexing
-  - [x] Generic N-dimensional support
-  - [x] Linear index calculation for column-major order
-- [x] Handle scalar variable indexing (0D)
-  - [x] Scalar variable support verified
-- [x] Create dataset variable selection methods
-  - [x] get_variable, has_variable, add_variable, remove_variable
-  - [x] list_variables, select_variables
-  - [x] Comprehensive error handling
-- [x] Test all indexing combinations
-  - [x] All 15 indexing tests passing
-  - [x] All 6 dataset tests passing
+### **Sprint Priority Complete Reordering Required:**
+Foundation work is 10x more complex than originally estimated.
 
-## Phase 2: I/O Operations (Sprint 5-8)
+## Phase 1: CRITICAL FOUNDATION WORK (Sprint 1-6) - COMPLETELY REDESIGNED
 
-### Sprint 5: NetCDF4 Reader ✓
-- [x] Implement complete NetCDF4 file reading
-  - [x] Read all dimensions and their lengths
-  - [x] Read all variables with proper types
-  - [x] Handle coordinate variables specially
-  - [x] Read all attributes (global and variable)
-  - [ ] Support NetCDF4 groups (deferred to Phase 9)
-- [x] Handle special cases
-  - [x] Scalar variables (0D)
-  - [x] Unlimited dimensions
-  - [ ] String variables (partial - reads as char arrays)
-  - [x] Missing values and fill values
-- [x] Create dataset from NetCDF file
-- [x] Selective variable loading
-- [ ] Test with real NetCDF files (deferred to integration testing)
+### Sprint 1: 🚨 MASSIVE TYPE SYSTEM OVERHAUL (8+ weeks)
+- [x] Rename `variable_t` → `fortarray_t` as central type (COMPLETED)
+- [ ] **CRITICAL + NO DUPLICATION**: Add ALL xarray-compatible method signatures to `fortarray_t`:
+  
+  **Selection Methods** (20+ procedures) - MIGRATE existing `fortarray_coordinate_selection.f90`:
+  - [ ] **MOVE CODE**: Migrate `sel()` from external function to `sel_point_r64()` method - DELETE old function
+  - [ ] **MOVE CODE**: Migrate `sel_range()` to `sel_range_r64()` method - DELETE old function  
+  - [ ] **MOVE CODE**: Migrate `isel()` to `isel_point()` method - DELETE old function
+  - [ ] **ADD NEW**: `sel_point_r32(coord_name, value, method)` - coordinate name-based selection
+  - [ ] **ADD NEW**: `sel_point_char(coord_name, value, method)` - string coordinate selection
+  - [ ] **ADD NEW**: `sel_range_char(coord_name, start, stop)` - time range selection
+  - [ ] **ADD NEW**: `isel_range(dim_name, start, stop, step)` - index range selection
+  - [ ] **ADD NEW**: `isel_indices(dim_name, indices)` - fancy indexing
+  - [ ] **ADD NEW**: `filter_condition(condition, other_value)` - xarray where() equivalent
+  - [ ] **ADD NEW**: `filter_mask(mask)` - boolean mask filtering
+  - [ ] **DELETE**: Remove `fortarray_coordinate_selection.f90` after migration complete
+  
+  **Aggregation Methods** (25+ procedures) - MIGRATE existing aggregation functions:
+  - [ ] **MOVE CODE**: Find and migrate existing `mean` functions to `mean_all()`, `mean_dims()` methods
+  - [ ] **MOVE CODE**: Find and migrate existing `sum` functions to `sum_all()`, `sum_dims()` methods  
+  - [ ] **MOVE CODE**: Find and migrate existing statistical functions to type-bound procedures
+  - [ ] **ADD NEW**: `std_all()`, `std_dims(dims)` - standard deviation methods
+  - [ ] **ADD NEW**: `var_all()`, `var_dims(dims)` - variance methods
+  - [ ] **ADD NEW**: `min_all()`, `min_dims(dims)` - minimum methods
+  - [ ] **ADD NEW**: `max_all()`, `max_dims(dims)` - maximum methods
+  - [ ] **ADD NEW**: `median()`, `quantile(q)` - statistical methods
+  - [ ] **DELETE**: Remove old standalone aggregation functions after migration
+  
+  **Data Access Methods** (10+ procedures) - MIGRATE existing I/O:
+  - [ ] **MOVE CODE**: Migrate NetCDF write functions to `to_netcdf_file()` method
+  - [ ] **ADD NEW**: `values_all()`, `values_copy()` - data extraction methods
+  - [ ] **ADD NEW**: `to_pandas_like()` - pandas compatibility method
+  - [ ] **DELETE**: Remove old standalone I/O functions after migration
+  
+  **Missing Data Methods** (15+ procedures) - NEW functionality:
+  - [ ] **ADD NEW**: `fillna_value(value)`, `fillna_method(method)` - missing data filling
+  - [ ] **ADD NEW**: `dropna_any()`, `dropna_all()` - missing data removal
+  - [ ] **ADD NEW**: `interpolate_na_linear()`, `interpolate_na_cubic()` - interpolation
+  - [ ] **ADD NEW**: `ffill()`, `bfill()` - forward/backward fill
+  
+  **Dimension Methods** (10+ procedures) - MIGRATE existing operations:
+  - [ ] **MOVE CODE**: Find and migrate existing transpose functions to `transpose_all()`, `transpose_order()` methods
+  - [ ] **ADD NEW**: `stack_dims(dims)`, `unstack_dims(dims)` - dimension stacking
+  - [ ] **ADD NEW**: `squeeze_all()`, `squeeze_dims(dims)` - dimension squeezing
+  - [ ] **ADD NEW**: `expand_dims_axis(axis)` - dimension expansion
+  - [ ] **DELETE**: Remove old standalone dimension functions after migration
+  
+  **Generic Interfaces** (15+ generics) - NO DUPLICATION:
+  - [ ] **CREATE**: `generic :: sel => sel_point_r64, sel_point_r32, sel_point_char`
+  - [ ] **CREATE**: `generic :: sel_range => sel_range_r64, sel_range_char`
+  - [ ] **CREATE**: `generic :: mean => mean_all, mean_dims`
+  - [ ] **CREATE**: `generic :: sum => sum_all, sum_dims`
+  - [ ] **CREATE**: 11+ more generic interfaces for clean API
 
-### Sprint 6: NetCDF4 Writer ✓
-- [x] Implement complete NetCDF4 writing
-  - [x] Define dimensions (including unlimited)
-  - [x] Define variables with proper types
-  - [x] Write coordinate variables
-  - [x] Write all attributes with type safety
-  - [x] Support compression and chunking
-- [x] Dataset to NetCDF file conversion
-- [x] Atomic writes (temp file + rename)
-- [x] CF-convention compliance checking
-- [x] Test round-trip fidelity
+- [ ] **CRITICAL + MOVE CODE**: Plot accessor integration:
+  - [ ] **MIGRATE**: Move plotting functions from `fortarray_fortplot_integration.f90` to plot accessor methods
+  - [ ] **ADD**: `type(plot_accessor_t) :: plot` component in `fortarray_t`
+  - [ ] **ADD**: `procedure :: init_plot_accessor` method
+  - [ ] **DELETE**: Remove standalone plotting functions after migration to accessor pattern
+  - [ ] **DELETE**: Remove entire `fortarray_fortplot_integration.f90` module when migration complete
 
-### Sprint 7: CSV I/O ✓
-- [x] CSV to 2D variable conversion
-- [x] Variable to CSV export (2D only)
-- [x] Handle headers and data types
-- [x] Support missing values
-- [x] Test with real CSV files
+- [ ] **CRITICAL + CLEAN BREAKS**: NO backward compatibility - DELETE all old APIs
+- [ ] **CRITICAL + CLEAN DESIGN**: Method chaining memory management - NO memory leaks
+- [ ] **CRITICAL + BENCHMARKING**: Performance impact assessment with memory profiling
+- [ ] **CRITICAL + COMPLETE MIGRATION**: Update ALL existing code to use new methods - DELETE old function calls and old modules
 
-### Sprint 8: Format Detection ✓
-- [x] Implement `from_file()` with auto-detection
-- [x] Support .nc, .nc4, .hdf5, .csv extensions
-- [x] Content-based format detection
-- [x] Comprehensive error messages
+**Estimated Effort**: 8-12 weeks (MASSIVELY underestimated in original plan)
+**Code Quality**: ZERO duplication - every old function MOVED or DELETED
 
-## Phase 3: Data Manipulation (Sprint 9-12)
+### Sprint 2: Constructor Harmonization - MIGRATE EXISTING CONSTRUCTORS
+- [ ] **MOVE CODE**: Find existing `fortarray_t` constructors and MIGRATE to xarray-style interfaces
+- [ ] **DELETE**: Remove old constructor functions after migration complete
+- [ ] **CREATE NEW**: `new_array()` constructor interface (avoid case conflict):
+  - [ ] **NO DUPLICATION**: `new_array(data, dims, name, units, attrs)` - REPLACE old constructors
+  - [ ] **NO DUPLICATION**: `new_array(scalar_value, name, units)` - REPLACE scalar constructors
+  - [ ] **NO DUPLICATION**: `new_array(data, coords, dims, name)` - REPLACE coordinate constructors
+- [ ] **CREATE NEW**: `new_dataset()` constructor interface:
+  - [ ] **NO DUPLICATION**: `new_dataset(arrays, coords, attrs)` - REPLACE old dataset constructors
+  - [ ] **NO DUPLICATION**: `new_dataset()` empty constructor - REPLACE empty constructors
+- [ ] **CLEAN IMPLEMENTATION**: Positional argument constructors (no keyword args in Fortran)
+- [ ] **NO DUPLICATION**: Overloaded constructors for all data types - CONSOLIDATE existing overloads
+- [ ] **RIGOROUS VALIDATION**: Add validation for all constructor arguments
+- [ ] **COMPREHENSIVE TESTING**: Test all constructor combinations with edge cases
+- [ ] **CLEAN BREAKS**: NO backward compatibility - DELETE old constructor interfaces completely when migration complete
 
-### Sprint 9: Broadcasting Engine ✓
-- [x] Implement dimension alignment
-- [x] Support operations between variables
-- [x] Handle scalar broadcasting
-- [x] Optimize common patterns
-- [x] Test all scenarios
+### Sprint 3: Selection Method Implementation - COMPLETE MIGRATION FROM EXTERNAL FUNCTIONS
+- [ ] **MIGRATE EXISTING**: Coordinate-based selection (`sel_*` methods) from `fortarray_coordinate_selection.f90`:
+  - [ ] **MOVE CODE**: Point selection with exact match - MIGRATE existing `sel()` function
+  - [ ] **MOVE CODE**: Point selection with nearest-neighbor - MIGRATE existing nearest-neighbor logic
+  - [ ] **MOVE CODE**: Range selection with start/stop values - MIGRATE existing `sel_range()` function
+  - [ ] **ADD NEW**: Multiple coordinate selection - extend migrated functionality
+  - [ ] **DELETE**: Remove external `sel()` functions after migration to type-bound procedures
+  - [ ] **DELETE**: Remove entire `fortarray_coordinate_selection.f90` module when migration complete
+- [ ] **MIGRATE EXISTING**: Index-based selection (`isel_*` methods):
+  - [ ] **MOVE CODE**: Single index selection - MIGRATE existing `isel()` function
+  - [ ] **ADD NEW**: Range selection with step support - extend existing functionality
+  - [ ] **ADD NEW**: Multiple index selection (fancy indexing) - new capability
+  - [ ] **DELETE**: Remove external `isel()` functions after migration complete
+  - [ ] **NO OLD APIs**: No backward compatibility for old selection function names
+- [ ] **NO DUPLICATION**: Comprehensive error handling - CONSOLIDATE existing error handling from external functions
+- [ ] **OPTIMIZE MIGRATED CODE**: Coordinate lookup algorithms - improve existing algorithms during migration
+- [ ] **COMPREHENSIVE TESTING**: Test edge cases (empty selections, out of bounds, etc.) - MIGRATE and EXPAND existing tests
 
-### Sprint 10: Arithmetic Operations ✓
-- [x] Variable arithmetic (+, -, *, /, **)
-- [x] Scalar-variable operations
-- [x] Type promotion rules
-- [x] NaN/missing value handling
-- [x] Operator overloading
+### Sprint 4: Method Chaining Infrastructure - CLEAN MEMORY MANAGEMENT
+- [ ] **NO MEMORY LEAKS**: Ensure ALL methods return `fortarray_t` for chaining with proper cleanup
+- [ ] **CLEAN DESIGN**: Implement efficient memory management for chained operations - NO temporary object accumulation
+- [ ] **OPTIMIZE**: Add copy-on-write semantics where appropriate - AVOID unnecessary data copying
+- [ ] **VALIDATE CHAINING**: Test complex chaining: `temp%sel_point()%mean()%filter()` - ensure NO memory leaks
+- [ ] **BENCHMARK**: Add performance tests for chaining vs separate operations - document memory overhead
+- [ ] **CLEAN IMPLEMENTATION**: Optimize temporary object creation and destruction - use memory pools if needed
+- [ ] **NO DEAD REFERENCES**: Ensure proper finalizer calls in chained operations
 
-### Sprint 11: Aggregation Functions ✓
-- [x] Statistical functions on variables
-  - [x] Mean, sum, min, max
-  - [x] Standard deviation, variance
-  - [x] Quantiles, median
-- [x] Operations along dimensions
-- [x] Weighted aggregations
-- [x] Handle missing data properly
+### Sprint 5: Filtering and Conditional Operations - NEW FUNCTIONALITY
+- [ ] **ADD NEW**: Implement `filter(condition, other_value)` method - xarray `where()` equivalent
+- [ ] **ADD NEW**: Boolean mask creation and application - clean implementation
+- [ ] **ADD NEW**: Support condition chaining (AND, OR, NOT operations) - efficient algorithms
+- [ ] **ADD NEW**: Implement `fillna` style replacement operations - missing data handling
+- [ ] **OPTIMIZE**: Add vectorized condition evaluation - high performance implementation
+- [ ] **COMPREHENSIVE TESTING**: Test with complex boolean expressions - edge case validation
 
-### Sprint 12: Missing Data ✓
-- [x] Define fill value semantics
-- [x] Implement where() for masking
-- [x] fillna() with various methods
-- [x] dropna() along dimensions
-- [x] Interpolation for missing values
+### Sprint 6: Data Access and Conversion Methods - MIGRATE I/O FUNCTIONALITY
+- [ ] **MIGRATE EXISTING**: Find and MOVE existing data access functions to `values()` method - DELETE old functions
+- [ ] **ADD NEW**: `to_numpy()` style methods for interoperability - clean interface design
+- [ ] **CLEAN IMPLEMENTATION**: Efficient data copying vs views - avoid unnecessary allocations
+- [ ] **CONSOLIDATE**: Data type conversion methods - MIGRATE and IMPROVE existing conversions
+- [ ] **OPTIMIZE**: Support different array layouts (column-major/row-major) - efficient memory access
+- [ ] **BENCHMARK**: Test memory efficiency of data access patterns - document performance characteristics
+- [ ] **DELETE**: Remove old standalone data access functions after migration complete
 
-## Phase 4: Advanced Indexing (Sprint 13-16)
+## Phase 2: Advanced Selection and Aggregation (Sprint 7-12)
 
-### Sprint 13: Coordinate-based Selection ✓
-- [x] Select by coordinate values
-- [x] Range selection (inclusive)
-- [x] Nearest-neighbor selection
-- [x] Multi-dimensional selection
-- [x] Performance optimization
+### Sprint 7: Enhanced Selection Methods
+- [ ] Implement nearest-neighbor selection with different algorithms
+- [ ] Add interpolation-based selection
+- [ ] Support string/datetime coordinate selection
+- [ ] Implement multi-dimensional selection optimization
+- [ ] Add selection validation and detailed error messages
+- [ ] Performance optimization for large coordinate arrays
 
-### Sprint 14: Boolean Indexing ✓
-- [x] Create boolean masks
-- [x] Apply masks to variables
-- [x] Conditional selection
-- [x] Multi-condition support
+### Sprint 8: Index Selection Enhancements
+- [ ] Support negative indexing (Python-style)
+- [ ] Implement fancy indexing with integer arrays
+- [ ] Add step-based indexing with memory optimization
+- [ ] Boolean mask selection integration
+- [ ] Optimize index calculation algorithms for nD arrays
+- [ ] Memory-efficient index operations for large datasets
 
-### Sprint 15: Slicing Operations ✓
-- [x] Implement slice syntax
-- [x] Support negative indices
-- [x] Step values in slices
-- [x] Preserve coordinates
+### Sprint 9: Advanced Aggregation Functions
+- [ ] Add quantile and percentile functions
+- [ ] Implement weighted aggregations
+- [ ] Add cumulative operations (cumsum, cumprod)
+- [ ] Rolling window aggregations with configurable windows
+- [ ] Multi-dimensional aggregations with axis specification
+- [ ] Statistical significance tests integration
 
-### Sprint 16: Interpolation ✓
-- [x] Linear interpolation
-- [x] Nearest-neighbor
-- [x] Higher-order methods
-- [x] Extrapolation options
+### Sprint 10: Dimension Manipulation
+- [ ] Implement `transpose` method with axis reordering
+- [ ] Add `stack` and `unstack` operations
+- [ ] Implement `squeeze` and `expand_dims`
+- [ ] Support dimension renaming operations
+- [ ] Add dimension broadcasting compatibility
+- [ ] Optimize dimension operations for large arrays
 
-## Phase 5: Computation Engine (Sprint 17-20)
+### Sprint 11: Missing Data Advanced Handling
+- [ ] Implement `interpolate_na` with multiple methods
+- [ ] Add forward fill (`ffill`) and backward fill (`bfill`)
+- [ ] Support different interpolation algorithms
+- [ ] Add `dropna` with axis and threshold support
+- [ ] Implement advanced filling strategies
+- [ ] Handle NaN propagation correctly in all operations
 
-### Sprint 17: Apply Functions ✓
-- [x] Apply along dimensions
-- [x] User-defined functions
-- [x] Vectorized operations
-- [x] Result type inference
+### Sprint 12: Performance Optimization Layer
+- [ ] Add SIMD optimization for selection operations
+- [ ] Implement parallel coordinate lookup
+- [ ] Add memory layout optimization for common access patterns
+- [ ] Create specialized algorithms for sorted coordinates
+- [ ] Add caching for frequently accessed coordinate ranges
+- [ ] Benchmark against xarray performance
 
-### Sprint 18: Lazy Evaluation ✓
-- [x] Computation graph
-- [x] Deferred execution
-- [x] Memory optimization
-- [x] Automatic chunking
+## Phase 3: Groupby and Resampling (Sprint 13-16)
 
-### Sprint 19: Chunked Operations ✓
-- [x] Define chunk sizes
-- [x] Iterate over chunks
-- [x] Parallel chunk processing
-- [x] Out-of-core algorithms
+### Sprint 13: Basic Groupby Implementation
+- [ ] Create `groupby_t` type with proper memory management
+- [ ] Implement `groupby()` method on `fortarray_t`
+- [ ] Add coordinate-based grouping with validation
+- [ ] Support groupby aggregations (mean, sum, std, etc.)
+- [ ] Implement efficient group iteration
+- [ ] Add comprehensive group validation and error handling
 
-### Sprint 20: Parallel Computing ✓
-- [x] OpenMP integration
-- [x] Thread-safe operations
-- [x] Load balancing
-- [x] Reduction operations
+### Sprint 14: Time-based Groupby
+- [ ] Implement time component extraction (year, month, season)
+- [ ] Add `groupby('time.month')` functionality
+- [ ] Support seasonal grouping with calendar awareness
+- [ ] Add custom time period grouping
+- [ ] Implement time zone handling
+- [ ] Calendar-aware grouping operations
 
-## Phase 6: Visualization (Sprint 21-22)
+### Sprint 15: Advanced Groupby Features
+- [ ] Implement `groupby_bins` with flexible binning
+- [ ] Add histogram-style binning with edge handling
+- [ ] Support custom binning functions
+- [ ] Add quantile-based binning
+- [ ] Multi-variable grouping support
+- [ ] Optimize groupby performance for large datasets
 
-### Sprint 21: Fortplot Integration ✓
-- [x] Variable plot methods
-- [x] Automatic axis labels
-- [x] Coordinate-aware plotting
-- [x] Dataset visualization
+### Sprint 16: Resampling Implementation
+- [ ] Implement `resample()` method with frequency support
+- [ ] Add time frequency conversion
+- [ ] Support upsampling and downsampling
+- [ ] Add resampling aggregations
+- [ ] Implement time series alignment
+- [ ] Add resampling interpolation methods
 
-### Sprint 22: Plot Types ✓
-- [x] Line plots (1D)
-- [x] Contour plots (2D)
-- [x] Surface plots (2D)
-- [x] Time series plots
+## Phase 4: I/O and Interoperability (Sprint 17-20)
 
-## Phase 7: Time Series Support (Sprint 23-24)
+### Sprint 17: Enhanced NetCDF I/O
+- [ ] Update I/O to work seamlessly with `fortarray_t`
+- [ ] Add xarray-compatible I/O methods (`open_dataset`, `to_netcdf`)
+- [ ] Implement `open_dataarray()` function
+- [ ] Support chunked reading/writing with optimization
+- [ ] Add compression and encoding options
+- [ ] Test with real-world large NetCDF files
 
-### Sprint 23: Time Coordinates ✓
-- [x] CF-compliant time handling
-- [x] Calendar support
-- [x] Time unit conversions
-- [x] Datetime parsing
+### Sprint 18: Multiple File Operations
+- [ ] Implement `open_mfdataset()` for multiple files
+- [ ] Add concatenation along specified dimensions
+- [ ] Support parallel file reading
+- [ ] Add file pattern matching and globbing
+- [ ] Implement lazy loading for datasets larger than memory
+- [ ] Add memory usage optimization and monitoring
 
-### Sprint 24: Time Operations ✓
-- [x] Time-based indexing
-- [x] Resampling methods
-- [x] Rolling windows
-- [x] Seasonal statistics
+### Sprint 19: Format Support Extension
+- [ ] Enhance HDF5 support with group handling
+- [ ] Add Zarr format support (future-proofing)
+- [ ] Improve CSV I/O with proper metadata handling
+- [ ] Add binary format support for performance
+- [ ] Implement format auto-detection improvements
+- [ ] Add format conversion utilities
 
-## Phase 8: Quality Assurance (Sprint 25-26)
+### Sprint 20: Interoperability Layer
+- [ ] Implement `to_pandas()` method for DataFrame conversion
+- [ ] Add pandas-compatible export formats
+- [ ] Create data exchange utilities for other libraries
+- [ ] Add CSV export with proper headers and metadata
+- [ ] Implement table-style operations where appropriate
+- [ ] Add Python interoperability layer (future)
 
-### Sprint 25: Testing ✓
-- [x] 100% public API coverage
-- [x] Integration test suite
-- [x] Performance benchmarks
-- [x] Memory leak checks
+## Phase 5: Testing and Quality Assurance (Sprint 21-24)
 
-### Sprint 26: Optimization ✓
-- [x] Profile critical paths
-- [x] SIMD optimizations  
-- [x] Cache efficiency
-- [x] Parallel scaling
+### Sprint 21: xarray Compatibility Testing
+- [ ] Create comprehensive xarray comparison test suite
+- [ ] Test API compatibility across all new methods
+- [ ] Add numerical accuracy verification tests
+- [ ] Test error handling compatibility
+- [ ] Add performance comparison benchmarks
+- [ ] Create migration validation test suite
 
-## Phase 9: Documentation (Sprint 27-28)
+### Sprint 22: Comprehensive Testing
+- [ ] Add edge case testing for all new methods
+- [ ] Test boundary conditions and error recovery
+- [ ] Add stress tests for large datasets
+- [ ] Test memory limit scenarios
+- [ ] Add concurrent access testing
+- [ ] Numerical stability and precision tests
 
-### Sprint 27: User Guide ✓
-- [x] Getting started guide
-- [x] API reference
-- [x] Example gallery
-- [x] Migration guides
+### Sprint 23: Performance Testing
+- [ ] Create automated performance benchmarks
+- [ ] Add memory usage monitoring and leak detection
+- [ ] Test scaling behavior with dataset size
+- [ ] Add compilation time monitoring
+- [ ] Create performance CI pipeline
+- [ ] Add performance regression alerts
 
-### Sprint 28: Developer Docs ✓
-- [x] Architecture overview
-- [x] Contributing guide
-- [x] Performance guide
-- [x] Extension guide
+### Sprint 24: Integration Testing
+- [ ] Test with real scientific workflows
+- [ ] Add end-to-end scenario testing
+- [ ] Test interoperability with existing Fortran libraries
+- [ ] Add long-running stability tests
+- [ ] Test different compiler compatibility
+- [ ] Add platform compatibility testing
+
+## Phase 6: Documentation and Migration (Sprint 25-28)
+
+### Sprint 25: Migration Documentation
+- [ ] Create comprehensive xarray → FortArray migration guide
+- [ ] Add side-by-side API comparisons with examples
+- [ ] Document syntax differences and workarounds
+- [ ] Add automated migration examples
+- [ ] Create migration best practices guide
+- [ ] Add performance optimization guide for migrated code
+
+### Sprint 26: Enhanced Documentation
+- [ ] Update all API documentation for new methods
+- [ ] Add xarray-style examples throughout
+- [ ] Document method chaining patterns and best practices
+- [ ] Add performance guidance for each operation
+- [ ] Create searchable API reference
+- [ ] Add inline documentation with examples
+
+### Sprint 27: Tutorial Development
+- [ ] Create comprehensive getting started tutorial
+- [ ] Add example gallery with real-world use cases
+- [ ] Document common scientific workflows
+- [ ] Add performance optimization tutorial
+- [ ] Create video tutorials (optional)
+- [ ] Add community contribution examples
+
+### Sprint 28: User Support Infrastructure
+- [ ] Create migration assistance tools
+- [ ] Add compatibility checking utilities
+- [ ] Implement automated code conversion helpers
+- [ ] Add deprecation management system
+- [ ] Create community support resources
+- [ ] Add comprehensive FAQ and troubleshooting guide
 
 ## Acceptance Criteria
-1. **Functionality**: Correct behavior for all cases
-2. **Performance**: Meets benchmark targets
-3. **Memory**: No leaks, efficient usage
-4. **Testing**: Comprehensive coverage
-5. **Documentation**: Complete and clear
-6. **NetCDF Compliance**: Follows conventions
+1. **xarray Compatibility**: 85%+ API similarity achieved with clean new API
+2. **Performance**: Maintains or improves Fortran performance advantages
+3. **NO BACKWARD COMPATIBILITY**: All old APIs completely DELETED - clean break from past
+4. **Testing**: Comprehensive test coverage including xarray compatibility tests
+5. **Documentation**: Complete migration guides and API documentation with examples showing NEW API only
+6. **User Experience**: Clean modern xarray-style API with zero legacy baggage
+7. **Code Quality**: ZERO duplication - all old functions, modules, and interfaces completely removed
 
 ## Definition of Done
-- [ ] Code compiles without warnings
+- [ ] All new APIs implemented with full functionality (no placeholders)
+- [ ] Code compiles without warnings on multiple compilers
 - [ ] All tests pass with OMP_NUM_THREADS=24
-- [ ] Memory leak check passes
-- [ ] Code coverage > 95%
-- [ ] Documentation complete
-- [ ] Performance targets met
-- [ ] Code reviewed
+- [ ] Memory leak checks pass
+- [ ] xarray compatibility tests pass
+- [ ] Performance benchmarks meet or exceed targets
+- [ ] Documentation complete with working examples showing ONLY new API
+- [ ] ALL old functions, modules, and interfaces completely DELETED
+- [ ] ZERO backward compatibility - clean modern codebase
+- [ ] Code reviewed and approved by maintainers
+
+## Success Metrics
+1. **API Coverage**: 90%+ of common xarray operations supported with similar syntax
+2. **Performance**: 5-10x speedup over xarray for computational operations
+3. **Code Quality**: ZERO legacy code - 100% modern xarray-style API
+4. **Maintainability**: Clean, well-documented, tested codebase with NO dead code
+5. **Ecosystem Integration**: Compatible with existing Fortran scientific libraries
+
+## Current Status
+- ✅ **Sprint 0**: Global rename completed (Foxel → FortArray)
+- 🔄 **Next**: Sprint 0.5 - Critical analysis and implementation planning
+- 🎯 **Goal**: Become the definitive "Fortran xarray" for high-performance scientific computing

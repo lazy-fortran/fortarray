@@ -1,6 +1,6 @@
 program test_finalizers
-    use foxel_types
-    use foxel_memory
+    use fortarray_types
+    use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64
     implicit none
     
@@ -32,7 +32,7 @@ contains
         
         ! Test in a block to trigger finalization
         block
-            type(variable_t) :: var
+            type(fortarray_t) :: var
             
             ! Allocate all components
             var%initialized = .true.
@@ -204,7 +204,7 @@ contains
         test_passed = .true.
         
         block
-            type(variable_t) :: var
+            type(fortarray_t) :: var
             
             var%initialized = .true.
             var%n_dims = 3
@@ -240,7 +240,7 @@ contains
         test_passed = .true.
         
         block
-            type(variable_t) :: var
+            type(fortarray_t) :: var
             
             ! Create a view (doesn't own memory)
             var%initialized = .true.

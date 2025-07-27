@@ -1,5 +1,5 @@
 program test_time_operations
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -43,7 +43,7 @@ program test_time_operations
 contains
 
     subroutine test_time_based_indexing()
-        type(variable_t) :: data_var, result
+        type(fortarray_t) :: data_var, result
         type(coordinate_t) :: time_coord
         real(real64), dimension(365) :: data, time_values
         integer :: i, stat
@@ -95,7 +95,7 @@ contains
     end subroutine test_time_based_indexing
     
     subroutine test_time_range_selection()
-        type(variable_t) :: data_var, result
+        type(fortarray_t) :: data_var, result
         type(coordinate_t) :: time_coord
         real(real64), dimension(100) :: data, time_values
         integer :: i, stat
@@ -146,7 +146,7 @@ contains
     end subroutine test_time_range_selection
     
     subroutine test_time_nearest_selection()
-        type(variable_t) :: data_var, result
+        type(fortarray_t) :: data_var, result
         type(coordinate_t) :: time_coord
         real(real64), dimension(10) :: data, time_values
         real(real64) :: target_time
@@ -201,7 +201,7 @@ contains
     end subroutine test_time_nearest_selection
     
     subroutine test_resample_daily_to_monthly()
-        type(variable_t) :: daily_var, monthly_var
+        type(fortarray_t) :: daily_var, monthly_var
         type(coordinate_t) :: time_coord
         real(real64), dimension(365) :: daily_data, time_values
         integer :: i, stat
@@ -252,7 +252,7 @@ contains
     end subroutine test_resample_daily_to_monthly
     
     subroutine test_resample_with_aggregation()
-        type(variable_t) :: hourly_var, daily_var
+        type(fortarray_t) :: hourly_var, daily_var
         type(coordinate_t) :: time_coord
         real(real64), dimension(168) :: hourly_data, time_values  ! 7 days * 24 hours
         integer :: i, stat
@@ -302,7 +302,7 @@ contains
     end subroutine test_resample_with_aggregation
     
     subroutine test_upsample_with_interpolation()
-        type(variable_t) :: monthly_var, daily_var
+        type(fortarray_t) :: monthly_var, daily_var
         type(coordinate_t) :: time_coord
         real(real64), dimension(12) :: monthly_data, time_values
         integer :: i, stat
@@ -353,7 +353,7 @@ contains
     end subroutine test_upsample_with_interpolation
     
     subroutine test_rolling_mean()
-        type(variable_t) :: data_var, rolled_var
+        type(fortarray_t) :: data_var, rolled_var
         real(real64), dimension(100) :: data
         integer :: i, window_size
         logical :: test_passed
@@ -397,7 +397,7 @@ contains
     end subroutine test_rolling_mean
     
     subroutine test_rolling_sum()
-        type(variable_t) :: data_var, rolled_var
+        type(fortarray_t) :: data_var, rolled_var
         real(real64), dimension(30) :: data
         integer :: i, window_size
         logical :: test_passed
@@ -439,7 +439,7 @@ contains
     end subroutine test_rolling_with_missing
     
     subroutine test_seasonal_mean()
-        type(variable_t) :: data_var, seasonal_var
+        type(fortarray_t) :: data_var, seasonal_var
         type(coordinate_t) :: time_coord
         real(real64), dimension(730) :: data, time_values  ! 2 years
         integer :: i, stat
@@ -497,7 +497,7 @@ contains
     end subroutine test_seasonal_decomposition
     
     subroutine test_time_shift()
-        type(variable_t) :: data_var, shifted_var
+        type(fortarray_t) :: data_var, shifted_var
         real(real64), dimension(10) :: data
         integer :: i, shift_amount
         logical :: test_passed
@@ -534,7 +534,7 @@ contains
     end subroutine test_time_shift
     
     subroutine test_time_diff()
-        type(variable_t) :: data_var, diff_var
+        type(fortarray_t) :: data_var, diff_var
         real(real64), dimension(10) :: data
         integer :: i
         logical :: test_passed
@@ -572,7 +572,7 @@ contains
     end subroutine test_time_diff
     
     subroutine test_time_cumulative()
-        type(variable_t) :: data_var, cumsum_var
+        type(fortarray_t) :: data_var, cumsum_var
         real(real64), dimension(5) :: data
         logical :: test_passed
         

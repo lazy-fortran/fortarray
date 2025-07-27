@@ -1,5 +1,5 @@
 program test_lazy_evaluation
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -43,7 +43,7 @@ program test_lazy_evaluation
 contains
 
     subroutine test_computation_graph_creation()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         type(computation_graph_t) :: graph
         real(real64), dimension(5) :: data1, data2
         logical :: test_passed
@@ -89,8 +89,8 @@ contains
     end subroutine test_computation_graph_creation
     
     subroutine test_deferred_execution()
-        type(variable_t) :: var, result
-        type(lazy_variable_t) :: lazy_result
+        type(fortarray_t) :: var, result
+        type(lazy_fortarray_t) :: lazy_result
         real(real64), dimension(4) :: data
         logical :: test_passed
         
@@ -138,8 +138,8 @@ contains
     end subroutine test_deferred_execution
     
     subroutine test_memory_optimization()
-        type(variable_t) :: var, result
-        type(lazy_variable_t) :: lazy_chain
+        type(fortarray_t) :: var, result
+        type(lazy_fortarray_t) :: lazy_chain
         real(real64), dimension(1000) :: data
         integer :: i, initial_memory, final_memory
         logical :: test_passed
@@ -190,8 +190,8 @@ contains
     end subroutine test_memory_optimization
     
     subroutine test_automatic_chunking()
-        type(variable_t) :: var, result
-        type(lazy_variable_t) :: lazy_result
+        type(fortarray_t) :: var, result
+        type(lazy_fortarray_t) :: lazy_result
         real(real64), dimension(10000) :: data
         integer :: i, chunk_size
         logical :: test_passed
@@ -244,8 +244,8 @@ contains
     end subroutine test_automatic_chunking
     
     subroutine test_lazy_arithmetic_operations()
-        type(variable_t) :: var1, var2, result
-        type(lazy_variable_t) :: lazy_result
+        type(fortarray_t) :: var1, var2, result
+        type(lazy_fortarray_t) :: lazy_result
         real(real64), dimension(3) :: data1, data2
         logical :: test_passed
         
@@ -259,7 +259,7 @@ contains
         var2 = variable(data2, name="var2", dim_names=["x"])
         
         ! Test lazy arithmetic: (var1 + var2) * var1
-        ! TODO: Fix lazy_multiply to accept lazy_variable_t
+        ! TODO: Fix lazy_multiply to accept lazy_fortarray_t
         ! lazy_result = lazy_multiply(lazy_add(var1, var2), var1)
         ! For now, test simple operation
         lazy_result = lazy_add(var1, var2)
@@ -299,8 +299,8 @@ contains
     end subroutine test_lazy_arithmetic_operations
     
     subroutine test_lazy_aggregation_functions()
-        type(variable_t) :: var, result
-        type(lazy_variable_t) :: lazy_result
+        type(fortarray_t) :: var, result
+        type(lazy_fortarray_t) :: lazy_result
         real(real64), dimension(6) :: data
         logical :: test_passed
         

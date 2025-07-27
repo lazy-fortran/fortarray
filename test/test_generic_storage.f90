@@ -1,6 +1,6 @@
 program test_generic_storage
-    use foxel_types
-    use foxel_storage
+    use fortarray_types
+    use fortarray_storage
     use iso_fortran_env, only: int32, int64, real32, real64
     implicit none
     

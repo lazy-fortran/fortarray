@@ -1,5 +1,5 @@
-program test_variable_type
-    use foxel_types
+program test_fortarray_type
+    use fortarray_types
     use iso_fortran_env, only: int32, int64, real32, real64
     implicit none
     
@@ -23,7 +23,7 @@ program test_variable_type
 contains
 
     subroutine test_type_creation()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(dataframe_t) :: df  ! Legacy type
         
         n_tests_total = n_tests_total + 1
@@ -44,7 +44,7 @@ contains
     end subroutine test_type_creation
     
     subroutine test_type_fields()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -92,7 +92,7 @@ contains
     end subroutine test_type_fields
     
     subroutine test_memory_layout()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -116,7 +116,7 @@ contains
     end subroutine test_memory_layout
     
     subroutine test_attribute_storage()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         logical :: test_passed
         integer :: i
         
@@ -158,7 +158,7 @@ contains
     end subroutine test_attribute_storage
     
     subroutine test_type_assignment()
-        type(variable_t) :: var1, var2
+        type(fortarray_t) :: var1, var2
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -258,4 +258,4 @@ contains
         if (allocated(ds%var_names)) deallocate(ds%var_names)
     end subroutine test_dataset_type
 
-end program test_variable_type
+end program test_fortarray_type

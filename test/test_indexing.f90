@@ -1,8 +1,8 @@
 program test_indexing
-    use foxel_types
-    use foxel_constructors
-    use foxel_indexing
-    use foxel_memory
+    use fortarray_types
+    use fortarray_constructors
+    use fortarray_indexing
+    use fortarray_memory
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -42,7 +42,7 @@ program test_indexing
 contains
 
     subroutine test_1d_positional_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(10) :: data_1d
         real(real64) :: value
         logical :: test_passed
@@ -90,7 +90,7 @@ contains
     end subroutine test_1d_positional_indexing
     
     subroutine test_2d_positional_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(3, 4) :: data_2d
         real(real64) :: value, expected
         logical :: test_passed
@@ -131,7 +131,7 @@ contains
     end subroutine test_2d_positional_indexing
     
     subroutine test_3d_positional_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(2, 3, 4) :: data_3d
         real(real64) :: value, expected
         logical :: test_passed
@@ -176,7 +176,7 @@ contains
     end subroutine test_3d_positional_indexing
     
     subroutine test_nd_positional_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(2, 3, 4) :: data_3d
         real(real64) :: value
         logical :: test_passed
@@ -232,7 +232,7 @@ contains
     end subroutine test_nd_positional_indexing
     
     subroutine test_scalar_variable_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64) :: value
         logical :: test_passed
         integer :: stat
@@ -272,7 +272,7 @@ contains
     end subroutine test_scalar_variable_indexing
     
     subroutine test_1d_label_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t) :: coord
         type(label_index_t) :: label_idx
         real(real64), dimension(5) :: data_1d
@@ -322,7 +322,7 @@ contains
     end subroutine test_1d_label_indexing
     
     subroutine test_nd_label_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t), dimension(2) :: coords
         type(label_index_t), dimension(2) :: label_indices
         real(real64), dimension(3, 2) :: data_2d
@@ -371,7 +371,7 @@ contains
     end subroutine test_nd_label_indexing
     
     subroutine test_numeric_label_indexing()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(coordinate_t) :: coord
         type(label_index_t) :: label_idx
         real(real64), dimension(5) :: data_1d
@@ -412,7 +412,7 @@ contains
     end subroutine test_numeric_label_indexing
     
     subroutine test_set_item_1d()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(5) :: data_1d
         real(real64) :: value
         logical :: test_passed
@@ -451,7 +451,7 @@ contains
     end subroutine test_set_item_1d
     
     subroutine test_set_item_2d()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(3, 3) :: data_2d
         real(real64) :: value
         logical :: test_passed
@@ -490,7 +490,7 @@ contains
     end subroutine test_set_item_2d
     
     subroutine test_set_item_3d()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(2, 2, 2) :: data_3d
         real(real64) :: value
         logical :: test_passed
@@ -525,7 +525,7 @@ contains
     end subroutine test_set_item_3d
     
     subroutine test_set_item_nd()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(3, 2, 3) :: data_3d
         real(real64) :: value
         logical :: test_passed
@@ -573,7 +573,7 @@ contains
     end subroutine test_set_item_nd
     
     subroutine test_bounds_checking()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(5) :: data_1d
         real(real64) :: value
         logical :: test_passed
@@ -619,7 +619,7 @@ contains
     end subroutine test_bounds_checking
     
     subroutine test_dimension_mismatch()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         real(real64), dimension(3, 3) :: data_2d
         real(real64) :: value
         logical :: test_passed
@@ -659,7 +659,7 @@ contains
     end subroutine test_dimension_mismatch
     
     subroutine test_missing_coordinates()
-        type(variable_t) :: var
+        type(fortarray_t) :: var
         type(label_index_t) :: label_idx
         real(real64), dimension(5) :: data_1d
         real(real64) :: value

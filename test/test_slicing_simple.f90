@@ -1,5 +1,5 @@
 program test_slicing_simple
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -31,7 +31,7 @@ program test_slicing_simple
 contains
 
     subroutine test_basic_slice()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -69,7 +69,7 @@ contains
     end subroutine test_basic_slice
     
     subroutine test_negative_slice()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         
@@ -106,7 +106,7 @@ contains
     end subroutine test_negative_slice
     
     subroutine test_step_slice()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(5) :: data
         logical :: test_passed
         

@@ -1,5 +1,5 @@
 program test_arithmetic
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -40,7 +40,7 @@ program test_arithmetic
 contains
 
     subroutine test_basic_addition()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(3,4) :: data1, data2, expected
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i, j
@@ -89,7 +89,7 @@ contains
     end subroutine test_basic_addition
     
     subroutine test_basic_subtraction()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(3,4) :: data1, data2, expected
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i
@@ -133,7 +133,7 @@ contains
     end subroutine test_basic_subtraction
     
     subroutine test_basic_multiplication()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(2,3) :: data1, data2, expected
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i
@@ -177,7 +177,7 @@ contains
     end subroutine test_basic_multiplication
     
     subroutine test_basic_division()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(2,2) :: data1, data2, expected
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i
@@ -221,7 +221,7 @@ contains
     end subroutine test_basic_division
     
     subroutine test_basic_power()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(2,2) :: data1, data2, expected
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i
@@ -267,7 +267,7 @@ contains
     end subroutine test_basic_power
     
     subroutine test_scalar_operations()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         real(real64), dimension(2,3) :: data, expected
         real(real64), dimension(:), allocatable :: expected_flat
         real(real64) :: scalar_val = 2.0_real64
@@ -330,7 +330,7 @@ contains
     end subroutine test_scalar_operations
     
     subroutine test_broadcasting_arithmetic()
-        type(variable_t) :: vec, mat, result
+        type(fortarray_t) :: vec, mat, result
         real(real64), dimension(4) :: vec_data
         real(real64), dimension(3,4) :: mat_data
         integer :: i, j
@@ -380,7 +380,7 @@ contains
     end subroutine test_broadcasting_arithmetic
     
     subroutine test_type_promotion()
-        type(variable_t) :: var_r32, var_r64, var_i32, result
+        type(fortarray_t) :: var_r32, var_r64, var_i32, result
         real(real32), dimension(2,2) :: data_r32
         real(real64), dimension(2,2) :: data_r64
         integer(int32), dimension(2,2) :: data_i32
@@ -427,7 +427,7 @@ contains
     end subroutine test_type_promotion
     
     subroutine test_nan_handling()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(2,2) :: data1, data2
         logical :: test_passed
         
@@ -463,7 +463,7 @@ contains
     end subroutine test_nan_handling
     
     subroutine test_missing_value_arithmetic()
-        type(variable_t) :: var1, var2, result
+        type(fortarray_t) :: var1, var2, result
         real(real64), dimension(2,2) :: data1, data2
         real(real64) :: missing
         logical :: test_passed
@@ -507,7 +507,7 @@ contains
     end subroutine test_missing_value_arithmetic
     
     subroutine test_operator_overloading()
-        type(variable_t) :: a, b, c, result
+        type(fortarray_t) :: a, b, c, result
         real(real64), dimension(2,2) :: data_a, data_b, data_c
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i
@@ -553,7 +553,7 @@ contains
     end subroutine test_operator_overloading
     
     subroutine test_chained_operations()
-        type(variable_t) :: a, b, c, d, result
+        type(fortarray_t) :: a, b, c, d, result
         real(real64), dimension(2,2) :: data_a, data_b, data_c, data_d, expected
         real(real64), dimension(:), allocatable :: expected_flat
         integer :: i

@@ -1,5 +1,5 @@
 program test_interpolation_simple
-    use foxel
+    use fortarray
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -31,7 +31,7 @@ program test_interpolation_simple
 contains
 
     subroutine test_linear_interp()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(3) :: data, coord_vals, interp_points
         integer :: stat
@@ -83,7 +83,7 @@ contains
     end subroutine test_linear_interp
     
     subroutine test_nearest_interp()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(3) :: data, coord_vals, interp_points
         integer :: stat
@@ -133,7 +133,7 @@ contains
     end subroutine test_nearest_interp
     
     subroutine test_cubic_interp()
-        type(variable_t) :: var, result
+        type(fortarray_t) :: var, result
         type(coordinate_t) :: x_coord
         real(real64), dimension(4) :: data, coord_vals
         real(real64), dimension(1) :: interp_points
