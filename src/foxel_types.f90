@@ -105,6 +105,7 @@ module foxel_types
         
         ! Missing value handling (NetCDF fill values)
         logical :: has_fill_value = .false.
+        real(real64), allocatable :: fill_value  ! Unified fill value as real64
         real(real64) :: fill_value_r64 = huge(1.0_real64)
         real(real32) :: fill_value_r32 = huge(1.0_real32)
         integer(int64) :: fill_value_i64 = huge(1_int64)

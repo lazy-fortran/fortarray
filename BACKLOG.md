@@ -144,12 +144,12 @@
 - [x] Weighted aggregations
 - [x] Handle missing data properly
 
-### Sprint 12: Missing Data
-- [ ] Define fill value semantics
-- [ ] Implement where() for masking
-- [ ] fillna() with various methods
-- [ ] dropna() along dimensions
-- [ ] Interpolation for missing values
+### Sprint 12: Missing Data ✓
+- [x] Define fill value semantics
+- [x] Implement where() for masking
+- [x] fillna() with various methods
+- [x] dropna() along dimensions
+- [x] Interpolation for missing values
 
 ## Phase 4: Advanced Indexing (Sprint 13-16)
 

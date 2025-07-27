@@ -11,6 +11,7 @@ module foxel
     use foxel_broadcasting
     use foxel_arithmetic
     use foxel_aggregation
+    use foxel_missing_data
     implicit none
     
     ! Re-export everything from submodules
