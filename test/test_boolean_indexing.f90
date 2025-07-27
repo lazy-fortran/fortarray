@@ -1,6 +1,6 @@
 program test_boolean_indexing
     use foxel
-    use ieee_arithmetic, only: ieee_quiet_nan
+    use ieee_arithmetic, only: ieee_value, ieee_quiet_nan
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -328,15 +328,19 @@ contains
     
     subroutine test_mask_with_missing_data()
         type(variable_t) :: var, result
-        real(real64), dimension(5) :: data
+        real(real64), dimension(5) :: test_data
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
         ! Include NaN values
-        data = [1.0_real64, 2.0_real64, ieee_quiet_nan(1.0_real64), 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        test_data(1) = 1.0_real64
+        test_data(2) = 2.0_real64
+        test_data(3) = ieee_value(1.0_real64, ieee_quiet_nan)
+        test_data(4) = 4.0_real64
+        test_data(5) = 5.0_real64
+        var = variable(test_data, name="test_data", dim_names=["x"])
         
         ! Test: select non-NaN values
         result = where_boolean(.not. isnull(var), var)
@@ -647,10 +651,10 @@ contains
         var = variable(data, name="test_data", dim_names=["x"])
         
         mask1_data = [.true., .false., .true., .false., .true.]
-        mask1 = variable(mask1_data, name="mask1", dim_names=["x"])
+        mask1 = create_mask_from_logical_array(mask1_data, ["x"])
         
         mask2_data = [.false., .true., .true., .true., .false.]
-        mask2 = variable(mask2_data, name="mask2", dim_names=["x"])
+        mask2 = create_mask_from_logical_array(mask2_data, ["x"])
         
         ! Combine masks with AND
         combined_mask = mask1 .and. mask2

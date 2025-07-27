@@ -13,6 +13,7 @@ module foxel_boolean_indexing
     ! Public interfaces
     public :: where_boolean, where_broadcast
     public :: create_mask, apply_mask
+    public :: where_mask_only, create_mask_from_logical_array
     
     ! Generic interface for where function
     interface where_boolean
