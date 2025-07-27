@@ -135,14 +135,14 @@
 - [x] NaN/missing value handling
 - [x] Operator overloading
 
-### Sprint 11: Aggregation Functions
-- [ ] Statistical functions on variables
-  - [ ] Mean, sum, min, max
-  - [ ] Standard deviation, variance
-  - [ ] Quantiles, median
-- [ ] Operations along dimensions
-- [ ] Weighted aggregations
-- [ ] Handle missing data properly
+### Sprint 11: Aggregation Functions ✓
+- [x] Statistical functions on variables
+  - [x] Mean, sum, min, max
+  - [x] Standard deviation, variance
+  - [x] Quantiles, median
+- [x] Operations along dimensions
+- [x] Weighted aggregations
+- [x] Handle missing data properly
 
 ### Sprint 12: Missing Data
 - [ ] Define fill value semantics
