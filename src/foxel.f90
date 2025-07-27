@@ -24,6 +24,7 @@ module foxel
     use foxel_parallel_computing
     use foxel_fortplot_integration
     use foxel_plot_types
+    use foxel_time_coordinates
     implicit none
     
     ! Re-export everything from submodules

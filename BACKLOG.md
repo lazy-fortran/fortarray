@@ -220,11 +220,11 @@
 
 ## Phase 7: Time Series Support (Sprint 23-24)
 
-### Sprint 23: Time Coordinates
-- [ ] CF-compliant time handling
-- [ ] Calendar support
-- [ ] Time unit conversions
-- [ ] Datetime parsing
+### Sprint 23: Time Coordinates ✓
+- [x] CF-compliant time handling
+- [x] Calendar support
+- [x] Time unit conversions
+- [x] Datetime parsing
 
 ### Sprint 24: Time Operations
 - [ ] Time-based indexing
