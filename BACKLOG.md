@@ -226,11 +226,11 @@
 - [x] Time unit conversions
 - [x] Datetime parsing
 
-### Sprint 24: Time Operations
-- [ ] Time-based indexing
-- [ ] Resampling methods
-- [ ] Rolling windows
-- [ ] Seasonal statistics
+### Sprint 24: Time Operations ✓
+- [x] Time-based indexing
+- [x] Resampling methods
+- [x] Rolling windows
+- [x] Seasonal statistics
 
 ## Phase 8: Quality Assurance (Sprint 25-26)
 
