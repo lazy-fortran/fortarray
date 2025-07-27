@@ -113,11 +113,11 @@
 - [x] Support missing values
 - [x] Test with real CSV files
 
-### Sprint 8: Format Detection
-- [ ] Implement `from_file()` with auto-detection
-- [ ] Support .nc, .nc4, .hdf5, .csv extensions
-- [ ] Content-based format detection
-- [ ] Comprehensive error messages
+### Sprint 8: Format Detection ✓
+- [x] Implement `from_file()` with auto-detection
+- [x] Support .nc, .nc4, .hdf5, .csv extensions
+- [x] Content-based format detection
+- [x] Comprehensive error messages
 
 ## Phase 3: Data Manipulation (Sprint 9-12)
 
