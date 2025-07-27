@@ -10,8 +10,9 @@ module fortarray_coordinate_selection
     implicit none
     private
     
-    ! Public functions
-    public :: sel, sel_range, sel_between, isel, loc
+    ! Public functions - DEPRECATED: Use type-bound procedures instead
+    ! These will be removed in future versions
+    public :: sel_between, loc  ! Keep for backward compatibility temporarily
     public :: METHOD_EXACT, METHOD_NEAREST
     
     ! Selection method constants
@@ -20,59 +21,64 @@ module fortarray_coordinate_selection
     
 contains
     
-    !> Select by coordinate value (simplified version)
-    function sel(var, x, y, z, method, tolerance, drop) result(result)
-        type(fortarray_t), intent(in) :: var
-        real(real64), intent(in), optional :: x, y, z
-        character(len=*), intent(in), optional :: method
-        real(real64), intent(in), optional :: tolerance
-        logical, intent(in), optional :: drop
-        type(fortarray_t) :: result
-        type(fortarray_t) :: temp
-        integer :: idx
-        
-        ! Start with original variable
-        result = var
-        
-        ! Apply selections sequentially
-        if (present(x) .and. var%n_dims >= 1) then
-            idx = loc(result, x, 1, method, tolerance)
-            if (idx > 0) then
-                temp = slice(result, create_index(idx))
-                if (.not. same_variable(result, var)) call finalize_variable(result)
-                result = temp
-            else
-                ! Return empty
-                result = create_empty_like(var)
-                return
-            end if
-        end if
-        
-        if (present(y) .and. var%n_dims >= 2) then
-            idx = loc(result, y, 2, method, tolerance)
-            if (idx > 0) then
-                temp = slice(result, create_slice(), create_index(idx))
-                if (.not. same_variable(result, var)) call finalize_variable(result)
-                result = temp
-            else
-                result = create_empty_like(var)
-                return
-            end if
-        end if
-        
-        if (present(z) .and. var%n_dims >= 3) then
-            idx = loc(result, z, 3, method, tolerance)
-            if (idx > 0) then
-                temp = slice(result, create_slice(), create_slice(), create_index(idx))
-                if (.not. same_variable(result, var)) call finalize_variable(result)
-                result = temp
-            else
-                result = create_empty_like(var)
-                return
-            end if
-        end if
-        
-    end function sel
+    ! MIGRATED TO fortarray_methods.f90 as type-bound procedures
+    ! The old sel() function is now replaced by:
+    !   - var%sel_point(coord_name, value) for point selection
+    !   - var%sel_range(coord_name, start_val, stop_val) for range selection
+    !
+    ! !> Select by coordinate value (simplified version)
+    ! function sel(var, x, y, z, method, tolerance, drop) result(result)
+    !     type(fortarray_t), intent(in) :: var
+    !     real(real64), intent(in), optional :: x, y, z
+    !     character(len=*), intent(in), optional :: method
+    !     real(real64), intent(in), optional :: tolerance
+    !     logical, intent(in), optional :: drop
+    !     type(fortarray_t) :: result
+    !     type(fortarray_t) :: temp
+    !     integer :: idx
+    !     
+    !     ! Start with original variable
+    !     result = var
+    !     
+    !     ! Apply selections sequentially
+    !     if (present(x) .and. var%n_dims >= 1) then
+    !         idx = loc(result, x, 1, method, tolerance)
+    !         if (idx > 0) then
+    !             temp = slice(result, create_index(idx))
+    !             if (.not. same_variable(result, var)) call finalize_variable(result)
+    !             result = temp
+    !         else
+    !             ! Return empty
+    !             result = create_empty_like(var)
+    !             return
+    !         end if
+    !     end if
+    !     
+    !     if (present(y) .and. var%n_dims >= 2) then
+    !         idx = loc(result, y, 2, method, tolerance)
+    !         if (idx > 0) then
+    !             temp = slice(result, create_slice(), create_index(idx))
+    !             if (.not. same_variable(result, var)) call finalize_variable(result)
+    !             result = temp
+    !         else
+    !             result = create_empty_like(var)
+    !             return
+    !         end if
+    !     end if
+    !     
+    !     if (present(z) .and. var%n_dims >= 3) then
+    !         idx = loc(result, z, 3, method, tolerance)
+    !         if (idx > 0) then
+    !             temp = slice(result, create_slice(), create_slice(), create_index(idx))
+    !             if (.not. same_variable(result, var)) call finalize_variable(result)
+    !             result = temp
+    !         else
+    !             result = create_empty_like(var)
+    !             return
+    !         end if
+    !     end if
+    !     
+    ! end function sel
     
     !> Select range of coordinate values
     function sel_range(var, x, y, z) result(result)
