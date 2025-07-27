@@ -10,6 +10,8 @@ module foxel
     use foxel_format_detection
     use foxel_broadcasting
     use foxel_arithmetic
+    use foxel_comparison
+    use foxel_logical
     use foxel_aggregation
     use foxel_missing_data
     use foxel_coordinate_selection
@@ -18,6 +20,7 @@ module foxel
     use foxel_interpolation
     use foxel_apply_functions
     use foxel_lazy_evaluation
+    use foxel_chunked_operations
     implicit none
     
     ! Re-export everything from submodules

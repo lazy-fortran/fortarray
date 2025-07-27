@@ -29,6 +29,9 @@ module foxel_constructors
         module procedure variable_from_int64_1d
         module procedure variable_from_int64_2d
         module procedure variable_from_int64_3d
+        module procedure variable_from_logical_1d
+        module procedure variable_from_logical_2d
+        module procedure variable_from_logical_3d
     end interface variable
     
     ! Legacy dataframe interface for compatibility
@@ -1898,5 +1901,233 @@ contains
         df%var = variable_from_int64_3d(data, dim_names, coords, name, &
                                        check_monotonic, stat, error_msg)
     end function dataframe_from_int64_3d
+
+    !======= Logical Constructors =======!
+    
+    !> 1D logical array constructor
+    function variable_from_logical_1d(data, dim_names, coords, name, &
+                                    check_monotonic, stat, error_msg) result(var)
+        logical, dimension(:), intent(in) :: data
+        character(len=*), dimension(:), intent(in), optional :: dim_names
+        type(coordinate_t), dimension(:), intent(in), optional :: coords
+        character(len=*), intent(in), optional :: name
+        logical, intent(in), optional :: check_monotonic
+        integer, intent(out), optional :: stat
+        character(len=*), intent(out), optional :: error_msg
+        type(variable_t) :: var
+        character(len=64), dimension(1) :: default_dim_names
+        integer :: i
+        
+        if (present(stat)) stat = 0
+        if (present(error_msg)) error_msg = ""
+        
+        ! Set dimensions
+        var%n_dims = 1
+        var%n_elements = size(data)
+        allocate(var%shape(1))
+        var%shape(1) = size(data, 1)
+        
+        ! Set dimension names
+        if (present(dim_names)) then
+            if (size(dim_names) /= 1) then
+                if (present(stat)) stat = 1
+                if (present(error_msg)) error_msg = "Wrong number of dimension names"
+                return
+            end if
+            allocate(var%dim_names(1))
+            var%dim_names = dim_names(1:1)
+        else
+            default_dim_names(1) = "dim1"
+            allocate(var%dim_names(1))
+            var%dim_names = default_dim_names
+        end if
+        
+        ! Set data
+        var%data%dtype = DTYPE_LOGICAL
+        var%data%n_elements = var%n_elements
+        allocate(var%data%values_logical(var%n_elements))
+        var%data%values_logical = data
+        var%data%initialized = .true.
+        
+        ! Set coordinates
+        if (present(coords)) then
+            if (size(coords) /= 1) then
+                if (present(stat)) stat = 2
+                if (present(error_msg)) error_msg = "Wrong number of coordinates"
+                return
+            end if
+            allocate(var%coords(1))
+            allocate(var%has_coord(1))
+            var%coords(1) = coords(1)
+            var%has_coord(1) = .true.
+        else
+            allocate(var%has_coord(1))
+            var%has_coord(1) = .false.
+        end if
+        
+        ! Set name
+        if (present(name)) then
+            var%name = name
+        else
+            var%name = "var"
+        end if
+        
+        var%initialized = .true.
+        
+    end function variable_from_logical_1d
+    
+    !> 2D logical array constructor
+    function variable_from_logical_2d(data, dim_names, coords, name, &
+                                    check_monotonic, stat, error_msg) result(var)
+        logical, dimension(:,:), intent(in) :: data
+        character(len=*), dimension(:), intent(in), optional :: dim_names
+        type(coordinate_t), dimension(:), intent(in), optional :: coords
+        character(len=*), intent(in), optional :: name
+        logical, intent(in), optional :: check_monotonic
+        integer, intent(out), optional :: stat
+        character(len=*), intent(out), optional :: error_msg
+        type(variable_t) :: var
+        character(len=64), dimension(2) :: default_dim_names
+        integer :: i
+        
+        if (present(stat)) stat = 0
+        if (present(error_msg)) error_msg = ""
+        
+        ! Set dimensions
+        var%n_dims = 2
+        var%n_elements = size(data)
+        allocate(var%shape(2))
+        var%shape(1) = size(data, 1)
+        var%shape(2) = size(data, 2)
+        
+        ! Set dimension names
+        if (present(dim_names)) then
+            if (size(dim_names) /= 2) then
+                if (present(stat)) stat = 1
+                if (present(error_msg)) error_msg = "Wrong number of dimension names"
+                return
+            end if
+            allocate(var%dim_names(2))
+            var%dim_names = dim_names(1:2)
+        else
+            default_dim_names(1) = "dim1"
+            default_dim_names(2) = "dim2"
+            allocate(var%dim_names(2))
+            var%dim_names = default_dim_names
+        end if
+        
+        ! Set data (convert to 1D for storage)
+        var%data%dtype = DTYPE_LOGICAL
+        var%data%n_elements = var%n_elements
+        allocate(var%data%values_logical(var%n_elements))
+        var%data%values_logical = reshape(data, [var%n_elements])
+        var%data%initialized = .true.
+        
+        ! Set coordinates
+        if (present(coords)) then
+            if (size(coords) /= 2) then
+                if (present(stat)) stat = 2
+                if (present(error_msg)) error_msg = "Wrong number of coordinates"
+                return
+            end if
+            allocate(var%coords(2))
+            allocate(var%has_coord(2))
+            do i = 1, 2
+                var%coords(i) = coords(i)
+                var%has_coord(i) = .true.
+            end do
+        else
+            allocate(var%has_coord(2))
+            var%has_coord = .false.
+        end if
+        
+        ! Set name
+        if (present(name)) then
+            var%name = name
+        else
+            var%name = "var"
+        end if
+        
+        var%initialized = .true.
+        
+    end function variable_from_logical_2d
+    
+    !> 3D logical array constructor
+    function variable_from_logical_3d(data, dim_names, coords, name, &
+                                    check_monotonic, stat, error_msg) result(var)
+        logical, dimension(:,:,:), intent(in) :: data
+        character(len=*), dimension(:), intent(in), optional :: dim_names
+        type(coordinate_t), dimension(:), intent(in), optional :: coords
+        character(len=*), intent(in), optional :: name
+        logical, intent(in), optional :: check_monotonic
+        integer, intent(out), optional :: stat
+        character(len=*), intent(out), optional :: error_msg
+        type(variable_t) :: var
+        character(len=64), dimension(3) :: default_dim_names
+        integer :: i
+        
+        if (present(stat)) stat = 0
+        if (present(error_msg)) error_msg = ""
+        
+        ! Set dimensions
+        var%n_dims = 3
+        var%n_elements = size(data)
+        allocate(var%shape(3))
+        var%shape(1) = size(data, 1)
+        var%shape(2) = size(data, 2)
+        var%shape(3) = size(data, 3)
+        
+        ! Set dimension names
+        if (present(dim_names)) then
+            if (size(dim_names) /= 3) then
+                if (present(stat)) stat = 1
+                if (present(error_msg)) error_msg = "Wrong number of dimension names"
+                return
+            end if
+            allocate(var%dim_names(3))
+            var%dim_names = dim_names(1:3)
+        else
+            default_dim_names(1) = "dim1"
+            default_dim_names(2) = "dim2"
+            default_dim_names(3) = "dim3"
+            allocate(var%dim_names(3))
+            var%dim_names = default_dim_names
+        end if
+        
+        ! Set data (convert to 1D for storage)
+        var%data%dtype = DTYPE_LOGICAL
+        var%data%n_elements = var%n_elements
+        allocate(var%data%values_logical(var%n_elements))
+        var%data%values_logical = reshape(data, [var%n_elements])
+        var%data%initialized = .true.
+        
+        ! Set coordinates
+        if (present(coords)) then
+            if (size(coords) /= 3) then
+                if (present(stat)) stat = 2
+                if (present(error_msg)) error_msg = "Wrong number of coordinates"
+                return
+            end if
+            allocate(var%coords(3))
+            allocate(var%has_coord(3))
+            do i = 1, 3
+                var%coords(i) = coords(i)
+                var%has_coord(i) = .true.
+            end do
+        else
+            allocate(var%has_coord(3))
+            var%has_coord = .false.
+        end if
+        
+        ! Set name
+        if (present(name)) then
+            var%name = name
+        else
+            var%name = "var"
+        end if
+        
+        var%initialized = .true.
+        
+    end function variable_from_logical_3d
 
 end module foxel_constructors
