@@ -3,15 +3,34 @@ module foxel_types
     implicit none
     private
     
-    ! Maximum length for dimension names and attribute keys
+    ! Maximum length for names and attributes
     integer, parameter :: MAX_NAME_LEN = 256
     integer, parameter :: MAX_ATTR_LEN = 1024
     
-    ! Coordinate storage type - will be extended later for different data types
+    ! Data type enumerations
+    integer, parameter :: DTYPE_INT8 = 1
+    integer, parameter :: DTYPE_INT16 = 2
+    integer, parameter :: DTYPE_INT32 = 3
+    integer, parameter :: DTYPE_INT64 = 4
+    integer, parameter :: DTYPE_REAL32 = 5
+    integer, parameter :: DTYPE_REAL64 = 6
+    integer, parameter :: DTYPE_CHAR = 7
+    integer, parameter :: DTYPE_LOGICAL = 8
+    
+    ! Dimension type - represents a NetCDF dimension
+    type :: dimension_t
+        character(len=MAX_NAME_LEN) :: name = ""
+        integer :: length = 0
+        logical :: is_unlimited = .false.
+        integer :: current_length = 0  ! For unlimited dimensions
+    end type dimension_t
+    
+    ! Coordinate type - 1D variable that defines an axis
     type :: coordinate_t
         logical :: initialized = .false.
+        character(len=MAX_NAME_LEN) :: name = ""
         integer :: length = 0
-        integer :: dtype = 0  ! 1=int32, 2=int64, 3=real32, 4=real64, 5=char
+        integer :: dtype = 0
         real(real64), allocatable :: values_r64(:)
         real(real32), allocatable :: values_r32(:)
         integer(int64), allocatable :: values_i64(:)
@@ -20,14 +39,18 @@ module foxel_types
         logical :: is_monotonic = .false.
         logical :: is_regular = .false.  ! Regular spacing
         real(real64) :: spacing = 0.0_real64  ! For regular coords
+        ! Attributes
+        integer :: n_attrs = 0
+        character(len=MAX_NAME_LEN), allocatable :: attr_keys(:)
+        character(len=MAX_ATTR_LEN), allocatable :: attr_values(:)
     contains
         final :: coordinate_finalizer
     end type coordinate_t
     
-    ! Data storage type - will be extended for generic data
+    ! Data storage type - generic storage for variable data
     type :: data_storage_t
         logical :: initialized = .false.
-        integer :: dtype = 0  ! 1=int32, 2=int64, 3=real32, 4=real64, 5=char
+        integer :: dtype = 0
         integer :: n_elements = 0
         ! Flattened storage for all types
         real(real64), allocatable :: values_r64(:)
@@ -35,14 +58,16 @@ module foxel_types
         integer(int64), allocatable :: values_i64(:)
         integer(int32), allocatable :: values_i32(:)
         character(len=:), allocatable :: values_char(:)
+        logical, allocatable :: values_logical(:)
     contains
         final :: data_storage_finalizer
     end type data_storage_t
     
-    ! Main DataFrame type
-    type :: dataframe_t
+    ! Variable type - represents a NetCDF variable (was dataframe_t)
+    type :: variable_t
         ! Basic properties
         logical :: initialized = .false.
+        character(len=MAX_NAME_LEN) :: name = ""
         integer :: n_dims = 0
         integer :: n_elements = 0  ! Total number of elements
         
@@ -51,46 +76,94 @@ module foxel_types
         integer, allocatable :: shape(:)
         integer, allocatable :: strides(:)  ! For efficient indexing
         
-        ! Coordinate arrays
+        ! Coordinate arrays (may be empty for some dimensions)
         type(coordinate_t), allocatable :: coords(:)
+        logical, allocatable :: has_coord(:)  ! Track which dims have coords
         
         ! Data storage
         type(data_storage_t) :: data
         
-        ! Attributes (key-value pairs)
+        ! Attributes (NetCDF attributes)
         integer :: n_attrs = 0
         character(len=MAX_NAME_LEN), allocatable :: attr_keys(:)
         character(len=MAX_ATTR_LEN), allocatable :: attr_values(:)
         
         ! Memory layout flags
         logical :: is_c_order = .false.  ! False = Fortran order (default)
-        logical :: is_view = .false.      ! True if this is a view of another dataframe
-        logical :: owns_memory = .true.   ! True if this dataframe owns its memory
+        logical :: is_view = .false.      ! True if this is a view
+        logical :: owns_memory = .true.   ! True if owns its memory
         
-        ! Parent reference for views (not used yet, placeholder)
-        integer :: parent_id = -1
+        ! Missing value handling (NetCDF fill values)
+        logical :: has_fill_value = .false.
+        real(real64) :: fill_value_r64 = huge(1.0_real64)
+        real(real32) :: fill_value_r32 = huge(1.0_real32)
+        integer(int64) :: fill_value_i64 = huge(1_int64)
+        integer(int32) :: fill_value_i32 = huge(1_int32)
+        character(len=1) :: fill_value_char = ""
         
-        ! Missing value handling
-        logical :: has_missing = .false.
-        real(real64) :: missing_value_r64 = huge(1.0_real64)
-        real(real32) :: missing_value_r32 = huge(1.0_real32)
-        integer(int64) :: missing_value_i64 = huge(1_int64)
-        integer(int32) :: missing_value_i32 = huge(1_int32)
-        character(len=1) :: missing_value_char = ""
+        ! Common NetCDF attributes stored separately for quick access
+        character(len=MAX_ATTR_LEN) :: units = ""
+        character(len=MAX_ATTR_LEN) :: long_name = ""
+        character(len=MAX_ATTR_LEN) :: standard_name = ""
         
-        ! Variable name (for single-variable dataframes)
-        character(len=MAX_NAME_LEN) :: var_name = ""
-        
-        ! Cache for commonly computed values
+        ! Cache flags
         logical :: shape_cached = .false.
         logical :: strides_cached = .false.
     contains
-        final :: dataframe_finalizer
+        final :: variable_finalizer
+    end type variable_t
+    
+    ! Dataset type - represents a NetCDF file with multiple variables
+    type :: dataset_t
+        ! Basic properties
+        logical :: initialized = .false.
+        character(len=MAX_NAME_LEN) :: filename = ""
+        
+        ! Dimensions (shared across variables)
+        integer :: n_dims = 0
+        type(dimension_t), allocatable :: dimensions(:)
+        
+        ! Variables
+        integer :: n_vars = 0
+        type(variable_t), allocatable :: variables(:)
+        character(len=MAX_NAME_LEN), allocatable :: var_names(:)
+        
+        ! Coordinate variables (subset of variables that are 1D)
+        integer :: n_coords = 0
+        integer, allocatable :: coord_var_indices(:)  ! Indices into variables array
+        
+        ! Global attributes
+        integer :: n_attrs = 0
+        character(len=MAX_NAME_LEN), allocatable :: attr_keys(:)
+        character(len=MAX_ATTR_LEN), allocatable :: attr_values(:)
+        
+        ! NetCDF specific
+        integer :: ncid = -1  ! NetCDF file ID when open
+        logical :: is_open = .false.
+        logical :: read_only = .true.
+        
+        ! CF convention info
+        character(len=MAX_ATTR_LEN) :: conventions = "CF-1.8"
+        character(len=MAX_ATTR_LEN) :: title = ""
+        character(len=MAX_ATTR_LEN) :: institution = ""
+        character(len=MAX_ATTR_LEN) :: source = ""
+        character(len=MAX_ATTR_LEN) :: history = ""
+        character(len=MAX_ATTR_LEN) :: references = ""
+    contains
+        final :: dataset_finalizer
+    end type dataset_t
+    
+    ! Legacy support - dataframe_t is now an alias for variable_t
+    type :: dataframe_t
+        type(variable_t) :: var
     end type dataframe_t
     
     ! Make types public
-    public :: dataframe_t, coordinate_t, data_storage_t
+    public :: variable_t, dataset_t, coordinate_t, data_storage_t, dimension_t
+    public :: dataframe_t  ! For backward compatibility
     public :: MAX_NAME_LEN, MAX_ATTR_LEN
+    public :: DTYPE_INT8, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64
+    public :: DTYPE_REAL32, DTYPE_REAL64, DTYPE_CHAR, DTYPE_LOGICAL
     
 contains
 
@@ -103,6 +176,8 @@ contains
         if (allocated(coord%values_r32)) deallocate(coord%values_r32)
         if (allocated(coord%values_r64)) deallocate(coord%values_r64)
         if (allocated(coord%values_char)) deallocate(coord%values_char)
+        if (allocated(coord%attr_keys)) deallocate(coord%attr_keys)
+        if (allocated(coord%attr_values)) deallocate(coord%attr_values)
     end subroutine coordinate_finalizer
     
     !> Finalizer for data_storage_t type
@@ -114,18 +189,32 @@ contains
         if (allocated(storage%values_r32)) deallocate(storage%values_r32)
         if (allocated(storage%values_r64)) deallocate(storage%values_r64)
         if (allocated(storage%values_char)) deallocate(storage%values_char)
+        if (allocated(storage%values_logical)) deallocate(storage%values_logical)
     end subroutine data_storage_finalizer
     
-    !> Finalizer for dataframe_t type
-    subroutine dataframe_finalizer(df)
-        type(dataframe_t), intent(inout) :: df
+    !> Finalizer for variable_t type (was dataframe_finalizer)
+    subroutine variable_finalizer(var)
+        type(variable_t), intent(inout) :: var
         
-        if (allocated(df%dim_names)) deallocate(df%dim_names)
-        if (allocated(df%shape)) deallocate(df%shape)
-        if (allocated(df%strides)) deallocate(df%strides)
-        if (allocated(df%coords)) deallocate(df%coords)
-        if (allocated(df%attr_keys)) deallocate(df%attr_keys)
-        if (allocated(df%attr_values)) deallocate(df%attr_values)
-    end subroutine dataframe_finalizer
+        if (allocated(var%dim_names)) deallocate(var%dim_names)
+        if (allocated(var%shape)) deallocate(var%shape)
+        if (allocated(var%strides)) deallocate(var%strides)
+        if (allocated(var%coords)) deallocate(var%coords)
+        if (allocated(var%has_coord)) deallocate(var%has_coord)
+        if (allocated(var%attr_keys)) deallocate(var%attr_keys)
+        if (allocated(var%attr_values)) deallocate(var%attr_values)
+    end subroutine variable_finalizer
+    
+    !> Finalizer for dataset_t type
+    subroutine dataset_finalizer(ds)
+        type(dataset_t), intent(inout) :: ds
+        
+        if (allocated(ds%dimensions)) deallocate(ds%dimensions)
+        if (allocated(ds%variables)) deallocate(ds%variables)
+        if (allocated(ds%var_names)) deallocate(ds%var_names)
+        if (allocated(ds%coord_var_indices)) deallocate(ds%coord_var_indices)
+        if (allocated(ds%attr_keys)) deallocate(ds%attr_keys)
+        if (allocated(ds%attr_values)) deallocate(ds%attr_values)
+    end subroutine dataset_finalizer
     
 end module foxel_types

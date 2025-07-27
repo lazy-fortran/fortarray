@@ -9,9 +9,11 @@ program test_finalizers
     n_tests_passed = 0
     n_tests_total = 0
     
+    call test_variable_finalizer()
     call test_dataframe_finalizer()
     call test_coordinate_finalizer()
     call test_data_storage_finalizer()
+    call test_dataset_finalizer()
     call test_nested_finalization()
     call test_view_finalization()
     
@@ -22,7 +24,7 @@ program test_finalizers
     
 contains
 
-    subroutine test_dataframe_finalizer()
+    subroutine test_variable_finalizer()
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
@@ -30,25 +32,28 @@ contains
         
         ! Test in a block to trigger finalization
         block
-            type(dataframe_t) :: df
+            type(variable_t) :: var
             
             ! Allocate all components
-            df%initialized = .true.
-            df%n_dims = 2
-            allocate(df%dim_names(2))
-            df%dim_names = ["time    ", "station "]
-            allocate(df%shape(2))
-            df%shape = [100, 50]
-            allocate(df%strides(2))
-            df%strides = [1, 100]
-            allocate(df%coords(2))
+            var%initialized = .true.
+            var%n_dims = 2
+            var%name = "test_variable"
+            allocate(var%dim_names(2))
+            var%dim_names = ["time    ", "station "]
+            allocate(var%shape(2))
+            var%shape = [100, 50]
+            allocate(var%strides(2))
+            var%strides = [1, 100]
+            allocate(var%coords(2))
+            allocate(var%has_coord(2))
+            var%has_coord = .false.
             
             ! Allocate attributes
-            df%n_attrs = 1
-            allocate(df%attr_keys(1))
-            allocate(df%attr_values(1))
-            df%attr_keys(1) = "test"
-            df%attr_values(1) = "value"
+            var%n_attrs = 1
+            allocate(var%attr_keys(1))
+            allocate(var%attr_values(1))
+            var%attr_keys(1) = "test"
+            var%attr_values(1) = "value"
             
             ! When block ends, finalizer should be called
         end block
@@ -56,9 +61,40 @@ contains
         ! If we get here without segfault, finalizer worked
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
-            write(*,'(A)') "PASS: DataFrame finalizer test"
+            write(*,'(A)') "PASS: Variable finalizer test"
         else
-            write(*,'(A)') "FAIL: DataFrame finalizer test"
+            write(*,'(A)') "FAIL: Variable finalizer test"
+        end if
+    end subroutine test_variable_finalizer
+
+    subroutine test_dataframe_finalizer()
+        logical :: test_passed
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        
+        ! Test legacy dataframe type
+        block
+            type(dataframe_t) :: df
+            
+            ! Allocate components through the var field
+            df%var%initialized = .true.
+            df%var%n_dims = 1
+            df%var%name = "legacy_dataframe"
+            allocate(df%var%dim_names(1))
+            df%var%dim_names = ["x"]
+            allocate(df%var%shape(1))
+            df%var%shape = [10]
+            
+            ! When block ends, finalizer should be called
+        end block
+        
+        ! If we get here without segfault, finalizer worked
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Legacy DataFrame finalizer test"
+        else
+            write(*,'(A)') "FAIL: Legacy DataFrame finalizer test"
         end if
     end subroutine test_dataframe_finalizer
     
@@ -73,10 +109,18 @@ contains
             type(coordinate_t) :: coord
             
             coord%initialized = .true.
-            coord%dtype = 4  ! real64
+            coord%name = "time"
+            coord%dtype = DTYPE_REAL64
             coord%length = 100
             allocate(coord%values_r64(100))
             coord%values_r64 = [(real(i, real64), i=1,100)]
+            
+            ! Allocate attributes
+            coord%n_attrs = 1
+            allocate(coord%attr_keys(1))
+            allocate(coord%attr_values(1))
+            coord%attr_keys(1) = "units"
+            coord%attr_values(1) = "seconds"
         end block
         
         if (test_passed) then
@@ -97,9 +141,9 @@ contains
             type(data_storage_t) :: storage
             
             storage%initialized = .true.
-            storage%dtype = 3  ! real32
-            storage%n_elements = 5000
-            allocate(storage%values_r32(5000))
+            storage%dtype = DTYPE_REAL32
+            storage%n_elements = 1000
+            allocate(storage%values_r32(1000))
             storage%values_r32 = 0.0_real32
         end block
         
@@ -111,33 +155,74 @@ contains
         end if
     end subroutine test_data_storage_finalizer
     
-    subroutine test_nested_finalization()
+    subroutine test_dataset_finalizer()
         logical :: test_passed
         
         n_tests_total = n_tests_total + 1
         test_passed = .true.
         
         block
-            type(dataframe_t) :: df
-            integer :: i
+            type(dataset_t) :: ds
             
-            df%initialized = .true.
-            df%n_dims = 3
-            allocate(df%coords(3))
+            ds%initialized = .true.
+            ds%filename = "test.nc"
+            ds%n_dims = 2
+            ds%n_vars = 2
             
-            ! Initialize each coordinate
+            ! Allocate dimensions
+            allocate(ds%dimensions(2))
+            ds%dimensions(1)%name = "time"
+            ds%dimensions(1)%length = 100
+            ds%dimensions(2)%name = "lat"
+            ds%dimensions(2)%length = 180
+            
+            ! Allocate variable names
+            allocate(ds%var_names(2))
+            ds%var_names = ["temperature", "pressure   "]
+            
+            ! Allocate global attributes
+            ds%n_attrs = 1
+            allocate(ds%attr_keys(1))
+            allocate(ds%attr_values(1))
+            ds%attr_keys(1) = "title"
+            ds%attr_values(1) = "Test Dataset"
+        end block
+        
+        if (test_passed) then
+            n_tests_passed = n_tests_passed + 1
+            write(*,'(A)') "PASS: Dataset finalizer test"
+        else
+            write(*,'(A)') "FAIL: Dataset finalizer test"
+        end if
+    end subroutine test_dataset_finalizer
+    
+    subroutine test_nested_finalization()
+        logical :: test_passed
+        integer :: i
+        
+        n_tests_total = n_tests_total + 1
+        test_passed = .true.
+        
+        block
+            type(variable_t) :: var
+            
+            var%initialized = .true.
+            var%n_dims = 3
+            allocate(var%coords(3))
+            
+            ! Initialize nested coordinates
             do i = 1, 3
-                df%coords(i)%initialized = .true.
-                df%coords(i)%dtype = 4
-                df%coords(i)%length = 10*i
-                allocate(df%coords(i)%values_r64(10*i))
+                var%coords(i)%initialized = .true.
+                var%coords(i)%dtype = DTYPE_REAL64
+                var%coords(i)%length = 10 * i
+                allocate(var%coords(i)%values_r64(10 * i))
             end do
             
             ! Initialize data storage
-            df%data%initialized = .true.
-            df%data%dtype = 4
-            df%data%n_elements = 600
-            allocate(df%data%values_r64(600))
+            var%data%initialized = .true.
+            var%data%dtype = DTYPE_REAL64
+            var%data%n_elements = 1000
+            allocate(var%data%values_r64(1000))
         end block
         
         if (test_passed) then
@@ -155,20 +240,18 @@ contains
         test_passed = .true.
         
         block
-            type(dataframe_t) :: df
+            type(variable_t) :: var
             
             ! Create a view (doesn't own memory)
-            df%initialized = .true.
-            df%is_view = .true.
-            df%owns_memory = .false.
-            df%n_dims = 1
-            allocate(df%dim_names(1))
-            allocate(df%shape(1))
+            var%initialized = .true.
+            var%is_view = .true.
+            var%owns_memory = .false.
             
-            ! For views, data shouldn't be deallocated by finalizer
-            df%data%initialized = .true.
-            df%data%dtype = 4
-            ! Don't allocate - simulating pointing to parent's data
+            ! Even though we allocate, the finalizer should handle views properly
+            var%data%initialized = .true.
+            var%data%dtype = DTYPE_REAL64
+            var%data%n_elements = 100
+            allocate(var%data%values_r64(100))
         end block
         
         if (test_passed) then

@@ -1,18 +1,19 @@
 # Foxel
 
-A modern Fortran library for handling multi-dimensional labeled arrays and datasets, inspired by Python's xarray and pandas.
+A modern Fortran library for handling multi-dimensional labeled arrays and datasets, following NetCDF data model conventions.
 
 ## Features
 
-- **Labeled dimensions and coordinates** - Work with meaningful names instead of array indices
-- **NetCDF4 support** - Native reading and writing of NetCDF files
-- **Intuitive API** - Familiar operations for users of xarray/pandas
-- **High performance** - Leverages Fortran's computational efficiency
-- **Flexible indexing** - Label-based, positional, and boolean indexing
-- **Built-in computations** - Aggregations, reductions, and transformations
-- **Missing data handling** - Proper NaN support and propagation
-- **Parallel operations** - OpenMP support for computationally intensive tasks
-- **Visualization** - Built-in plotting capabilities via fortplot integration
+- **NetCDF data model** - Variables, dimensions, coordinates, and attributes
+- **Multi-dimensional arrays** - Support for 0D scalars through nD arrays
+- **Dataset collections** - Group multiple variables with shared dimensions
+- **NetCDF4/HDF5 I/O** - Native support for scientific data formats
+- **CF conventions** - Climate and Forecast metadata standards
+- **Label-based indexing** - Work with coordinate values, not just indices
+- **High performance** - Optimized Fortran implementations
+- **Parallel operations** - OpenMP support for large datasets
+- **Missing data handling** - Proper fill values and NaN support
+- **Visualization** - Integrated plotting via fortplot
 
 ## Installation
 
@@ -29,73 +30,127 @@ program example
     use foxel
     implicit none
     
-    type(dataframe_t) :: df
-    real, allocatable :: values(:,:)
+    type(dataset_t) :: ds
+    type(variable_t) :: temp, pres
+    real(real64), allocatable :: temp_data(:,:,:)
     
-    ! Create a DataFrame from array
-    allocate(values(100, 50))
-    call random_number(values)
+    ! Read a NetCDF file
+    ds = from_netcdf('weather_data.nc')
     
-    df = dataframe(values, &
-                   dims=['time', 'station'], &
-                   coords=[time_coords, station_coords])
+    ! Access variables
+    temp = ds%var('temperature')
+    pres = ds%var('pressure')
     
-    ! Write to file (auto-detects format from extension)
-    call df%to_file('output.nc')
+    ! Select data by coordinate values
+    temp_subset = temp%sel(time='2024-01-01', lat=45.0:55.0)
     
-    ! Read from file (auto-detects format from extension)
-    df = from_file('input.nc')
+    ! Compute statistics along dimensions
+    temp_mean = temp%mean(dim='time')
     
-    ! Or specify format explicitly
-    call df%to_file('output.dat', format='csv')
-    df = from_file('input.dat', format='csv')
+    ! Create new variable from array
+    allocate(temp_data(360, 180, 24))
+    call random_number(temp_data)
     
-    ! Filter data by label
-    df_subset = df%filter(time='2024-01-01', station='A001')
+    temp = variable(temp_data, &
+                   dims=['lon', 'lat', 'time'], &
+                   name='temperature', &
+                   units='kelvin')
     
-    ! Select specific variables
-    df_vars = df%vars(['temperature', 'pressure'])
+    ! Add to dataset
+    call ds%add_var(temp)
     
-    ! Compute mean along dimension
-    df_mean = df%mean(dim='time')
+    ! Write to NetCDF
+    call ds%to_netcdf('output.nc')
     
-    ! Plot the data
-    call df%plot(x='time', y='station')
+    ! Plot using fortplot
+    call temp%plot(lon=0.0, lat=45.0)  ! Time series at point
     
 end program example
 ```
 
-## Core Concepts
+## Core Types
 
-### DataFrame
-The central data structure in Foxel, containing:
-- **Data array**: The actual numerical values
-- **Dimensions**: Named axes (e.g., 'time', 'lat', 'lon')
-- **Coordinates**: Label arrays for each dimension
-- **Attributes**: Metadata (units, descriptions, etc.)
+### Variable
+A named multi-dimensional array (NetCDF variable):
+- **Data array**: The actual values (0D to nD)
+- **Dimensions**: Named axes with sizes
+- **Coordinates**: Optional 1D arrays defining axis values
+- **Attributes**: Metadata (units, long_name, etc.)
+
+### Dataset
+A collection of variables (NetCDF file):
+- **Variables**: Named collection of arrays
+- **Dimensions**: Shared dimension definitions
+- **Coordinates**: Shared coordinate variables
+- **Attributes**: Global metadata
 
 ### Operations
-- **Selection**: Extract subsets using labels or indices
-- **Aggregation**: Compute statistics along dimensions
-- **Arithmetic**: Element-wise and broadcasting operations
-- **I/O**: Read/write various formats (NetCDF, CSV)
-- **Visualization**: Plot DataFrames directly using fortplot
+- **Selection**: Extract data using coordinates or indices
+- **Slicing**: Multi-dimensional array subsets
+- **Aggregation**: Statistical operations along dimensions
+- **Arithmetic**: Operations between variables
+- **I/O**: Read/write NetCDF4, HDF5, CSV formats
+- **Visualization**: Direct plotting of variables
+
+## NetCDF Example
+
+```fortran
+! Working with real climate data
+type(dataset_t) :: climate
+type(variable_t) :: temp, precip
+real(real64) :: global_mean
+
+! Load ERA5 reanalysis data
+climate = from_netcdf('era5_2023.nc')
+
+! Extract variables
+temp = climate%var('t2m')  ! 2-meter temperature
+precip = climate%var('tp')  ! Total precipitation
+
+! Compute annual mean temperature
+temp_annual = temp%mean(dim='time')
+
+! Select a region
+europe = temp%sel(lat=35.0:70.0, lon=-10.0:40.0)
+
+! Compute area-weighted global mean
+global_mean = temp%weighted_mean(weights=area_weights)
+
+! Write subset to new file
+call europe%to_netcdf('europe_temperature.nc')
+```
 
 ## Requirements
 
 - Modern Fortran compiler (gfortran 9+, ifort 2021+)
 - NetCDF-Fortran library
+- HDF5 library (usually comes with NetCDF4)
 - fortplot (installed automatically via fpm)
-- OpenMP support (optional)
+- OpenMP support (optional but recommended)
 - fpm (Fortran Package Manager)
 
 ## Documentation
 
-Detailed documentation and API reference available at: [coming soon]
+- [User Guide](docs/user_guide.md) - Getting started and examples
+- [API Reference](docs/api_reference.md) - Complete API documentation
+- [NetCDF Primer](docs/netcdf_primer.md) - Understanding the data model
+- [Migration Guide](docs/migration.md) - Coming from xarray/CDO/NCL
+
+## Testing
+
+Run the test suite with:
+```bash
+export OMP_NUM_THREADS=24
+fpm test
+```
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines and submit pull requests to our repository.
+Contributions are welcome! Please:
+1. Follow the coding standards in [CLAUDE.md](CLAUDE.md)
+2. Add tests for new features
+3. Update documentation
+4. Submit pull requests
 
 ## License
 
@@ -103,10 +158,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-Inspired by the excellent Python libraries:
-- [xarray](https://xarray.pydata.org/)
-- [pandas](https://pandas.pydata.org/)
+- Follows [NetCDF](https://www.unidata.ucar.edu/software/netcdf/) data model
+- Complies with [CF Conventions](https://cfconventions.org/)
+- Inspired by [xarray](https://xarray.pydata.org/) API design
 
 ## Status
 
-This project is under active development. See [ROADMAP.md](ROADMAP.md) for planned features.
+This project is under active development. See [ROADMAP.md](ROADMAP.md) for planned features and [BACKLOG.md](BACKLOG.md) for detailed task tracking.
