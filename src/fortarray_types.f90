@@ -121,6 +121,9 @@ module fortarray_types
         ! Cache flags
         logical :: shape_cached = .false.
         logical :: strides_cached = .false.
+        
+        ! Lazy loading flag
+        logical :: lazy = .false.
     contains
         ! Finalizer
         final :: variable_finalizer
