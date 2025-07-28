@@ -1,0 +1,32 @@
+# Build artifacts
+build/
+*.mod
+*.o
+*.a
+*.so
+
+# Test artifacts and temporary files
+*.tmp
+*.nc.tmp
+test_*.nc
+debug_*.f90
+simple_debug*.f90
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug and log files
+debug.log
+*.log
+
+# Backup files
+*.bak
+*.backup
