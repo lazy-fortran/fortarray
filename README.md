@@ -47,23 +47,24 @@ program example
     ! Method chaining support
     pres = temp%sel_point("lat", 1.0)%mean()
     
-    ! Create new variable from array
+    ! Create 3D variable from array  
     allocate(temp_data(360, 180, 24))
     call random_number(temp_data)
     
-    temp = variable(temp_data, &
-                   dims=['lon', 'lat', 'time'], &
-                   name='temperature', &
-                   units='kelvin')
+    temp = new_array(temp_data, &
+                     dim_names=['lon', 'lat', 'time'], &
+                     name='temperature')
+    temp%units = 'kelvin'
     
     ! Add to dataset
-    call ds%add_var(temp)
+    ds = new_dataset()
+    call add_variable(ds, temp)
     
     ! Write to NetCDF
-    call ds%to_netcdf('output.nc')
+    call write_netcdf('output.nc', ds)
     
     ! Plot using fortplot
-    call temp%plot(lon=0.0, lat=45.0)  ! Time series at point
+    call temp%plot(x='time')  ! Time series plot
     
 end program example
 ```
@@ -101,23 +102,23 @@ type(fortarray_t) :: temp, precip
 real(real64) :: global_mean
 
 ! Load ERA5 reanalysis data
-call read_netcdf_dataset('era5_2023.nc', climate)
+climate = read_netcdf_dataset('era5_2023.nc')
 
-! Extract variables
-temp = climate%variables(1)  ! 2-meter temperature
-precip = climate%variables(2)  ! Total precipitation
+! Extract variables using xarray-style access
+temp = climate%get_variable('t2m')  ! 2-meter temperature
+precip = climate%get_variable('tp')  ! Total precipitation
 
 ! Compute annual mean temperature
-temp_annual = temp%mean(dim='time')
+temp_annual = temp%mean(dim_name='time')
 
-! Select a region
-europe = temp%sel(lat=35.0:70.0, lon=-10.0:40.0)
+! Select a region using coordinate-based selection
+europe = temp%sel_range('lat', 35.0_real64, 70.0_real64)%sel_range('lon', -10.0_real64, 40.0_real64)
 
 ! Compute area-weighted global mean
-global_mean = temp%weighted_mean(weights=area_weights)
+global_mean = temp%mean()%data%values_r64(1)
 
-! Write subset to new file
-call europe%to_netcdf('europe_temperature.nc')
+! Write subset to new file  
+call write_netcdf('europe_temperature.nc', europe)
 ```
 
 ## Requirements
