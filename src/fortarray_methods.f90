@@ -3218,5 +3218,476 @@ contains
         if (j + 1 < last) call quicksort_r64(arr, j + 1, last)
         
     end subroutine quicksort_r64
+    
+    ! ======= DIMENSION MANIPULATION METHODS (Sprint 10) =======
+    
+    !> Transpose array (reverse dimension order by default)
+    module function fortarray_transpose(this, axes) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, dimension(:), intent(in), optional :: axes
+        type(fortarray_t) :: result_array
+        
+        integer, dimension(:), allocatable :: perm, new_shape, new_strides
+        integer, dimension(:), allocatable :: old_indices, new_indices
+        integer :: i, j, n_dims
+        real(real64), allocatable :: temp_data(:)
+        
+        n_dims = this%n_dims
+        
+        ! Handle scalar (0D) case
+        if (n_dims == 0) then
+            result_array = this
+            return
+        end if
+        
+        ! Set up permutation
+        allocate(perm(n_dims))
+        if (present(axes)) then
+            if (size(axes) /= n_dims) then
+                write(error_unit, '(A)') "ERROR: axes must have same length as array dimensions"
+                result_array = create_empty_like(this)
+                return
+            end if
+            perm = axes
+        else
+            ! Default: reverse dimension order
+            do i = 1, n_dims
+                perm(i) = n_dims - i + 1
+            end do
+        end if
+        
+        ! Validate permutation
+        do i = 1, n_dims
+            if (perm(i) < 1 .or. perm(i) > n_dims) then
+                write(error_unit, '(A)') "ERROR: Invalid axis in permutation"
+                result_array = create_empty_like(this)
+                return
+            end if
+        end do
+        
+        ! Calculate new shape
+        allocate(new_shape(n_dims))
+        do i = 1, n_dims
+            new_shape(i) = this%shape(perm(i))
+        end do
+        
+        ! Create result array with transposed shape
+        result_array%name = trim(this%name) // "_T"
+        result_array%n_dims = n_dims
+        result_array%n_elements = this%n_elements
+        result_array%initialized = .true.
+        
+        allocate(result_array%shape(n_dims))
+        result_array%shape = new_shape
+        
+        ! Transpose dimension names if present
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(n_dims))
+            do i = 1, n_dims
+                result_array%dim_names(i) = this%dim_names(perm(i))
+            end do
+        end if
+        
+        ! For real64 data only (extend for other types as needed)
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: transpose currently only supports real64 data"
+            return
+        end if
+        
+        ! Setup result data storage
+        result_array%data%dtype = this%data%dtype
+        result_array%data%initialized = .true.
+        result_array%data%n_elements = this%n_elements
+        allocate(result_array%data%values_r64(this%n_elements))
+        
+        ! Perform transpose by iterating through all elements
+        allocate(old_indices(n_dims), new_indices(n_dims))
+        
+        do i = 1, this%n_elements
+            ! Convert linear index to multi-dimensional indices
+            call linear_to_multi_index(i, this%shape, old_indices)
+            
+            ! Apply permutation
+            do j = 1, n_dims
+                new_indices(j) = old_indices(perm(j))
+            end do
+            
+            ! Convert back to linear index in transposed array
+            j = multi_to_linear_index(new_indices, new_shape)
+            
+            ! Copy data
+            result_array%data%values_r64(j) = this%data%values_r64(i)
+        end do
+        
+        deallocate(perm, new_shape, old_indices, new_indices)
+        
+    end function fortarray_transpose
+    
+    !> Squeeze array (remove dimensions of size 1)
+    module function fortarray_squeeze(this, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: axis
+        type(fortarray_t) :: result_array
+        
+        integer, dimension(:), allocatable :: new_shape, squeeze_mask
+        character(len=:), dimension(:), allocatable :: new_dim_names
+        integer :: i, j, new_ndims
+        
+        ! Count dimensions to keep
+        if (present(axis)) then
+            ! Squeeze only specified axis if it's size 1
+            if (axis < 1 .or. axis > this%n_dims) then
+                write(error_unit, '(A)') "ERROR: Invalid axis for squeeze"
+                result_array = create_empty_like(this)
+                return
+            end if
+            if (this%shape(axis) /= 1) then
+                write(error_unit, '(A)') "ERROR: Cannot squeeze axis with size > 1"
+                result_array = create_empty_like(this)
+                return
+            end if
+            
+            ! Create new shape without specified axis
+            new_ndims = this%n_dims - 1
+            if (new_ndims == 0) then
+                ! Result is scalar
+                result_array = this
+                result_array%n_dims = 0
+                if (allocated(result_array%shape)) deallocate(result_array%shape)
+                if (allocated(result_array%dim_names)) deallocate(result_array%dim_names)
+                return
+            end if
+            
+            allocate(new_shape(new_ndims))
+            j = 0
+            do i = 1, this%n_dims
+                if (i /= axis) then
+                    j = j + 1
+                    new_shape(j) = this%shape(i)
+                end if
+            end do
+        else
+            ! Squeeze all dimensions of size 1
+            allocate(squeeze_mask(this%n_dims))
+            squeeze_mask = 0
+            new_ndims = 0
+            do i = 1, this%n_dims
+                if (this%shape(i) > 1) then
+                    new_ndims = new_ndims + 1
+                    squeeze_mask(i) = 1
+                end if
+            end do
+            
+            if (new_ndims == 0) then
+                ! All dimensions are size 1, result is scalar
+                result_array = this
+                result_array%n_dims = 0
+                if (allocated(result_array%shape)) deallocate(result_array%shape)
+                if (allocated(result_array%dim_names)) deallocate(result_array%dim_names)
+                return
+            end if
+            
+            allocate(new_shape(new_ndims))
+            j = 0
+            do i = 1, this%n_dims
+                if (squeeze_mask(i) == 1) then
+                    j = j + 1
+                    new_shape(j) = this%shape(i)
+                end if
+            end do
+        end if
+        
+        ! Create result array
+        result_array = this  ! Shallow copy
+        result_array%shape = new_shape
+        result_array%n_dims = new_ndims
+        
+        ! Update dimension names if present
+        if (allocated(this%dim_names)) then
+            allocate(character(len=len(this%dim_names)) :: new_dim_names(new_ndims))
+            if (present(axis)) then
+                j = 0
+                do i = 1, this%n_dims
+                    if (i /= axis) then
+                        j = j + 1
+                        new_dim_names(j) = this%dim_names(i)
+                    end if
+                end do
+            else
+                j = 0
+                do i = 1, this%n_dims
+                    if (squeeze_mask(i) == 1) then
+                        j = j + 1
+                        new_dim_names(j) = this%dim_names(i)
+                    end if
+                end do
+            end if
+            result_array%dim_names = new_dim_names
+        end if
+        
+    end function fortarray_squeeze
+    
+    !> Expand dimensions (add new axis of size 1)
+    module function fortarray_expand_dims(this, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in) :: axis
+        type(fortarray_t) :: result_array
+        
+        integer, dimension(:), allocatable :: new_shape
+        character(len=:), dimension(:), allocatable :: new_dim_names
+        integer :: i, j, new_ndims
+        
+        new_ndims = this%n_dims + 1
+        
+        ! Validate axis
+        if (axis < 1 .or. axis > new_ndims) then
+            write(error_unit, '(A)') "ERROR: Invalid axis for expand_dims"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Create new shape with size 1 at specified axis
+        allocate(new_shape(new_ndims))
+        j = 0
+        do i = 1, new_ndims
+            if (i == axis) then
+                new_shape(i) = 1
+            else
+                j = j + 1
+                if (j <= this%n_dims) then
+                    new_shape(i) = this%shape(j)
+                end if
+            end if
+        end do
+        
+        ! Create result array
+        result_array = this  ! Shallow copy (same data)
+        result_array%shape = new_shape
+        result_array%n_dims = new_ndims
+        
+        ! Update dimension names if present
+        if (allocated(this%dim_names)) then
+            allocate(character(len=max(len(this%dim_names), 8)) :: new_dim_names(new_ndims))
+            j = 0
+            do i = 1, new_ndims
+                if (i == axis) then
+                    new_dim_names(i) = "newaxis"
+                else
+                    j = j + 1
+                    if (j <= this%n_dims) then
+                        new_dim_names(i) = this%dim_names(j)
+                    end if
+                end if
+            end do
+            result_array%dim_names = new_dim_names
+        end if
+        
+    end function fortarray_expand_dims
+    
+    !> Rename dimensions
+    module function fortarray_rename_dims(this, old_name, new_name, new_names) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in), optional :: old_name, new_name
+        character(len=*), dimension(:), intent(in), optional :: new_names
+        type(fortarray_t) :: result_array
+        
+        integer :: i
+        
+        ! Create result as copy
+        result_array = this
+        
+        ! Ensure dimension names are allocated
+        if (.not. allocated(result_array%dim_names)) then
+            allocate(result_array%dim_names(this%n_dims))
+            do i = 1, this%n_dims
+                write(result_array%dim_names(i), '(A,I0)') "dim", i
+            end do
+        end if
+        
+        if (present(old_name) .and. present(new_name)) then
+            ! Rename single dimension
+            do i = 1, this%n_dims
+                if (trim(result_array%dim_names(i)) == trim(old_name)) then
+                    result_array%dim_names(i) = new_name
+                    exit
+                end if
+            end do
+        else if (present(new_names)) then
+            ! Rename all dimensions
+            if (size(new_names) /= this%n_dims) then
+                write(error_unit, '(A)') "ERROR: new_names must match number of dimensions"
+                return
+            end if
+            result_array%dim_names = new_names
+        else
+            write(error_unit, '(A)') "ERROR: Must provide either old_name/new_name or new_names"
+        end if
+        
+    end function fortarray_rename_dims
+    
+    !> Stack arrays along new axis
+    module function fortarray_stack(arrays, axis, out_name) result(result_array)
+        type(fortarray_t), dimension(:), intent(in) :: arrays
+        integer, intent(in) :: axis
+        character(len=*), intent(in), optional :: out_name
+        type(fortarray_t) :: result_array
+        integer :: n_arrays, i, j, idx
+        integer, allocatable :: new_shape(:)
+        real(real64), allocatable :: stacked_data(:)
+        character(len=32) :: num_str
+        
+        n_arrays = size(arrays)
+        if (n_arrays == 0) then
+            write(error_unit, '(A)') "ERROR: Cannot stack empty array list"
+            return
+        end if
+        
+        ! Check all arrays have same shape
+        do i = 2, n_arrays
+            if (.not. all(arrays(i)%shape == arrays(1)%shape)) then
+                write(error_unit, '(A)') "ERROR: All arrays must have same shape for stacking"
+                return
+            end if
+        end do
+        
+        ! Create new shape with added dimension
+        allocate(new_shape(arrays(1)%n_dims + 1))
+        if (axis <= arrays(1)%n_dims + 1) then
+            new_shape(1:axis-1) = arrays(1)%shape(1:axis-1)
+            new_shape(axis) = n_arrays
+            if (axis <= arrays(1)%n_dims) then
+                new_shape(axis+1:) = arrays(1)%shape(axis:)
+            end if
+        else
+            write(error_unit, '(A)') "ERROR: Invalid axis for stack"
+            return
+        end if
+        
+        ! Initialize result
+        result_array%name = "stacked"
+        if (present(out_name)) result_array%name = out_name
+        result_array%n_dims = arrays(1)%n_dims + 1
+        result_array%n_elements = product(new_shape)
+        allocate(result_array%shape(result_array%n_dims))
+        result_array%shape = new_shape
+        result_array%initialized = .true.
+        
+        ! Stack data (only real64 for now)
+        if (arrays(1)%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: stack currently only supports real64 data"
+            return
+        end if
+        
+        result_array%data%dtype = DTYPE_REAL64
+        result_array%data%initialized = .true.
+        result_array%data%n_elements = result_array%n_elements
+        allocate(result_array%data%values_r64(result_array%n_elements))
+        
+        ! Copy data from each array
+        idx = 1
+        do i = 1, n_arrays
+            do j = 1, arrays(i)%n_elements
+                result_array%data%values_r64(idx) = arrays(i)%data%values_r64(j)
+                idx = idx + 1
+            end do
+        end do
+        
+    end function fortarray_stack
+    
+    !> Unstack array along axis
+    module function fortarray_unstack(this, axis) result(arrays)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in) :: axis
+        type(fortarray_t), dimension(:), allocatable :: arrays
+        integer :: n_slices, slice_size, i, j, idx
+        integer, allocatable :: slice_shape(:)
+        character(len=32) :: num_str
+        
+        if (axis < 1 .or. axis > this%n_dims) then
+            write(error_unit, '(A)') "ERROR: Invalid axis for unstack"
+            return
+        end if
+        
+        n_slices = this%shape(axis)
+        allocate(arrays(n_slices))
+        
+        ! Create shape for each slice (remove axis dimension)
+        allocate(slice_shape(this%n_dims - 1))
+        if (axis == 1) then
+            slice_shape = this%shape(2:)
+        else if (axis == this%n_dims) then
+            slice_shape = this%shape(1:this%n_dims-1)
+        else
+            slice_shape(1:axis-1) = this%shape(1:axis-1)
+            slice_shape(axis:) = this%shape(axis+1:)
+        end if
+        
+        slice_size = product(slice_shape)
+        
+        ! Only real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: unstack currently only supports real64 data"
+            return
+        end if
+        
+        ! Create each slice
+        idx = 1
+        do i = 1, n_slices
+            write(num_str, '(I0)') i
+            arrays(i)%name = trim(this%name) // "_slice" // trim(num_str)
+            arrays(i)%n_dims = this%n_dims - 1
+            arrays(i)%n_elements = slice_size
+            allocate(arrays(i)%shape(arrays(i)%n_dims))
+            arrays(i)%shape = slice_shape
+            arrays(i)%initialized = .true.
+            
+            arrays(i)%data%dtype = DTYPE_REAL64
+            arrays(i)%data%initialized = .true.
+            arrays(i)%data%n_elements = slice_size
+            allocate(arrays(i)%data%values_r64(slice_size))
+            
+            ! Copy slice data
+            do j = 1, slice_size
+                arrays(i)%data%values_r64(j) = this%data%values_r64(idx)
+                idx = idx + 1
+            end do
+        end do
+        
+    end function fortarray_unstack
+    
+    ! ======= HELPER FUNCTIONS FOR DIMENSION MANIPULATION =======
+    
+    !> Convert linear index to multi-dimensional indices
+    subroutine linear_to_multi_index(linear_idx, shape, indices)
+        integer, intent(in) :: linear_idx
+        integer, dimension(:), intent(in) :: shape
+        integer, dimension(:), intent(out) :: indices
+        
+        integer :: i, idx, prod
+        
+        idx = linear_idx - 1  ! Convert to 0-based
+        do i = size(shape), 1, -1
+            prod = product(shape(1:i-1))
+            indices(i) = idx / prod + 1
+            idx = mod(idx, prod)
+        end do
+        
+    end subroutine linear_to_multi_index
+    
+    !> Convert multi-dimensional indices to linear index
+    function multi_to_linear_index(indices, shape) result(linear_idx)
+        integer, dimension(:), intent(in) :: indices, shape
+        integer :: linear_idx
+        
+        integer :: i, stride
+        
+        linear_idx = 1
+        stride = 1
+        do i = 1, size(shape)
+            linear_idx = linear_idx + (indices(i) - 1) * stride
+            stride = stride * shape(i)
+        end do
+        
+    end function multi_to_linear_index
 
 end submodule fortarray_methods
