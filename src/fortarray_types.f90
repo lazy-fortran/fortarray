@@ -191,6 +191,11 @@ module fortarray_types
         procedure :: rename_dims => fortarray_rename_dims
         procedure :: unstack => fortarray_unstack
         
+        ! Missing data advanced handling (Sprint 11)
+        procedure :: interpolate_na => fortarray_interpolate_na
+        procedure :: bfill => fortarray_bfill
+        procedure :: dropna => fortarray_dropna_advanced
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -591,6 +596,30 @@ module fortarray_types
             integer, intent(in) :: axis
             type(fortarray_t), dimension(:), allocatable :: arrays
         end function fortarray_unstack
+        
+        ! Missing data advanced handling (Sprint 11)
+        module function fortarray_interpolate_na(this, method, order, limit) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in), optional :: method
+            integer, intent(in), optional :: order
+            integer, intent(in), optional :: limit
+            type(fortarray_t) :: result_array
+        end function fortarray_interpolate_na
+        
+        module function fortarray_bfill(this, limit) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: limit
+            type(fortarray_t) :: result_array
+        end function fortarray_bfill
+        
+        module function fortarray_dropna_advanced(this, axis, how, thresh, subset) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: axis
+            character(len=*), intent(in), optional :: how
+            integer, intent(in), optional :: thresh
+            character(len=*), dimension(:), intent(in), optional :: subset
+            type(fortarray_t) :: result_array
+        end function fortarray_dropna_advanced
         
     end interface
     
