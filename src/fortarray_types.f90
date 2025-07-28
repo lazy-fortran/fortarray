@@ -154,6 +154,21 @@ module fortarray_types
         procedure :: where_custom => fortarray_where_custom
         procedure :: where_complex => fortarray_where_complex
         
+        ! Data access and conversion methods
+        procedure :: values => fortarray_values_all
+        procedure :: values_copy => fortarray_values_copy
+        procedure :: to_netcdf => fortarray_to_netcdf_file
+        procedure :: to_numpy => fortarray_to_numpy_like
+        procedure :: to_pandas => fortarray_to_pandas_like
+        
+        ! Enhanced selection methods (Sprint 7)
+        procedure :: sel_nearest => fortarray_sel_nearest_r64
+        procedure :: sel_interp => fortarray_sel_interp_linear
+        procedure :: sel_string => fortarray_sel_string
+        procedure :: sel_datetime => fortarray_sel_datetime
+        procedure :: sel_multi => fortarray_sel_multi_coord
+        procedure :: sel_method => fortarray_sel_method_choice
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -344,6 +359,82 @@ module fortarray_types
             real(real64), intent(in) :: other_value
             type(fortarray_t) :: result_array
         end function fortarray_where_complex
+        
+        ! Data access and conversion methods
+        module function fortarray_values_all(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_values_all
+        
+        module function fortarray_values_copy(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_values_copy
+        
+        module function fortarray_to_netcdf_file(this, filename) result(status)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: filename
+            integer :: status
+        end function fortarray_to_netcdf_file
+        
+        module function fortarray_to_numpy_like(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_to_numpy_like
+        
+        module function fortarray_to_pandas_like(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_to_pandas_like
+        
+        ! Enhanced selection methods (Sprint 7)
+        module function fortarray_sel_nearest_r64(this, coord_name, value, method) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in) :: value
+            character(len=*), intent(in), optional :: method  ! 'linear', 'cubic', 'nearest'
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_nearest_r64
+        
+        module function fortarray_sel_interp_linear(this, coord_name, value, method) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in) :: value
+            character(len=*), intent(in), optional :: method  ! 'linear', 'cubic', 'spline'
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_interp_linear
+        
+        module function fortarray_sel_string(this, coord_name, value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            character(len=*), intent(in) :: value
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_string
+        
+        module function fortarray_sel_datetime(this, coord_name, value, tolerance) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            character(len=*), intent(in) :: value  ! ISO 8601 format
+            real(real64), intent(in), optional :: tolerance
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_datetime
+        
+        module function fortarray_sel_multi_coord(this, coord_names, values, method) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_names(:)
+            real(real64), intent(in) :: values(:)
+            character(len=*), intent(in), optional :: method  ! 'exact', 'nearest', 'interp'
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_multi_coord
+        
+        module function fortarray_sel_method_choice(this, coord_name, value, method, tolerance) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in) :: value
+            character(len=*), intent(in) :: method  ! 'exact', 'nearest', 'interpolate'
+            real(real64), intent(in), optional :: tolerance
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_method_choice
         
     end interface
     

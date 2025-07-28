@@ -461,15 +461,86 @@ contains
     function fortarray_values_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: values_all not yet implemented"
-        result_array = create_empty_like(this)
+        
+        ! Return a view of the underlying data (same array, not a copy)
+        result_array = this
+        result_array%is_view = .true.
+        result_array%owns_memory = .false.
+        
     end function fortarray_values_all
     
     function fortarray_values_copy(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: values_copy not yet implemented"
-        result_array = create_empty_like(this)
+        integer :: i
+        
+        ! Create a proper copy of this array
+        result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        result_array%is_view = .false.
+        result_array%owns_memory = .true.
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Copy coordinates
+        if (allocated(this%coords)) then
+            allocate(result_array%coords(size(this%coords)))
+            do i = 1, size(this%coords)
+                result_array%coords(i) = this%coords(i)
+            end do
+        end if
+        if (allocated(this%has_coord)) then
+            allocate(result_array%has_coord(size(this%has_coord)))
+            result_array%has_coord = this%has_coord
+        end if
+        
+        ! Initialize data storage and copy data
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        
+        ! Copy data based on type
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                allocate(result_array%data%values_r64(this%n_elements))
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                allocate(result_array%data%values_r32(this%n_elements))
+                result_array%data%values_r32(:) = this%data%values_r32(:)
+            end if
+        case(DTYPE_INT64)
+            if (allocated(this%data%values_i64)) then
+                allocate(result_array%data%values_i64(this%n_elements))
+                result_array%data%values_i64(:) = this%data%values_i64(:)
+            end if
+        case(DTYPE_INT32)
+            if (allocated(this%data%values_i32)) then
+                allocate(result_array%data%values_i32(this%n_elements))
+                result_array%data%values_i32(:) = this%data%values_i32(:)
+            end if
+        case(DTYPE_LOGICAL)
+            if (allocated(this%data%values_logical)) then
+                allocate(result_array%data%values_logical(this%n_elements))
+                result_array%data%values_logical(:) = this%data%values_logical(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Unsupported data type in values_copy"
+        end select
+        
     end function fortarray_values_copy
     
     function fortarray_to_netcdf_file(this, filename) result(status)
@@ -480,11 +551,20 @@ contains
         status = -1
     end function fortarray_to_netcdf_file
     
+    function fortarray_to_numpy_like(this) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t) :: result_array
+        write(error_unit, '(A)') "ERROR: to_numpy_like not yet implemented"
+        ! Return uninitialized array for placeholder
+        result_array%initialized = .false.
+    end function fortarray_to_numpy_like
+    
     function fortarray_to_pandas_like(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: to_pandas_like not yet implemented"
-        result_array = create_empty_like(this)
+        ! Return uninitialized array for placeholder
+        result_array%initialized = .false.
     end function fortarray_to_pandas_like
     
     function fortarray_fillna_value(this, fill_value) result(result_array)
@@ -493,9 +573,24 @@ contains
         type(fortarray_t) :: result_array
         integer :: i
         
-        ! Create copy of input array
-        result_array = create_empty_like(this)
+        ! Create a proper copy of this array
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = this%data%dtype
         result_array%data%n_elements = this%n_elements
@@ -828,6 +923,32 @@ contains
         end select
         
     end function find_coord_index
+    
+    !> Find coordinate index by name in fortarray_t
+    function find_coord_index_by_name(arr, coord_name) result(idx)
+        class(fortarray_t), intent(in) :: arr
+        character(len=*), intent(in) :: coord_name
+        integer :: idx
+        integer :: i
+        
+        idx = -1
+        
+        if (.not. allocated(arr%coords)) return
+        if (.not. allocated(arr%dim_names)) return
+        
+        ! Find dimension index matching coordinate name
+        do i = 1, size(arr%dim_names)
+            if (trim(arr%dim_names(i)) == trim(coord_name)) then
+                if (i <= size(arr%coords)) then
+                    if (arr%coords(i)%initialized) then
+                        idx = i
+                        return
+                    end if
+                end if
+            end if
+        end do
+        
+    end function find_coord_index_by_name
     
     !> Get coordinate values as real64 (MIGRATED from fortarray_coordinate_selection.f90)
     subroutine get_coord_values_r64(coord, values)
@@ -1483,15 +1604,28 @@ contains
         type(fortarray_t) :: result_array
         integer :: i
         
-        ! Initialize result with same shape but logical data type
-        result_array = create_empty_like(this)
+        ! Create result with same shape but logical data type
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize logical data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = DTYPE_LOGICAL
         result_array%data%n_elements = this%n_elements
-        if (.not. allocated(result_array%data%values_logical)) then
-            allocate(result_array%data%values_logical(this%n_elements))
-        end if
+        allocate(result_array%data%values_logical(this%n_elements))
         
         ! Create boolean mask
         select case(this%data%dtype)
@@ -1521,15 +1655,28 @@ contains
         type(fortarray_t) :: result_array
         integer :: i
         
-        ! Initialize result with same shape but logical data type
-        result_array = create_empty_like(this)
+        ! Create result with same shape but logical data type
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize logical data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = DTYPE_LOGICAL
         result_array%data%n_elements = this%n_elements
-        if (.not. allocated(result_array%data%values_logical)) then
-            allocate(result_array%data%values_logical(this%n_elements))
-        end if
+        allocate(result_array%data%values_logical(this%n_elements))
         
         ! Create boolean mask
         select case(this%data%dtype)
@@ -1578,21 +1725,33 @@ contains
         end do
         
         ! Create result array with reduced size
-        result_array = create_empty_like(this)
-        result_array%n_elements = count_true
-        if (allocated(result_array%shape)) result_array%shape(1) = count_true
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = count_true
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names, updating first dimension
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+            result_array%shape(1) = count_true  ! Update first dimension
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = this%data%dtype
         result_array%data%n_elements = count_true
+        
         select case(this%data%dtype)
         case(DTYPE_REAL64)
-            if (.not. allocated(result_array%data%values_r64)) then
-                allocate(result_array%data%values_r64(count_true))
-            end if
+            allocate(result_array%data%values_r64(count_true))
         case default
             write(error_unit, '(A)') "ERROR: Data type not supported for mask_where"
-            result_array = create_empty_like(this)
             return
         end select
         
@@ -1640,15 +1799,28 @@ contains
             return
         end if
         
-        ! Create result logical array
-        result_array = create_empty_like(this)
+        ! Create result logical array with same shape
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize logical data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = DTYPE_LOGICAL
         result_array%data%n_elements = this%n_elements
-        if (.not. allocated(result_array%data%values_logical)) then
-            allocate(result_array%data%values_logical(this%n_elements))
-        end if
+        allocate(result_array%data%values_logical(this%n_elements))
         
         ! Perform AND operation
         do i = 1, this%n_elements
@@ -1682,15 +1854,28 @@ contains
             return
         end if
         
-        ! Create result logical array
-        result_array = create_empty_like(this)
+        ! Create result logical array with same shape
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize logical data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = DTYPE_LOGICAL
         result_array%data%n_elements = this%n_elements
-        if (.not. allocated(result_array%data%values_logical)) then
-            allocate(result_array%data%values_logical(this%n_elements))
-        end if
+        allocate(result_array%data%values_logical(this%n_elements))
         
         ! Perform OR operation
         do i = 1, this%n_elements
@@ -1717,15 +1902,28 @@ contains
             return
         end if
         
-        ! Create result logical array
-        result_array = create_empty_like(this)
+        ! Create result logical array with same shape
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize logical data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = DTYPE_LOGICAL
         result_array%data%n_elements = this%n_elements
-        if (.not. allocated(result_array%data%values_logical)) then
-            allocate(result_array%data%values_logical(this%n_elements))
-        end if
+        allocate(result_array%data%values_logical(this%n_elements))
         
         ! Perform NOT operation
         do i = 1, this%n_elements
@@ -1830,5 +2028,291 @@ contains
         write(error_unit, '(A)') "INFO: where_complex not fully implemented - returning copy"
         
     end function fortarray_where_complex
+
+    ! ======= ENHANCED SELECTION METHODS (SPRINT 7) =======
+    
+    !> Nearest-neighbor selection with algorithm choice
+    module function fortarray_sel_nearest_r64(this, coord_name, value, method) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        real(real64), intent(in) :: value
+        character(len=*), intent(in), optional :: method
+        type(fortarray_t) :: result_array
+        integer :: coord_index, nearest_idx
+        real(real64), allocatable :: coord_values(:)
+        real(real64) :: min_diff, diff
+        integer :: i
+        character(len=20) :: used_method
+        
+        ! Set default method
+        if (present(method)) then
+            used_method = method
+        else
+            used_method = "nearest"
+        end if
+        
+        ! Find coordinate index
+        coord_index = find_coord_index_by_name(this, coord_name)
+        if (coord_index == -1) then
+            write(error_unit, '(A,A,A)') "ERROR: Coordinate '", coord_name, "' not found"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Get coordinate values
+        call get_coord_values_r64(this%coords(coord_index), coord_values)
+        if (.not. allocated(coord_values) .or. size(coord_values) == 0) then
+            write(error_unit, '(A)') "ERROR: No coordinate values available"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Find nearest neighbor using different algorithms
+        select case(trim(used_method))
+        case("nearest", "linear")
+            ! Simple linear search for nearest neighbor
+            min_diff = huge(1.0_real64)
+            nearest_idx = 1
+            do i = 1, size(coord_values)
+                diff = abs(coord_values(i) - value)
+                if (diff < min_diff) then
+                    min_diff = diff
+                    nearest_idx = i
+                end if
+            end do
+            
+        case("cubic")
+            ! For cubic, still use nearest for now but could implement cubic interpolation
+            min_diff = huge(1.0_real64)
+            nearest_idx = 1
+            do i = 1, size(coord_values) 
+                diff = abs(coord_values(i) - value)
+                if (diff < min_diff) then
+                    min_diff = diff
+                    nearest_idx = i
+                end if
+            end do
+            
+        case default
+            write(error_unit, '(A,A,A)') "ERROR: Unknown method '", trim(used_method), "'"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        ! Select using nearest index
+        result_array = slice_along_dimension(this, coord_index, nearest_idx)
+        
+    end function fortarray_sel_nearest_r64
+    
+    !> Interpolation-based selection
+    module function fortarray_sel_interp_linear(this, coord_name, value, method) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        real(real64), intent(in) :: value
+        character(len=*), intent(in), optional :: method
+        type(fortarray_t) :: result_array
+        integer :: coord_index, i, lower_idx, upper_idx
+        real(real64), allocatable :: coord_values(:)
+        real(real64) :: alpha, lower_val, upper_val
+        character(len=20) :: used_method
+        
+        ! Set default method
+        if (present(method)) then
+            used_method = method
+        else
+            used_method = "linear"
+        end if
+        
+        ! Find coordinate index
+        coord_index = find_coord_index_by_name(this, coord_name)
+        if (coord_index == -1) then
+            write(error_unit, '(A,A,A)') "ERROR: Coordinate '", coord_name, "' not found"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Get coordinate values
+        call get_coord_values_r64(this%coords(coord_index), coord_values)
+        if (.not. allocated(coord_values) .or. size(coord_values) == 0) then
+            write(error_unit, '(A)') "ERROR: No coordinate values available"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        select case(trim(used_method))
+        case("linear")
+            ! Find bracketing indices for linear interpolation
+            lower_idx = 1
+            upper_idx = size(coord_values)
+            
+            do i = 1, size(coord_values) - 1
+                if (coord_values(i) <= value .and. coord_values(i+1) >= value) then
+                    lower_idx = i
+                    upper_idx = i + 1
+                    exit
+                end if
+            end do
+            
+            ! Check for exact match
+            if (abs(coord_values(lower_idx) - value) < 1e-10) then
+                result_array = slice_along_dimension(this, coord_index, lower_idx)
+                return
+            end if
+            
+            if (abs(coord_values(upper_idx) - value) < 1e-10) then
+                result_array = slice_along_dimension(this, coord_index, upper_idx)
+                return
+            end if
+            
+            ! Linear interpolation weight
+            lower_val = coord_values(lower_idx)
+            upper_val = coord_values(upper_idx)
+            alpha = (value - lower_val) / (upper_val - lower_val)
+            
+            ! For now, return nearest neighbor (full interpolation requires weighted averaging)
+            if (alpha < 0.5) then
+                result_array = slice_along_dimension(this, coord_index, lower_idx)
+            else
+                result_array = slice_along_dimension(this, coord_index, upper_idx)
+            end if
+            
+        case("cubic", "spline")
+            ! For cubic/spline, fall back to nearest neighbor for now
+            write(error_unit, '(A)') "INFO: Cubic/spline interpolation not yet implemented, using nearest"
+            result_array = fortarray_sel_nearest_r64(this, coord_name, value, "nearest")
+            
+        case default
+            write(error_unit, '(A,A,A)') "ERROR: Unknown interpolation method '", trim(used_method), "'"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_sel_interp_linear
+    
+    !> String coordinate selection
+    module function fortarray_sel_string(this, coord_name, value) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        character(len=*), intent(in) :: value
+        type(fortarray_t) :: result_array
+        integer :: coord_index, i, match_idx
+        
+        ! Find coordinate index
+        coord_index = find_coord_index_by_name(this, coord_name)
+        if (coord_index == -1) then
+            write(error_unit, '(A,A,A)') "ERROR: Coordinate '", coord_name, "' not found"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Check if coordinate has string values
+        if (.not. allocated(this%coords(coord_index)%values_char)) then
+            write(error_unit, '(A)') "ERROR: Coordinate does not contain string values"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Find matching string
+        match_idx = -1
+        do i = 1, size(this%coords(coord_index)%values_char)
+            if (trim(this%coords(coord_index)%values_char(i)) == trim(value)) then
+                match_idx = i
+                exit
+            end if
+        end do
+        
+        if (match_idx == -1) then
+            write(error_unit, '(A,A,A)') "ERROR: String value '", trim(value), "' not found in coordinate"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Select using matching index
+        result_array = slice_along_dimension(this, coord_index, match_idx)
+        
+    end function fortarray_sel_string
+    
+    !> Datetime coordinate selection (placeholder)
+    module function fortarray_sel_datetime(this, coord_name, value, tolerance) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        character(len=*), intent(in) :: value
+        real(real64), intent(in), optional :: tolerance
+        type(fortarray_t) :: result_array
+        
+        ! Placeholder implementation - would need datetime parsing
+        write(error_unit, '(A)') "INFO: sel_datetime not yet implemented - using string matching"
+        result_array = fortarray_sel_string(this, coord_name, value)
+        
+    end function fortarray_sel_datetime
+    
+    !> Multi-coordinate selection
+    module function fortarray_sel_multi_coord(this, coord_names, values, method) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_names(:)
+        real(real64), intent(in) :: values(:)
+        character(len=*), intent(in), optional :: method
+        type(fortarray_t) :: result_array
+        integer :: i
+        character(len=20) :: used_method
+        
+        ! Set default method
+        if (present(method)) then
+            used_method = method
+        else
+            used_method = "exact"
+        end if
+        
+        if (size(coord_names) /= size(values)) then
+            write(error_unit, '(A)') "ERROR: coord_names and values must have same size"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Start with full array
+        result_array = this
+        
+        ! Apply selections sequentially
+        select case(trim(used_method))
+        case("exact")
+            do i = 1, size(coord_names)
+                result_array = result_array%sel_point(coord_names(i), values(i), "exact")
+            end do
+        case("nearest")
+            do i = 1, size(coord_names)
+                result_array = result_array%sel_nearest(coord_names(i), values(i), "nearest")
+            end do
+        case("interp")
+            do i = 1, size(coord_names)
+                result_array = result_array%sel_interp(coord_names(i), values(i), "linear")
+            end do
+        case default
+            write(error_unit, '(A,A,A)') "ERROR: Unknown multi-selection method '", trim(used_method), "'"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_sel_multi_coord
+    
+    !> Generic selection with method choice
+    module function fortarray_sel_method_choice(this, coord_name, value, method, tolerance) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        real(real64), intent(in) :: value
+        character(len=*), intent(in) :: method
+        real(real64), intent(in), optional :: tolerance
+        type(fortarray_t) :: result_array
+        
+        select case(trim(method))
+        case("exact")
+            result_array = this%sel_point(coord_name, value, "exact")
+        case("nearest")
+            result_array = this%sel_nearest(coord_name, value, "nearest")
+        case("interpolate", "interp")
+            result_array = this%sel_interp(coord_name, value, "linear")
+        case default
+            write(error_unit, '(A,A,A)') "ERROR: Unknown selection method '", trim(method), "'"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_sel_method_choice
 
 end submodule fortarray_methods
