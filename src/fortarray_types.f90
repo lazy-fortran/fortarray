@@ -140,6 +140,9 @@ module fortarray_types
         ! Aggregation methods
         procedure :: mean => fortarray_mean_all
         procedure :: sum => fortarray_sum_all
+        procedure :: max => fortarray_max_all
+        procedure :: min => fortarray_min_all
+        procedure :: std => fortarray_std_all
         
         ! Advanced aggregation methods (Sprint 9)
         procedure :: quantile => fortarray_quantile
@@ -220,6 +223,10 @@ module fortarray_types
         procedure :: groupby_coord => fortarray_groupby_coord
         procedure :: groupby_bins => fortarray_groupby_bins
         procedure :: groupby_quantiles => fortarray_groupby_quantiles
+        
+        ! Resampling methods (Sprint 16)
+        procedure :: resample => fortarray_resample
+        procedure :: interpolate => fortarray_interpolate_resample
         
     end type fortarray_t
     
@@ -387,6 +394,21 @@ module fortarray_types
             class(fortarray_t), intent(in) :: this
             type(fortarray_t) :: result_array
         end function fortarray_sum_all
+        
+        module function fortarray_max_all(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_max_all
+        
+        module function fortarray_min_all(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_min_all
+        
+        module function fortarray_std_all(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_std_all
         
         ! Advanced aggregation methods (Sprint 9)
         module function fortarray_quantile(this, q, axis, interpolation) result(result_array)
@@ -814,6 +836,20 @@ module fortarray_types
             integer, intent(in) :: n_quantiles
             type(groupby_t) :: gb
         end function fortarray_groupby_quantiles
+        
+        ! Resampling methods (Sprint 16)
+        module function fortarray_resample(this, freq, align) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: freq
+            character(len=*), intent(in), optional :: align
+            type(fortarray_t) :: result_array
+        end function fortarray_resample
+        
+        module function fortarray_interpolate_resample(this, method) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in), optional :: method
+            type(fortarray_t) :: result_array
+        end function fortarray_interpolate_resample
         
         ! Groupby aggregation methods
         module function groupby_mean(this, skipna) result(result_array)

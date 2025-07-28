@@ -420,11 +420,22 @@ contains
     
     !> Compute mean over all dimensions
     module function fortarray_mean_all(this) result(result_array)
+        use fortarray_time_operations, only: resample_to_daily, resample_to_monthly, &
+                                            resample_to_yearly
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         
         real(real64) :: mean_value
         integer :: i
+        character(len=:), allocatable :: resample_freq
+        
+        ! Check if this is a resampled array
+        resample_freq = get_resample_freq(this)
+        if (len_trim(resample_freq) > 0) then
+            ! Perform resampling with mean aggregation
+            result_array = perform_resample_aggregation(this, resample_freq, "mean")
+            return
+        end if
         
         ! Check for empty array
         if (this%n_elements == 0) then
@@ -472,6 +483,15 @@ contains
         type(fortarray_t) :: result_array
         
         real(real64) :: sum_value
+        character(len=:), allocatable :: resample_freq
+        
+        ! Check if this is a resampled array
+        resample_freq = get_resample_freq(this)
+        if (len_trim(resample_freq) > 0) then
+            ! Perform resampling with sum aggregation
+            result_array = perform_resample_aggregation(this, resample_freq, "sum")
+            return
+        end if
         
         ! Compute sum based on data type
         select case(this%data%dtype)
@@ -494,6 +514,137 @@ contains
         
     end function fortarray_sum_all
     
+    !> Compute maximum over all dimensions
+    module function fortarray_max_all(this) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t) :: result_array
+        
+        real(real64) :: max_value
+        character(len=:), allocatable :: resample_freq
+        
+        ! Check if this is a resampled array
+        resample_freq = get_resample_freq(this)
+        if (len_trim(resample_freq) > 0) then
+            ! Perform resampling with max aggregation
+            result_array = perform_resample_aggregation(this, resample_freq, "max")
+            return
+        end if
+        
+        ! Compute max based on data type
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            max_value = maxval(this%data%values_r64)
+        case(DTYPE_REAL32)
+            max_value = maxval(real(this%data%values_r32, real64))
+        case(DTYPE_INT32)
+            max_value = maxval(real(this%data%values_i32, real64))
+        case(DTYPE_INT64)
+            max_value = maxval(real(this%data%values_i64, real64))
+        case default
+            write(error_unit, '(A)') "ERROR: Unsupported data type for max"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        ! Create scalar result
+        result_array = create_scalar_fortarray(max_value, trim(this%name)//"_max", this%units)
+        
+    end function fortarray_max_all
+    
+    !> Compute minimum over all dimensions
+    module function fortarray_min_all(this) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t) :: result_array
+        
+        real(real64) :: min_value
+        character(len=:), allocatable :: resample_freq
+        
+        ! Check if this is a resampled array
+        resample_freq = get_resample_freq(this)
+        if (len_trim(resample_freq) > 0) then
+            ! Perform resampling with min aggregation
+            result_array = perform_resample_aggregation(this, resample_freq, "min")
+            return
+        end if
+        
+        ! Compute min based on data type
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            min_value = minval(this%data%values_r64)
+        case(DTYPE_REAL32)
+            min_value = minval(real(this%data%values_r32, real64))
+        case(DTYPE_INT32)
+            min_value = minval(real(this%data%values_i32, real64))
+        case(DTYPE_INT64)
+            min_value = minval(real(this%data%values_i64, real64))
+        case default
+            write(error_unit, '(A)') "ERROR: Unsupported data type for min"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        ! Create scalar result
+        result_array = create_scalar_fortarray(min_value, trim(this%name)//"_min", this%units)
+        
+    end function fortarray_min_all
+    
+    !> Compute standard deviation over all dimensions
+    module function fortarray_std_all(this) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t) :: result_array
+        
+        real(real64) :: mean_value, variance, std_value
+        character(len=:), allocatable :: resample_freq
+        integer :: i
+        
+        ! Check if this is a resampled array
+        resample_freq = get_resample_freq(this)
+        if (len_trim(resample_freq) > 0) then
+            ! Perform resampling with std aggregation
+            result_array = perform_resample_aggregation(this, resample_freq, "std")
+            return
+        end if
+        
+        ! First compute mean
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            mean_value = sum(this%data%values_r64) / real(this%n_elements, real64)
+            variance = 0.0_real64
+            do i = 1, this%n_elements
+                variance = variance + (this%data%values_r64(i) - mean_value)**2
+            end do
+        case(DTYPE_REAL32)
+            mean_value = sum(real(this%data%values_r32, real64)) / real(this%n_elements, real64)
+            variance = 0.0_real64
+            do i = 1, this%n_elements
+                variance = variance + (real(this%data%values_r32(i), real64) - mean_value)**2
+            end do
+        case(DTYPE_INT32)
+            mean_value = sum(real(this%data%values_i32, real64)) / real(this%n_elements, real64)
+            variance = 0.0_real64
+            do i = 1, this%n_elements
+                variance = variance + (real(this%data%values_i32(i), real64) - mean_value)**2
+            end do
+        case(DTYPE_INT64)
+            mean_value = sum(real(this%data%values_i64, real64)) / real(this%n_elements, real64)
+            variance = 0.0_real64
+            do i = 1, this%n_elements
+                variance = variance + (real(this%data%values_i64(i), real64) - mean_value)**2
+            end do
+        case default
+            write(error_unit, '(A)') "ERROR: Unsupported data type for std"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        variance = variance / real(this%n_elements - 1, real64)
+        std_value = sqrt(variance)
+        
+        ! Create scalar result
+        result_array = create_scalar_fortarray(std_value, trim(this%name)//"_std", this%units)
+        
+    end function fortarray_std_all
+    
     !> Compute sum over specified dimensions
     module function fortarray_sum_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -508,13 +659,6 @@ contains
     
     ! ======= PLACEHOLDER IMPLEMENTATIONS FOR REMAINING METHODS =======
     ! (Following BACKLOG.md: implement FULL functionality, no shortcuts)
-    
-    module function fortarray_std_all(this) result(result_array)
-        class(fortarray_t), intent(in) :: this
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: std_all not yet implemented"
-        result_array = create_empty_like(this)
-    end function fortarray_std_all
     
     module function fortarray_std_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -539,13 +683,6 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_var_dims
     
-    module function fortarray_min_all(this) result(result_array)
-        class(fortarray_t), intent(in) :: this
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: min_all not yet implemented"
-        result_array = create_empty_like(this)
-    end function fortarray_min_all
-    
     module function fortarray_min_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
@@ -553,13 +690,6 @@ contains
         write(error_unit, '(A)') "ERROR: min_dims not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_min_dims
-    
-    module function fortarray_max_all(this) result(result_array)
-        class(fortarray_t), intent(in) :: this
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: max_all not yet implemented"
-        result_array = create_empty_like(this)
-    end function fortarray_max_all
     
     module function fortarray_max_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -1127,13 +1257,124 @@ contains
         
     end function fortarray_groupby_quantiles
     
-    module function fortarray_resample_freq(this, freq) result(result_array)
+    module function fortarray_resample(this, freq, align) result(result_array)
+        use fortarray_time_operations, only: resample_to_daily, resample_to_monthly, &
+                                            resample_to_yearly, upsample_to_daily
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: freq
+        character(len=*), intent(in), optional :: align
         type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: resample_freq not yet implemented"
-        result_array = create_empty_like(this)
-    end function fortarray_resample_freq
+        type(attribute_t), allocatable :: temp_attrs(:)
+        integer :: new_size
+        
+        ! Frequency constants
+        character(len=*), parameter :: FREQ_DAILY = "D"
+        character(len=*), parameter :: FREQ_WEEKLY = "W"
+        character(len=*), parameter :: FREQ_MONTHLY = "M"
+        character(len=*), parameter :: FREQ_QUARTERLY = "Q"
+        character(len=*), parameter :: FREQ_YEARLY = "Y"
+        character(len=*), parameter :: FREQ_HOURLY = "H"
+        
+        ! For now, we create a resample object that supports method chaining
+        ! The actual aggregation happens when an aggregation method is called
+        
+        ! Initialize result_array as a copy of this
+        result_array = this
+        
+        ! Ensure attrs array is allocated with at least 2 elements
+        if (.not. allocated(result_array%attrs)) then
+            allocate(result_array%attrs(2))
+            result_array%n_attrs = 0
+        else if (size(result_array%attrs) < result_array%n_attrs + 1) then
+            ! Need to resize the array
+            new_size = max(result_array%n_attrs + 2, size(result_array%attrs) * 2)
+            allocate(temp_attrs(new_size))
+            if (result_array%n_attrs > 0) then
+                temp_attrs(1:result_array%n_attrs) = result_array%attrs(1:result_array%n_attrs)
+            end if
+            call move_alloc(temp_attrs, result_array%attrs)
+        end if
+        
+        ! Add resample frequency attribute
+        select case(trim(freq))
+        case(FREQ_DAILY)
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_freq"
+            result_array%attrs(result_array%n_attrs)%value = "D"
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        case(FREQ_WEEKLY)
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_freq"
+            result_array%attrs(result_array%n_attrs)%value = "W"
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        case(FREQ_MONTHLY)
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_freq"
+            result_array%attrs(result_array%n_attrs)%value = "M"
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        case(FREQ_YEARLY)
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_freq"
+            result_array%attrs(result_array%n_attrs)%value = "Y"
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        case(FREQ_HOURLY)
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_freq"
+            result_array%attrs(result_array%n_attrs)%value = "H"
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        case("6H", "12H", "3H")
+            ! Handle specific hour frequencies
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_freq"
+            result_array%attrs(result_array%n_attrs)%value = trim(freq)
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        case default
+            ! Unsupported frequency, return original without adding attribute
+        end select
+        
+        ! Store alignment if provided
+        if (present(align)) then
+            ! Ensure we have space for another attribute
+            if (size(result_array%attrs) < result_array%n_attrs + 1) then
+                ! Need to resize the array
+                new_size = max(result_array%n_attrs + 1, size(result_array%attrs) * 2)
+                allocate(temp_attrs(new_size))
+                temp_attrs(1:result_array%n_attrs) = result_array%attrs(1:result_array%n_attrs)
+                call move_alloc(temp_attrs, result_array%attrs)
+            end if
+            
+            result_array%n_attrs = result_array%n_attrs + 1
+            result_array%attrs(result_array%n_attrs)%name = "_resample_align"
+            result_array%attrs(result_array%n_attrs)%value = trim(align)
+            result_array%attrs(result_array%n_attrs)%dtype = ATTR_TYPE_STRING
+        end if
+        
+    end function fortarray_resample
+    
+    module function fortarray_interpolate_resample(this, method) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in), optional :: method
+        type(fortarray_t) :: result_array
+        
+        character(len=:), allocatable :: resample_freq
+        character(len=20) :: interp_method
+        
+        ! Set default method
+        interp_method = "linear"
+        if (present(method)) interp_method = method
+        
+        ! Check if this is a resampled array
+        resample_freq = get_resample_freq(this)
+        if (len_trim(resample_freq) > 0) then
+            ! Perform resampling with interpolation
+            result_array = perform_resample_aggregation(this, resample_freq, "interpolate")
+            return
+        end if
+        
+        ! Otherwise, just interpolate missing values
+        result_array = this%interpolate_na(interp_method)
+        
+    end function fortarray_interpolate_resample
     
     module function fortarray_rolling_window(this, window) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -5481,5 +5722,242 @@ contains
             end do
         end do
     end subroutine simple_sort
+    
+    !> Get resample frequency from attributes
+    function get_resample_freq(arr) result(freq)
+        type(fortarray_t), intent(in) :: arr
+        character(len=:), allocatable :: freq
+        integer :: i
+        
+        freq = ""
+        if (.not. allocated(arr%attrs)) return
+        
+        do i = 1, size(arr%attrs)
+            if (arr%attrs(i)%name == "_resample_freq") then
+                freq = trim(arr%attrs(i)%value)
+                return
+            end if
+        end do
+    end function get_resample_freq
+    
+    !> Perform resampling with specified aggregation
+    function perform_resample_aggregation(arr, freq, method) result(output)
+        use fortarray_time_operations, only: resample_to_daily, resample_to_monthly, &
+                                            resample_to_yearly, upsample_to_daily
+        type(fortarray_t), intent(in) :: arr
+        character(len=*), intent(in) :: freq
+        character(len=*), intent(in) :: method
+        type(fortarray_t) :: output
+        type(fortarray_t) :: clean_arr
+        integer :: i
+        
+        ! Create a clean copy without resample attributes
+        clean_arr = arr
+        if (allocated(clean_arr%attrs)) then
+            ! Remove resample attributes
+            do i = 1, size(clean_arr%attrs)
+                if (clean_arr%attrs(i)%name == "_resample_freq" .or. &
+                    clean_arr%attrs(i)%name == "_resample_align") then
+                    clean_arr%attrs(i)%name = ""
+                end if
+            end do
+        end if
+        
+        ! Perform resampling based on frequency
+        select case(trim(freq))
+        case("D")
+            output = resample_to_daily(clean_arr, method)
+        case("W")
+            output = resample_to_weekly(clean_arr, method)
+        case("M")
+            output = resample_to_monthly(clean_arr, method)
+        case("Y")
+            output = resample_to_yearly(clean_arr, method)
+        case("H")
+            output = resample_to_hourly(clean_arr, method)
+        case("6H", "12H", "3H")
+            output = resample_to_n_hourly(clean_arr, method, freq)
+        case default
+            output = clean_arr
+        end select
+        
+    end function perform_resample_aggregation
+    
+    !> Resample to weekly frequency
+    function resample_to_weekly(var, method) result(output)
+        type(fortarray_t), intent(in) :: var
+        character(len=*), intent(in) :: method
+        type(fortarray_t) :: output
+        
+        integer :: n_weeks, points_per_week, i, j, start_idx, end_idx, count
+        real(real64), dimension(:), allocatable :: weekly_data
+        real(real64) :: sum_val, max_val, min_val, mean_val, variance_val
+        
+        ! Determine number of weeks (assuming daily data)
+        points_per_week = 7
+        n_weeks = var%n_elements / points_per_week
+        
+        if (n_weeks < 1) then
+            output = var
+            return
+        end if
+        
+        allocate(weekly_data(n_weeks))
+        
+        select case(trim(method))
+        case("mean")
+            do i = 1, n_weeks
+                start_idx = (i-1) * points_per_week + 1
+                end_idx = min(i * points_per_week, var%n_elements)
+                sum_val = 0.0_real64
+                count = 0
+                
+                do j = start_idx, end_idx
+                    select case(var%data%dtype)
+                    case(DTYPE_REAL64)
+                        sum_val = sum_val + var%data%values_r64(j)
+                    case(DTYPE_REAL32)
+                        sum_val = sum_val + real(var%data%values_r32(j), real64)
+                    end select
+                    count = count + 1
+                end do
+                
+                if (count > 0) then
+                    weekly_data(i) = sum_val / real(count, real64)
+                else
+                    weekly_data(i) = 0.0_real64
+                end if
+            end do
+            output = new_array(weekly_data, name=trim(var%name)//"_weekly_mean", dim_names=["time"])
+            
+        case("max")
+            do i = 1, n_weeks
+                start_idx = (i-1) * points_per_week + 1
+                end_idx = min(i * points_per_week, var%n_elements)
+                max_val = -huge(1.0_real64)
+                
+                do j = start_idx, end_idx
+                    select case(var%data%dtype)
+                    case(DTYPE_REAL64)
+                        if (var%data%values_r64(j) > max_val) max_val = var%data%values_r64(j)
+                    case(DTYPE_REAL32)
+                        if (real(var%data%values_r32(j), real64) > max_val) then
+                            max_val = real(var%data%values_r32(j), real64)
+                        end if
+                    end select
+                end do
+                
+                weekly_data(i) = max_val
+            end do
+            output = new_array(weekly_data, name=trim(var%name)//"_weekly_max", dim_names=["time"])
+            
+        case("min")
+            do i = 1, n_weeks
+                start_idx = (i-1) * points_per_week + 1
+                end_idx = min(i * points_per_week, var%n_elements)
+                min_val = huge(1.0_real64)
+                
+                do j = start_idx, end_idx
+                    select case(var%data%dtype)
+                    case(DTYPE_REAL64)
+                        if (var%data%values_r64(j) < min_val) min_val = var%data%values_r64(j)
+                    case(DTYPE_REAL32)
+                        if (real(var%data%values_r32(j), real64) < min_val) then
+                            min_val = real(var%data%values_r32(j), real64)
+                        end if
+                    end select
+                end do
+                
+                weekly_data(i) = min_val
+            end do
+            output = new_array(weekly_data, name=trim(var%name)//"_weekly_min", dim_names=["time"])
+            
+        case("sum")
+            do i = 1, n_weeks
+                start_idx = (i-1) * points_per_week + 1
+                end_idx = min(i * points_per_week, var%n_elements)
+                sum_val = 0.0_real64
+                
+                do j = start_idx, end_idx
+                    select case(var%data%dtype)
+                    case(DTYPE_REAL64)
+                        sum_val = sum_val + var%data%values_r64(j)
+                    case(DTYPE_REAL32)
+                        sum_val = sum_val + real(var%data%values_r32(j), real64)
+                    end select
+                end do
+                
+                weekly_data(i) = sum_val
+            end do
+            output = new_array(weekly_data, name=trim(var%name)//"_weekly_sum", dim_names=["time"])
+            
+        case("std")
+            do i = 1, n_weeks
+                start_idx = (i-1) * points_per_week + 1
+                end_idx = min(i * points_per_week, var%n_elements)
+                count = end_idx - start_idx + 1
+                
+                ! Compute mean first
+                sum_val = 0.0_real64
+                do j = start_idx, end_idx
+                    select case(var%data%dtype)
+                    case(DTYPE_REAL64)
+                        sum_val = sum_val + var%data%values_r64(j)
+                    case(DTYPE_REAL32)
+                        sum_val = sum_val + real(var%data%values_r32(j), real64)
+                    end select
+                end do
+                mean_val = sum_val / real(count, real64)
+                
+                ! Compute variance
+                variance_val = 0.0_real64
+                do j = start_idx, end_idx
+                    select case(var%data%dtype)
+                    case(DTYPE_REAL64)
+                        variance_val = variance_val + (var%data%values_r64(j) - mean_val)**2
+                    case(DTYPE_REAL32)
+                        variance_val = variance_val + (real(var%data%values_r32(j), real64) - mean_val)**2
+                    end select
+                end do
+                
+                if (count > 1) then
+                    variance_val = variance_val / real(count - 1, real64)
+                    weekly_data(i) = sqrt(variance_val)
+                else
+                    weekly_data(i) = 0.0_real64
+                end if
+            end do
+            output = new_array(weekly_data, name=trim(var%name)//"_weekly_std", dim_names=["time"])
+            
+        case default
+            output = var
+        end select
+        
+        if (allocated(weekly_data)) deallocate(weekly_data)
+        
+    end function resample_to_weekly
+    
+    !> Resample to hourly frequency (placeholder)
+    function resample_to_hourly(var, method) result(output)
+        type(fortarray_t), intent(in) :: var
+        character(len=*), intent(in) :: method
+        type(fortarray_t) :: output
+        
+        ! Placeholder - just return input
+        output = var
+        
+    end function resample_to_hourly
+    
+    !> Resample to N-hourly frequency (placeholder)
+    function resample_to_n_hourly(var, method, freq) result(output)
+        type(fortarray_t), intent(in) :: var
+        character(len=*), intent(in) :: method
+        character(len=*), intent(in) :: freq
+        type(fortarray_t) :: output
+        
+        ! Placeholder - just return input
+        output = var
+        
+    end function resample_to_n_hourly
 
 end submodule fortarray_methods

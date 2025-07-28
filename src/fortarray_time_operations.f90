@@ -20,6 +20,8 @@ module fortarray_time_operations
     public :: select_time_range
     public :: select_time_nearest
     public :: resample
+    public :: resample_to_daily, resample_to_monthly, resample_to_yearly
+    public :: upsample_to_daily
     public :: rolling_mean
     public :: rolling_sum
     public :: rolling_std
