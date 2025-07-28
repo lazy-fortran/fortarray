@@ -27,6 +27,7 @@ module fortarray
     use fortarray_time_coordinates
     use fortarray_time_operations
     use fortarray_optimization
+    use fortarray_groupby_methods
     implicit none
     
     ! Re-export everything from submodules

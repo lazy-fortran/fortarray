@@ -4352,5 +4352,687 @@ contains
         end do
         
     end function multi_to_linear_index
+    
+    ! ======= GROUPBY METHODS (SPRINT 13) =======
+    
+    !> Create groupby object from fortarray_t
+    module function fortarray_groupby(this, dim_name, groups) result(gb)
+        class(fortarray_t), intent(in), target :: this
+        character(len=*), intent(in) :: dim_name
+        class(fortarray_t), intent(in) :: groups
+        type(groupby_t) :: gb
+        
+        integer :: i, j, dim_idx, group_count, current_size
+        character(len=MAX_NAME_LEN), allocatable :: unique_names(:)
+        integer, allocatable :: group_starts(:), group_ends(:)
+        logical :: found_dim, found_group
+        
+        ! Initialize groupby object
+        gb%initialized = .false.
+        gb%dim_name = dim_name
+        gb%n_groups = 0
+        gb%current_group = 0
+        gb%iterator_active = .false.
+        
+        ! Validate input array
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Cannot create groupby from uninitialized array"
+            return
+        end if
+        
+        ! Find dimension index
+        found_dim = .false.
+        dim_idx = 0
+        if (allocated(this%dim_names)) then
+            do i = 1, this%n_dims
+                if (trim(this%dim_names(i)) == trim(dim_name)) then
+                    found_dim = .true.
+                    dim_idx = i
+                    exit
+                end if
+            end do
+        end if
+        
+        if (.not. found_dim) then
+            write(error_unit, '(A,A)') "ERROR: Dimension not found: ", trim(dim_name)
+            return
+        end if
+        
+        ! Validate groups array
+        if (.not. groups%initialized) then
+            write(error_unit, '(A)') "ERROR: Groups array is not initialized"
+            return
+        end if
+        
+        ! Check that groups array has same size as dimension
+        if (groups%n_elements /= this%shape(dim_idx)) then
+            write(error_unit, '(A)') "ERROR: Groups array size does not match dimension size"
+            return
+        end if
+        
+        ! Count unique groups and create group information
+        allocate(unique_names(groups%n_elements))
+        allocate(group_starts(groups%n_elements))
+        allocate(group_ends(groups%n_elements))
+        
+        group_count = 0
+        
+        ! Handle different group data types
+        select case(groups%data%dtype)
+        case(DTYPE_CHAR)
+            ! Character/string groups
+            do i = 1, groups%n_elements
+                found_group = .false.
+                do j = 1, group_count
+                    if (trim(unique_names(j)) == trim(groups%data%values_char(i))) then
+                        found_group = .true.
+                        group_ends(j) = i
+                        exit
+                    end if
+                end do
+                
+                if (.not. found_group) then
+                    group_count = group_count + 1
+                    unique_names(group_count) = trim(groups%data%values_char(i))
+                    group_starts(group_count) = i
+                    group_ends(group_count) = i
+                end if
+            end do
+            
+        case(DTYPE_INT32)
+            ! Integer groups - convert to strings
+            do i = 1, groups%n_elements
+                block
+                    character(len=32) :: int_str
+                    write(int_str, '(I0)') groups%data%values_i32(i)
+                
+                found_group = .false.
+                do j = 1, group_count
+                    if (trim(unique_names(j)) == trim(int_str)) then
+                        found_group = .true.
+                        group_ends(j) = i
+                        exit
+                    end if
+                end do
+                
+                if (.not. found_group) then
+                    group_count = group_count + 1
+                    unique_names(group_count) = trim(int_str)
+                    group_starts(group_count) = i
+                    group_ends(group_count) = i
+                end if
+                end block
+            end do
+            
+        case(DTYPE_REAL64)
+            ! Real groups - convert to strings
+            do i = 1, groups%n_elements
+                block
+                    character(len=32) :: real_str
+                    write(real_str, '(F0.6)') groups%data%values_r64(i)
+                
+                found_group = .false.
+                do j = 1, group_count
+                    if (trim(unique_names(j)) == trim(real_str)) then
+                        found_group = .true.
+                        group_ends(j) = i
+                        exit
+                    end if
+                end do
+                
+                if (.not. found_group) then
+                    group_count = group_count + 1
+                    unique_names(group_count) = trim(real_str)
+                    group_starts(group_count) = i
+                    group_ends(group_count) = i
+                end if
+                end block
+            end do
+            
+        case default
+            write(error_unit, '(A)') "ERROR: Unsupported group data type"
+            return
+        end select
+        
+        ! Set up groupby object
+        gb%n_groups = group_count
+        allocate(gb%group_names(group_count))
+        allocate(gb%group_sizes(group_count))
+        allocate(gb%group_indices(group_count, 2))  ! Start and end indices
+        
+        ! Fill group information
+        do i = 1, group_count
+            gb%group_names(i) = unique_names(i)
+            gb%group_sizes(i) = group_ends(i) - group_starts(i) + 1
+            gb%group_indices(i, 1) = group_starts(i)
+            gb%group_indices(i, 2) = group_ends(i)
+        end do
+        
+        ! Set parent array pointer (non-owning)
+        gb%parent_array => this
+        gb%initialized = .true.
+        
+        deallocate(unique_names, group_starts, group_ends)
+        
+    end function fortarray_groupby
+    
+    ! ======= GROUPBY AGGREGATION METHODS =======
+    
+    !> Groupby mean aggregation
+    module function groupby_mean(this, skipna) result(result_array)
+        class(groupby_t), intent(in) :: this
+        logical, intent(in), optional :: skipna
+        type(fortarray_t) :: result_array
+        
+        logical :: skip_missing
+        integer :: i, j, group_start, group_end, valid_count
+        real(real64), allocatable :: group_means(:), group_values(:)
+        real(real64) :: group_sum
+        
+        skip_missing = .true.
+        if (present(skipna)) skip_missing = skipna
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(group_means(this%n_groups))
+        
+        ! Calculate mean for each group
+        do i = 1, this%n_groups
+            group_start = this%group_indices(i, 1)
+            group_end = this%group_indices(i, 2)
+            
+            ! Extract group values
+            allocate(group_values(group_end - group_start + 1))
+            do j = group_start, group_end
+                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            end do
+            
+            ! Calculate mean
+            group_sum = 0.0_real64
+            valid_count = 0
+            
+            do j = 1, size(group_values)
+                if (skip_missing .and. is_missing(group_values(j))) then
+                    cycle
+                end if
+                group_sum = group_sum + group_values(j)
+                valid_count = valid_count + 1
+            end do
+            
+            if (valid_count > 0) then
+                group_means(i) = group_sum / real(valid_count, real64)
+            else
+                group_means(i) = huge(1.0_real64)  ! Missing value
+            end if
+            
+            deallocate(group_values)
+        end do
+        
+        ! Create result array
+        result_array = new_array(group_means, name=trim(this%parent_array%name) // "_groupby_mean")
+        
+    end function groupby_mean
+    
+    !> Groupby sum aggregation
+    module function groupby_sum(this, skipna) result(result_array)
+        class(groupby_t), intent(in) :: this
+        logical, intent(in), optional :: skipna
+        type(fortarray_t) :: result_array
+        
+        logical :: skip_missing
+        integer :: i, j, group_start, group_end, valid_count
+        real(real64), allocatable :: group_sums(:), group_values(:)
+        real(real64) :: group_sum
+        
+        skip_missing = .true.
+        if (present(skipna)) skip_missing = skipna
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(group_sums(this%n_groups))
+        
+        ! Calculate sum for each group
+        do i = 1, this%n_groups
+            group_start = this%group_indices(i, 1)
+            group_end = this%group_indices(i, 2)
+            
+            ! Extract group values
+            allocate(group_values(group_end - group_start + 1))
+            do j = group_start, group_end
+                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            end do
+            
+            ! Calculate sum
+            group_sum = 0.0_real64
+            valid_count = 0
+            
+            do j = 1, size(group_values)
+                if (skip_missing .and. is_missing(group_values(j))) then
+                    cycle
+                end if
+                group_sum = group_sum + group_values(j)
+                valid_count = valid_count + 1
+            end do
+            
+            if (valid_count > 0) then
+                group_sums(i) = group_sum
+            else
+                group_sums(i) = huge(1.0_real64)  ! Missing value
+            end if
+            
+            deallocate(group_values)
+        end do
+        
+        ! Create result array
+        result_array = new_array(group_sums, name=trim(this%parent_array%name) // "_groupby_sum")
+        
+    end function groupby_sum
+    
+    !> Groupby std aggregation
+    module function groupby_std(this, skipna) result(result_array)
+        class(groupby_t), intent(in) :: this
+        logical, intent(in), optional :: skipna
+        type(fortarray_t) :: result_array
+        
+        logical :: skip_missing
+        integer :: i, j, group_start, group_end, valid_count
+        real(real64), allocatable :: group_stds(:), group_values(:)
+        real(real64) :: group_mean, group_sum, group_var
+        
+        skip_missing = .true.
+        if (present(skipna)) skip_missing = skipna
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(group_stds(this%n_groups))
+        
+        ! Calculate std for each group
+        do i = 1, this%n_groups
+            group_start = this%group_indices(i, 1)
+            group_end = this%group_indices(i, 2)
+            
+            ! Extract group values
+            allocate(group_values(group_end - group_start + 1))
+            do j = group_start, group_end
+                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            end do
+            
+            ! Calculate mean first
+            group_sum = 0.0_real64
+            valid_count = 0
+            
+            do j = 1, size(group_values)
+                if (skip_missing .and. is_missing(group_values(j))) then
+                    cycle
+                end if
+                group_sum = group_sum + group_values(j)
+                valid_count = valid_count + 1
+            end do
+            
+            if (valid_count > 1) then
+                group_mean = group_sum / real(valid_count, real64)
+                
+                ! Calculate variance
+                group_var = 0.0_real64
+                do j = 1, size(group_values)
+                    if (skip_missing .and. is_missing(group_values(j))) then
+                        cycle
+                    end if
+                    group_var = group_var + (group_values(j) - group_mean)**2
+                end do
+                
+                group_stds(i) = sqrt(group_var / real(valid_count - 1, real64))
+            else
+                group_stds(i) = huge(1.0_real64)  ! Missing value
+            end if
+            
+            deallocate(group_values)
+        end do
+        
+        ! Create result array
+        result_array = new_array(group_stds, name=trim(this%parent_array%name) // "_groupby_std")
+        
+    end function groupby_std
+    
+    !> Groupby max aggregation
+    module function groupby_max(this, skipna) result(result_array)
+        class(groupby_t), intent(in) :: this
+        logical, intent(in), optional :: skipna
+        type(fortarray_t) :: result_array
+        
+        logical :: skip_missing
+        integer :: i, j, group_start, group_end, valid_count
+        real(real64), allocatable :: group_maxes(:), group_values(:)
+        real(real64) :: group_max
+        
+        skip_missing = .true.
+        if (present(skipna)) skip_missing = skipna
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(group_maxes(this%n_groups))
+        
+        ! Calculate max for each group
+        do i = 1, this%n_groups
+            group_start = this%group_indices(i, 1)
+            group_end = this%group_indices(i, 2)
+            
+            ! Extract group values
+            allocate(group_values(group_end - group_start + 1))
+            do j = group_start, group_end
+                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            end do
+            
+            ! Calculate max
+            group_max = -huge(1.0_real64)
+            valid_count = 0
+            
+            do j = 1, size(group_values)
+                if (skip_missing .and. is_missing(group_values(j))) then
+                    cycle
+                end if
+                if (group_values(j) > group_max) then
+                    group_max = group_values(j)
+                end if
+                valid_count = valid_count + 1
+            end do
+            
+            if (valid_count > 0) then
+                group_maxes(i) = group_max
+            else
+                group_maxes(i) = huge(1.0_real64)  ! Missing value
+            end if
+            
+            deallocate(group_values)
+        end do
+        
+        ! Create result array
+        result_array = new_array(group_maxes, name=trim(this%parent_array%name) // "_groupby_max")
+        
+    end function groupby_max
+    
+    !> Groupby min aggregation
+    module function groupby_min(this, skipna) result(result_array)
+        class(groupby_t), intent(in) :: this
+        logical, intent(in), optional :: skipna
+        type(fortarray_t) :: result_array
+        
+        logical :: skip_missing
+        integer :: i, j, group_start, group_end, valid_count
+        real(real64), allocatable :: group_mins(:), group_values(:)
+        real(real64) :: group_min
+        
+        skip_missing = .true.
+        if (present(skipna)) skip_missing = skipna
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(group_mins(this%n_groups))
+        
+        ! Calculate min for each group
+        do i = 1, this%n_groups
+            group_start = this%group_indices(i, 1)
+            group_end = this%group_indices(i, 2)
+            
+            ! Extract group values
+            allocate(group_values(group_end - group_start + 1))
+            do j = group_start, group_end
+                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            end do
+            
+            ! Calculate min
+            group_min = huge(1.0_real64)
+            valid_count = 0
+            
+            do j = 1, size(group_values)
+                if (skip_missing .and. is_missing(group_values(j))) then
+                    cycle
+                end if
+                if (group_values(j) < group_min) then
+                    group_min = group_values(j)
+                end if
+                valid_count = valid_count + 1
+            end do
+            
+            if (valid_count > 0) then
+                group_mins(i) = group_min
+            else
+                group_mins(i) = huge(1.0_real64)  ! Missing value
+            end if
+            
+            deallocate(group_values)
+        end do
+        
+        ! Create result array
+        result_array = new_array(group_mins, name=trim(this%parent_array%name) // "_groupby_min")
+        
+    end function groupby_min
+    
+    ! ======= GROUP ACCESS METHODS =======
+    
+    !> Get specific group by name
+    module function groupby_get_group(this, group_name) result(result_array)
+        class(groupby_t), intent(in) :: this
+        character(len=*), intent(in) :: group_name
+        type(fortarray_t) :: result_array
+        
+        integer :: i, group_idx, group_start, group_end, group_size
+        real(real64), allocatable :: group_values(:)
+        logical :: found_group
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        ! Find group by name
+        found_group = .false.
+        group_idx = 0
+        do i = 1, this%n_groups
+            if (trim(this%group_names(i)) == trim(group_name)) then
+                found_group = .true.
+                group_idx = i
+                exit
+            end if
+        end do
+        
+        if (.not. found_group) then
+            write(error_unit, '(A,A)') "ERROR: Group not found: ", trim(group_name)
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        ! Extract group data
+        group_start = this%group_indices(group_idx, 1)
+        group_end = this%group_indices(group_idx, 2)
+        group_size = group_end - group_start + 1
+        
+        allocate(group_values(group_size))
+        do i = 1, group_size
+            group_values(i) = this%parent_array%data%values_r64(group_start + i - 1)
+        end do
+        
+        ! Create result array
+        result_array = new_array(group_values, name=trim(this%parent_array%name) // "_group_" // trim(group_name))
+        
+    end function groupby_get_group
+    
+    ! ======= GROUP ITERATION METHODS =======
+    
+    !> Reset group iterator
+    module subroutine groupby_reset_iterator(this)
+        class(groupby_t), intent(inout) :: this
+        
+        this%current_group = 0
+        this%iterator_active = .true.
+        
+    end subroutine groupby_reset_iterator
+    
+    !> Check if iterator has next group
+    module function groupby_has_next_group(this) result(has_next)
+        class(groupby_t), intent(in) :: this
+        logical :: has_next
+        
+        has_next = this%iterator_active .and. (this%current_group < this%n_groups)
+        
+    end function groupby_has_next_group
+    
+    !> Get next group in iteration
+    module function groupby_next_group(this, group_name) result(result_array)
+        class(groupby_t), intent(inout) :: this
+        character(len=*), intent(out) :: group_name
+        type(fortarray_t) :: result_array
+        
+        if (.not. this%has_next_group()) then
+            write(error_unit, '(A)') "ERROR: No more groups in iterator"
+            result_array = create_empty_like(this%parent_array)
+            group_name = ""
+            return
+        end if
+        
+        this%current_group = this%current_group + 1
+        group_name = this%group_names(this%current_group)
+        result_array = this%get_group(group_name)
+        
+        if (this%current_group >= this%n_groups) then
+            this%iterator_active = .false.
+        end if
+        
+    end function groupby_next_group
+    
+    ! ======= COMPLEX OPERATIONS =======
+    
+    !> Apply custom operation to each group
+    module function groupby_apply(this, operation) result(result_array)
+        class(groupby_t), intent(in) :: this
+        character(len=*), intent(in) :: operation
+        type(fortarray_t) :: result_array
+        
+        integer :: i
+        real(real64), allocatable :: result_values(:)
+        type(fortarray_t) :: group_data
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(result_values(this%n_groups))
+        
+        ! Apply operation to each group
+        do i = 1, this%n_groups
+            group_data = this%get_group(this%group_names(i))
+            
+            select case(trim(operation))
+            case("range")
+                ! Calculate range (max - min) for each group
+                result_values(i) = maxval(group_data%data%values_r64) - minval(group_data%data%values_r64)
+                
+            case("count")
+                ! Count non-missing values
+                result_values(i) = real(count(.not. is_missing(group_data%data%values_r64)), real64)
+                
+            case default
+                write(error_unit, '(A,A)') "ERROR: Unknown operation: ", trim(operation)
+                result_values(i) = huge(1.0_real64)
+            end select
+            
+            call finalize_variable(group_data)
+        end do
+        
+        ! Create result array
+        result_array = new_array(result_values, name=trim(this%parent_array%name) // "_" // trim(operation))
+        
+    end function groupby_apply
+    
+    !> Transform groups (broadcast result back to original size)
+    module function groupby_transform(this, operation) result(result_array)
+        class(groupby_t), intent(in) :: this
+        character(len=*), intent(in) :: operation
+        type(fortarray_t) :: result_array
+        
+        integer :: i, j, group_start, group_end
+        real(real64), allocatable :: result_values(:), group_values(:)
+        real(real64) :: group_mean, group_sum
+        integer :: valid_count
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: Groupby object not initialized"
+            result_array = create_empty_like(this%parent_array)
+            return
+        end if
+        
+        allocate(result_values(this%parent_array%n_elements))
+        
+        ! Transform each group and broadcast back
+        do i = 1, this%n_groups
+            group_start = this%group_indices(i, 1)
+            group_end = this%group_indices(i, 2)
+            
+            ! Extract group values
+            allocate(group_values(group_end - group_start + 1))
+            do j = group_start, group_end
+                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            end do
+            
+            select case(trim(operation))
+            case("mean")
+                ! Calculate group mean and broadcast to all elements in group
+                group_sum = 0.0_real64
+                valid_count = 0
+                do j = 1, size(group_values)
+                    if (.not. is_missing(group_values(j))) then
+                        group_sum = group_sum + group_values(j)
+                        valid_count = valid_count + 1
+                    end if
+                end do
+                
+                if (valid_count > 0) then
+                    group_mean = group_sum / real(valid_count, real64)
+                else
+                    group_mean = huge(1.0_real64)
+                end if
+                
+                ! Broadcast to all positions in this group
+                do j = group_start, group_end
+                    result_values(j) = group_mean
+                end do
+                
+            case default
+                write(error_unit, '(A,A)') "ERROR: Unknown transform operation: ", trim(operation)
+                do j = group_start, group_end
+                    result_values(j) = huge(1.0_real64)
+                end do
+            end select
+            
+            deallocate(group_values)
+        end do
+        
+        ! Create result array with same shape as original
+        result_array = new_array(result_values, name=trim(this%parent_array%name) // "_transform_" // trim(operation))
+        
+    end function groupby_transform
 
 end submodule fortarray_methods

@@ -215,6 +215,9 @@ module fortarray_types
         procedure :: optimize_memory => fortarray_optimize_memory
         procedure :: sel_range_parallel => fortarray_sel_range_parallel
         
+        ! Groupby methods (Sprint 13)
+        procedure :: groupby => fortarray_groupby
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -257,6 +260,46 @@ module fortarray_types
         final :: dataset_finalizer
     end type dataset_t
     
+    ! Groupby type for groupby operations (Sprint 13)
+    type :: groupby_t
+        logical :: initialized = .false.
+        character(len=MAX_NAME_LEN) :: dim_name = ""
+        integer :: n_groups = 0
+        
+        ! Group information
+        character(len=MAX_NAME_LEN), allocatable :: group_names(:)
+        integer, allocatable :: group_sizes(:)
+        integer, allocatable :: group_indices(:, :)  ! Start and end indices for each group
+        
+        ! Parent array reference (not owning)
+        class(fortarray_t), pointer :: parent_array => null()
+        
+        ! Group iterator state
+        integer :: current_group = 0
+        logical :: iterator_active = .false.
+    contains
+        final :: groupby_finalizer
+        
+        ! Groupby aggregation methods
+        procedure :: mean => groupby_mean
+        procedure :: sum => groupby_sum
+        procedure :: std => groupby_std
+        procedure :: max => groupby_max
+        procedure :: min => groupby_min
+        
+        ! Group access methods
+        procedure :: get_group => groupby_get_group
+        
+        ! Group iteration methods
+        procedure :: reset_iterator => groupby_reset_iterator
+        procedure :: has_next_group => groupby_has_next_group
+        procedure :: next_group => groupby_next_group
+        
+        ! Complex operations
+        procedure :: apply => groupby_apply
+        procedure :: transform => groupby_transform
+    end type groupby_t
+    
     ! Legacy support - dataframe_t is now an alias for fortarray_t
     type :: dataframe_t
         type(fortarray_t) :: var
@@ -264,6 +307,7 @@ module fortarray_types
     
     ! Make types public
     public :: fortarray_t, dataset_t, coordinate_t, data_storage_t, dimension_t
+    public :: groupby_t  ! Groupby type for Sprint 13
     public :: dataframe_t  ! For backward compatibility
     public :: MAX_NAME_LEN, MAX_ATTR_LEN
     public :: DTYPE_INT8, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64
@@ -739,6 +783,81 @@ module fortarray_types
             type(fortarray_t) :: result_array
         end function fortarray_sel_range_parallel
         
+        ! Groupby methods (Sprint 13)
+        module function fortarray_groupby(this, dim_name, groups) result(gb)
+            class(fortarray_t), intent(in), target :: this
+            character(len=*), intent(in) :: dim_name
+            class(fortarray_t), intent(in) :: groups
+            type(groupby_t) :: gb
+        end function fortarray_groupby
+        
+        ! Groupby aggregation methods
+        module function groupby_mean(this, skipna) result(result_array)
+            class(groupby_t), intent(in) :: this
+            logical, intent(in), optional :: skipna
+            type(fortarray_t) :: result_array
+        end function groupby_mean
+        
+        module function groupby_sum(this, skipna) result(result_array)
+            class(groupby_t), intent(in) :: this
+            logical, intent(in), optional :: skipna
+            type(fortarray_t) :: result_array
+        end function groupby_sum
+        
+        module function groupby_std(this, skipna) result(result_array)
+            class(groupby_t), intent(in) :: this
+            logical, intent(in), optional :: skipna
+            type(fortarray_t) :: result_array
+        end function groupby_std
+        
+        module function groupby_max(this, skipna) result(result_array)
+            class(groupby_t), intent(in) :: this
+            logical, intent(in), optional :: skipna
+            type(fortarray_t) :: result_array
+        end function groupby_max
+        
+        module function groupby_min(this, skipna) result(result_array)
+            class(groupby_t), intent(in) :: this
+            logical, intent(in), optional :: skipna
+            type(fortarray_t) :: result_array
+        end function groupby_min
+        
+        ! Group access methods
+        module function groupby_get_group(this, group_name) result(result_array)
+            class(groupby_t), intent(in) :: this
+            character(len=*), intent(in) :: group_name
+            type(fortarray_t) :: result_array
+        end function groupby_get_group
+        
+        ! Group iteration methods
+        module subroutine groupby_reset_iterator(this)
+            class(groupby_t), intent(inout) :: this
+        end subroutine groupby_reset_iterator
+        
+        module function groupby_has_next_group(this) result(has_next)
+            class(groupby_t), intent(in) :: this
+            logical :: has_next
+        end function groupby_has_next_group
+        
+        module function groupby_next_group(this, group_name) result(result_array)
+            class(groupby_t), intent(inout) :: this
+            character(len=*), intent(out) :: group_name
+            type(fortarray_t) :: result_array
+        end function groupby_next_group
+        
+        ! Complex operations
+        module function groupby_apply(this, operation) result(result_array)
+            class(groupby_t), intent(in) :: this
+            character(len=*), intent(in) :: operation
+            type(fortarray_t) :: result_array
+        end function groupby_apply
+        
+        module function groupby_transform(this, operation) result(result_array)
+            class(groupby_t), intent(in) :: this
+            character(len=*), intent(in) :: operation
+            type(fortarray_t) :: result_array
+        end function groupby_transform
+        
     end interface
     
 contains
@@ -790,5 +909,16 @@ contains
         if (allocated(ds%attr_keys)) deallocate(ds%attr_keys)
         if (allocated(ds%attr_values)) deallocate(ds%attr_values)
     end subroutine dataset_finalizer
+    
+    !> Finalizer for groupby_t type
+    subroutine groupby_finalizer(gb)
+        type(groupby_t), intent(inout) :: gb
+        
+        if (allocated(gb%group_names)) deallocate(gb%group_names)
+        if (allocated(gb%group_sizes)) deallocate(gb%group_sizes)
+        if (allocated(gb%group_indices)) deallocate(gb%group_indices)
+        ! Note: parent_array is not owned, so we don't deallocate it
+        if (associated(gb%parent_array)) gb%parent_array => null()
+    end subroutine groupby_finalizer
     
 end module fortarray_types
