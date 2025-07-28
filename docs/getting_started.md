@@ -1,6 +1,6 @@
-# Foxel Getting Started Guide
+# FortArray Getting Started Guide
 
-Foxel is a modern Fortran library for handling multi-dimensional labeled arrays and datasets, following NetCDF data model conventions. This guide will help you get started with Foxel for scientific data analysis.
+FortArray is a modern Fortran library providing xarray-compatible labeled multi-dimensional arrays and datasets, following NetCDF data model conventions. This guide will help you get started with FortArray for scientific data analysis.
 
 ## Installation
 
@@ -29,10 +29,10 @@ make test
 
 ## Basic Concepts
 
-Foxel follows the NetCDF data model with these core types:
+FortArray follows the NetCDF data model with these core types:
 
-- **`variable_t`**: Multi-dimensional labeled arrays (0D to nD)
-- **`dataset_t`**: Collection of variables with shared dimensions
+- **`fortarray_t`**: Multi-dimensional labeled arrays (0D to nD) with xarray-compatible methods
+- **`dataset_t`**: Collection of arrays with shared dimensions
 - **`coordinate_t`**: 1D variables defining axes
 - **`dimension_t`**: Named axes with lengths
 
@@ -42,10 +42,10 @@ Foxel follows the NetCDF data model with these core types:
 
 ```fortran
 program quick_start
-    use foxel
+    use fortarray
     implicit none
     
-    type(variable_t) :: temp_var, pressure_var
+    type(fortarray_t) :: temp_var, pressure_var
     real(real64), dimension(365) :: temperature_data, pressure_data
     integer :: i
     
@@ -55,12 +55,14 @@ program quick_start
         pressure_data(i) = 1013.25 + 50.0 * cos(2.0 * 3.14159 * real(i) / 365.0)
     end do
     
-    ! Create variables
-    temp_var = variable(temperature_data, name="temperature", dim_names=["time"])
+    ! Create variables with xarray-style constructor
+    temp_var = new_array(temperature_data, dim_names=["time"])
+    temp_var%name = "temperature"
     temp_var%units = "degrees_C"
     temp_var%standard_name = "air_temperature"
     
-    pressure_var = variable(pressure_data, name="pressure", dim_names=["time"])
+    pressure_var = new_array(pressure_data, dim_names=["time"])
+    pressure_var%name = "pressure"
     pressure_var%units = "hPa"
     pressure_var%standard_name = "air_pressure"
     
@@ -79,11 +81,11 @@ end program quick_start
 
 ```fortran
 program dataset_example
-    use foxel
+    use fortarray
     implicit none
     
     type(dataset_t) :: climate_data
-    type(variable_t) :: temp_var, humid_var
+    type(fortarray_t) :: temp_var, humid_var
     real(real64), dimension(100, 50) :: temp_2d, humid_2d
     integer :: i, j
     

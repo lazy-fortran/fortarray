@@ -1,7 +1,7 @@
 program test_boolean_minimal
     use fortarray_boolean_indexing, only: create_mask_from_logical_array, where_mask_only
     use fortarray_types, only: fortarray_t
-    use fortarray_constructors, only: variable
+    use fortarray_constructors, only: new_array
     use iso_fortran_env, only: real64, error_unit
     implicit none
     
@@ -14,7 +14,7 @@ program test_boolean_minimal
     
     ! Create simple test data
     data = [1.0_real64, 2.0_real64, 3.0_real64]
-    var = variable(data, name="test", dim_names=["x"])
+    var = new_array(data, name="test", dim_names=["x"])
     
     ! Create mask
     mask_data = [.true., .false., .true.]

@@ -56,7 +56,7 @@ contains
         do i = 1, 100
             data(i) = sin(real(i, real64) * 0.1_real64)
         end do
-        var = variable(data, name="sine_wave", dim_names=["x"])
+        var = new_array(data, name="sine_wave", dim_names=["x"])
         var%units = "radians"
         var%long_name = "Sine Wave Test Data"
         
@@ -98,7 +98,7 @@ contains
                 data(idx) = sin(real(i, real64) * 0.1_real64) * cos(real(j, real64) * 0.1_real64)
             end do
         end do
-        var = variable(data, name="wave_2d", dim_names=["x", "y"])
+        var = new_array(data, name="wave_2d", dim_names=["x", "y"])
         var%shape = [20, 20]
         
         ! Test 2D plot methods
@@ -146,7 +146,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="decay", dim_names=["time"])
+        var = new_array(data, name="decay", dim_names=["time"])
         if (.not. allocated(var%coords)) allocate(var%coords(1))
         if (.not. allocated(var%has_coord)) allocate(var%has_coord(1))
         var%coords(1) = x_coord
@@ -189,9 +189,9 @@ contains
             data3(i) = sin(real(i, real64) * 0.1_real64) * cos(real(i, real64) * 0.05_real64)
         end do
         
-        var1 = variable(data1, name="sin", dim_names=["x"])
-        var2 = variable(data2, name="cos", dim_names=["x"])
-        var3 = variable(data3, name="sin*cos", dim_names=["x"])
+        var1 = new_array(data1, name="sin", dim_names=["x"])
+        var2 = new_array(data2, name="cos", dim_names=["x"])
+        var3 = new_array(data3, name="sin*cos", dim_names=["x"])
         
         ! Plot multiple variables on same axes
         opts%title = "Multiple Variables"
@@ -229,7 +229,7 @@ contains
             end if
         end do
         
-        var = variable(data, name="data_with_gaps", dim_names=["x"])
+        var = new_array(data, name="data_with_gaps", dim_names=["x"])
         
         ! Plot should handle NaN values gracefully
         call variable_plot(var)
@@ -258,7 +258,7 @@ contains
         do i = 1, 100
             data(i) = real(i, real64)**2
         end do
-        var = variable(data, name="quadratic", dim_names=["x"])
+        var = new_array(data, name="quadratic", dim_names=["x"])
         
         ! Test method chaining - not available with current implementation
         call variable_plot(var)
@@ -287,7 +287,7 @@ contains
         do i = 1, 50
             data(i) = exp(-real(i-25, real64)**2 / 100.0_real64)
         end do
-        var = variable(data, name="gaussian", dim_names=["x"])
+        var = new_array(data, name="gaussian", dim_names=["x"])
         
         ! Test plot customization options
         call variable_plot(var)
@@ -317,7 +317,7 @@ contains
         do i = 1, 50
             data(i) = sin(real(i, real64) * 0.2_real64)
         end do
-        var = variable(data, name="export_test", dim_names=["x"])
+        var = new_array(data, name="export_test", dim_names=["x"])
         
         ! Test export to different formats
         call variable_plot(var)
@@ -373,7 +373,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="temperature", dim_names=["time"])
+        var = new_array(data, name="temperature", dim_names=["time"])
         var%units = "K"
         var%long_name = "Air Temperature"
         var%standard_name = "air_temperature"
@@ -419,16 +419,16 @@ contains
             hum_data(i) = 60.0_real64 + 20.0_real64 * sin(real(i, real64) * 0.15_real64)
         end do
         
-        temp = variable(temp_data, name="temperature", dim_names=["time"])
+        temp = new_array(temp_data, name="temperature", dim_names=["time"])
         temp%units = "degC"
         
-        pressure = variable(pres_data, name="pressure", dim_names=["time"])
+        pressure = new_array(pres_data, name="pressure", dim_names=["time"])
         pressure%units = "hPa"
         
-        humidity = variable(hum_data, name="humidity", dim_names=["time"])
+        humidity = new_array(hum_data, name="humidity", dim_names=["time"])
         humidity%units = "%"
         
-        ds = dataset()
+        ds = new_dataset()
         call add_variable(ds, temp)
         call add_variable(ds, pressure)
         call add_variable(ds, humidity)

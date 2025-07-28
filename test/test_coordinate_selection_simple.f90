@@ -47,7 +47,7 @@ contains
         call create_coordinate(x_coord, size(coord_vals), "real64", idx)
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
-        var = variable(data, name="test_data", dim_names=["x"], coords=[x_coord])
+        var = new_array(data, name="test_data", dim_names=["x"], coords=[x_coord])
         
         ! Test basic location finding
         idx = loc(var, 3.0_real64, 1)
@@ -96,7 +96,7 @@ contains
         call create_coordinate(x_coord, size(coord_vals), "real64", i)
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
-        var = variable(data, name="test_data", dim_names=["x"], coords=[x_coord])
+        var = new_array(data, name="test_data", dim_names=["x"], coords=[x_coord])
         
         ! Find indices for range manually
         start_idx = 0
@@ -148,7 +148,7 @@ contains
         call create_coordinate(x_coord, size(coord_vals), "real64", i)
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
-        var = variable(data, name="test_data", dim_names=["x"], coords=[x_coord])
+        var = new_array(data, name="test_data", dim_names=["x"], coords=[x_coord])
         
         ! Find nearest to 27.0 manually
         target = 27.0_real64

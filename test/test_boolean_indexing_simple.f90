@@ -40,7 +40,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Create logical mask manually
         mask_data = [.true., .false., .true., .false., .true.]
@@ -77,7 +77,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         mask_data = [.false., .true., .false., .true., .true.]
         mask = create_mask(mask_data, ["x"])
@@ -120,7 +120,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         mask_data = [.true., .false., .true., .false., .true.]
         mask = create_mask(mask_data, ["x"])

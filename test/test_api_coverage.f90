@@ -59,7 +59,7 @@ contains
         
         ! Test variable constructor
         data = [(real(i, real64), i = 1, 10)]
-        var = variable(data, name="test", dim_names=["x"])
+        var = new_array(data, name="test", dim_names=["x"])
         
         if (var%name /= "test") then
             test_passed = .false.
@@ -67,7 +67,7 @@ contains
         end if
         
         ! Test dataset constructor
-        ds = dataset()
+        ds = new_dataset()
         call add_variable(ds, var)
         
         if (ds%n_vars /= 1) then
@@ -112,7 +112,7 @@ contains
         test_passed = .true.
         
         data = [(real(i*i, real64), i = 1, 20)]
-        var = variable(data, name="squared", dim_names=["index"])
+        var = new_array(data, name="squared", dim_names=["index"])
         
         ! Test positional indexing
         value = get_item(var, 5)
@@ -151,10 +151,10 @@ contains
         data1 = [(real(i, real64), i = 1, 10)]
         data2 = [(real(i*2, real64), i = 1, 10)]
         
-        var1 = variable(data1, name="var1", dim_names=["x"])
-        var2 = variable(data2, name="var2", dim_names=["x"])
+        var1 = new_array(data1, name="var1", dim_names=["x"])
+        var2 = new_array(data2, name="var2", dim_names=["x"])
         
-        ds = dataset()
+        ds = new_dataset()
         call add_variable(ds, var1)
         call add_variable(ds, var2)
         
@@ -203,9 +203,9 @@ contains
         test_passed = .true.
         
         data = [(real(i, real64), i = 1, 5)]
-        var = variable(data, name="io_test", dim_names=["index"])
+        var = new_array(data, name="io_test", dim_names=["index"])
         
-        ds = dataset()
+        ds = new_dataset()
         call add_variable(ds, var)
         
         ! Test NetCDF writing
@@ -261,8 +261,8 @@ contains
         data1 = [(real(i, real64), i = 1, 5)]
         data2 = [(real(i*2, real64), i = 1, 5)]
         
-        var1 = variable(data1, name="var1", dim_names=["x"])
-        var2 = variable(data2, name="var2", dim_names=["x"])
+        var1 = new_array(data1, name="var1", dim_names=["x"])
+        var2 = new_array(data2, name="var2", dim_names=["x"])
         
         ! Test addition
         result = var1 + var2
@@ -303,7 +303,7 @@ contains
         test_passed = .true.
         
         data = [(real(i, real64), i = 1, 10)]
-        var = variable(data, name="agg_test", dim_names=["index"])
+        var = new_array(data, name="agg_test", dim_names=["index"])
         
         ! Test all aggregation functions
         mean_result = mean(var)
@@ -371,7 +371,7 @@ contains
         test_passed = .true.
         
         data = [(real(i, real64), i = 1, 20)]
-        var = variable(data, name="slice_test", dim_names=["index"])
+        var = new_array(data, name="slice_test", dim_names=["index"])
         
         ! Test slicing
         sliced = slice_range(var, 5, 10)
@@ -419,7 +419,7 @@ contains
         test_passed = .true.
         
         data = [(real(i, real64), i = 1, 1000)]
-        var = variable(data, name="chunk_test", dim_names=["index"])
+        var = new_array(data, name="chunk_test", dim_names=["index"])
         
         ! Test chunking
         call set_chunk_size(100)
@@ -480,7 +480,7 @@ contains
         test_passed = .true.
         
         data = [(sin(real(i, real64) * 0.01_real64), i = 1, 365)]
-        var = variable(data, name="time_test", dim_names=["time"])
+        var = new_array(data, name="time_test", dim_names=["time"])
         
         ! Test resampling
         resampled = resample(var, "M", "mean")

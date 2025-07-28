@@ -60,7 +60,7 @@ contains
         
         ! Create test data
         data = reshape([(real(i, real64), i=1,12)], [3,4])
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         
         ! Test sum of all elements
         result = sum(var)
@@ -111,7 +111,7 @@ contains
         
         ! Create test data
         data = reshape([(real(i, real64), i=1,24)], [2,3,4])
-        var = variable(data, name="test_data", dim_names=["x", "y", "z"])
+        var = new_array(data, name="test_data", dim_names=["x", "y", "z"])
         
         ! Test mean of all elements
         result = mean(var)
@@ -153,7 +153,7 @@ contains
         data = reshape([5.0_real64, 2.0_real64, 8.0_real64, &
                        1.0_real64, 9.0_real64, 3.0_real64, &
                        7.0_real64, 4.0_real64, 6.0_real64], [3,3])
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         
         ! Test min
         min_result = minval(var)
@@ -208,7 +208,7 @@ contains
         
         ! Create test data with known statistics
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Calculate expected values
         expected_mean = sum(data) / size(data)  ! 2.5
@@ -262,7 +262,7 @@ contains
         
         ! Test odd number of elements
         data_odd = [3.0_real64, 1.0_real64, 4.0_real64, 2.0_real64, 5.0_real64]
-        var_odd = variable(data_odd, name="odd_data", dim_names=["x"])
+        var_odd = new_array(data_odd, name="odd_data", dim_names=["x"])
         
         result = median(var_odd)
         if (abs(result%data%values_r64(1) - 3.0_real64) > 1e-10) then
@@ -272,7 +272,7 @@ contains
         
         ! Test even number of elements
         data_even = [3.0_real64, 1.0_real64, 4.0_real64, 2.0_real64, 5.0_real64, 6.0_real64]
-        var_even = variable(data_even, name="even_data", dim_names=["x"])
+        var_even = new_array(data_even, name="even_data", dim_names=["x"])
         
         result = median(var_even)
         if (abs(result%data%values_r64(1) - 3.5_real64) > 1e-10) then
@@ -303,7 +303,7 @@ contains
         
         ! Create test data: 1 to 100
         data = [(real(i, real64), i=1,100)]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test 25th percentile
         q25 = quantile(var, 0.25_real64)
@@ -357,7 +357,7 @@ contains
             end do
         end do
         
-        var = variable(data, name="test_3d", dim_names=["x", "y", "z"])
+        var = new_array(data, name="test_3d", dim_names=["x", "y", "z"])
         
         ! Test sum along different dimensions
         result = sum(var, dim=1)  ! Sum over x
@@ -409,8 +409,8 @@ contains
         data_vals = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64]
         weight_vals = [0.1_real64, 0.2_real64, 0.3_real64, 0.4_real64]
         
-        var = variable(data_vals, name="values", dim_names=["x"])
-        weights = variable(weight_vals, name="weights", dim_names=["x"])
+        var = new_array(data_vals, name="values", dim_names=["x"])
+        weights = new_array(weight_vals, name="weights", dim_names=["x"])
         
         ! Calculate expected weighted mean
         expected_weighted_mean = sum(data_vals * weight_vals) / sum(weight_vals)
@@ -451,8 +451,8 @@ contains
         weight_vals = reshape([1.0_real64, 1.0_real64, 2.0_real64, &
                               2.0_real64, 3.0_real64, 3.0_real64], [2,3])
         
-        var = variable(data_vals, name="values", dim_names=["x", "y"])
-        weights = variable(weight_vals, name="weights", dim_names=["x", "y"])
+        var = new_array(data_vals, name="values", dim_names=["x", "y"])
+        weights = new_array(weight_vals, name="weights", dim_names=["x", "y"])
         
         ! Calculate expected weighted sum
         expected_weighted_sum = sum(data_vals * weight_vals)
@@ -490,7 +490,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="data_with_missing", dim_names=["x"])
+        var = new_array(data, name="data_with_missing", dim_names=["x"])
         
         ! Test mean with skipna=.true. (default)
         result = mean(var, skipna=.true.)
@@ -535,7 +535,7 @@ contains
         test_passed = .true.
         
         ! Create empty variable
-        var = variable(empty_data, name="empty", dim_names=["x"])
+        var = new_array(empty_data, name="empty", dim_names=["x"])
         
         ! Test sum of empty array (should be 0)
         result = sum(var)
@@ -571,7 +571,7 @@ contains
         test_passed = .true.
         
         ! Create scalar variable
-        scalar_var = variable_scalar(scalar_val, name="scalar")
+        scalar_var = variable_scalar_real64(scalar_val, name="scalar")
         
         ! Test aggregations on scalar
         result = sum(scalar_var)
@@ -614,7 +614,7 @@ contains
         
         ! Create 3D test data
         data = reshape([(real(i, real64), i=1,60)], [3,4,5])
-        var = variable(data, name="test_3d", dim_names=["x", "y", "z"])
+        var = new_array(data, name="test_3d", dim_names=["x", "y", "z"])
         
         ! Test single dimension aggregation for now (multi-dim not fully implemented)
         result = sum(var, dim=1)  ! Sum over x dimension
@@ -652,7 +652,7 @@ contains
         
         ! Test with int32 data
         data_i32 = [1_int32, 2_int32, 3_int32, 4_int32]
-        var_i32 = variable(data_i32, name="int_data", dim_names=["x"])
+        var_i32 = new_array(data_i32, name="int_data", dim_names=["x"])
         
         result = sum(var_i32)
         if (result%data%dtype /= DTYPE_INT32) then
@@ -662,7 +662,7 @@ contains
         
         ! Test with real32 data
         data_r32 = [1.0_real32, 2.0_real32, 3.0_real32, 4.0_real32]
-        var_r32 = variable(data_r32, name="float_data", dim_names=["x"])
+        var_r32 = new_array(data_r32, name="float_data", dim_names=["x"])
         
         result = mean(var_r32)
         if (result%data%dtype /= DTYPE_REAL32) then
@@ -694,7 +694,7 @@ contains
         
         ! Create large dataset
         large_data = reshape([(real(i, real64), i=1,1000000)], [100, 100, 100])
-        var = variable(large_data, name="large_data", dim_names=["x", "y", "z"])
+        var = new_array(large_data, name="large_data", dim_names=["x", "y", "z"])
         
         ! Time aggregation operations
         call cpu_time(start_time)

@@ -293,8 +293,8 @@ contains
             bounds_data(2*i) = real(i, real64) * 30.0_real64  ! End of month
         end do
         
-        time_var = variable(time_data, name="time", dim_names=["time"])
-        time_bounds_var = variable(bounds_data, name="time_bounds", dim_names=["bnds  ", "time  "])
+        time_var = new_array(time_data, name="time", dim_names=["time"])
+        time_bounds_var = new_array(bounds_data, name="time_bounds", dim_names=["bnds  ", "time  "])
         time_bounds_var%shape = [2, 12]
         
         ! Debug print
@@ -448,7 +448,7 @@ contains
         call random_number(temp_data)
         temp_data = 20.0_real64 + 10.0_real64 * temp_data
         
-        temp_var = variable(temp_data, name="temperature", dim_names=["time"])
+        temp_var = new_array(temp_data, name="temperature", dim_names=["time"])
         temp_var%units = "degrees_C"
         temp_var%standard_name = "air_temperature"
         

@@ -55,7 +55,7 @@ contains
         do i = 1, 10
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test basic slice: [3:7]
         result = slice_range(var, 3, 7)
@@ -98,7 +98,7 @@ contains
         do i = 1, 10
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test negative indices: [-3:]  (last 3 elements)
         result = slice_from_negative(var, -3)
@@ -140,7 +140,7 @@ contains
         do i = 1, 10
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test step values: [1:10:2] (every 2nd element)
         result = slice_with_step(var, 1, 10, 2)
@@ -193,7 +193,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -241,7 +241,7 @@ contains
         test_passed = .true.
         
         data = [10.0_real64, 20.0_real64, 30.0_real64, 40.0_real64, 50.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test slice: [2:4]
         result = slice_range(var, 2, 4)
@@ -282,7 +282,7 @@ contains
         do i = 1, 12
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [3, 4]
         
         ! Test slice: [2:3, 1:3] 
@@ -318,7 +318,7 @@ contains
         do i = 1, 24
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y", "z"])
+        var = new_array(data, name="test_data", dim_names=["x", "y", "z"])
         var%shape = [2, 3, 4]
         
         ! Test slice: [1:2, 2:3, 1:2]
@@ -350,7 +350,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test edge case: empty slice [3:2]
         result = slice_range(var, 3, 2)
@@ -397,7 +397,7 @@ contains
         do i = 1, 12
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [3, 4]
         
         ! Test slicing with broadcasting: [2:3, :]
@@ -433,7 +433,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test large slice: [100:900]
         result = slice_range(var, 100, 900)
@@ -467,7 +467,7 @@ contains
         do i = 1, 60
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y", "z"])
+        var = new_array(data, name="test_data", dim_names=["x", "y", "z"])
         var%shape = [3, 4, 5]
         
         ! Test complex multidimensional slice
@@ -499,7 +499,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test bounds checking: slice beyond array bounds should handle gracefully
         result = slice_with_bounds_check(var, 1, 10)
@@ -530,7 +530,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test empty result case
         result = slice_range(var, 6, 10)  ! Beyond array bounds
@@ -571,7 +571,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -610,7 +610,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         var%units = "meters"
         var%long_name = "Test data for slicing"
         

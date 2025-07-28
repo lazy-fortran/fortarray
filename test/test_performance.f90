@@ -54,8 +54,8 @@ contains
             data2(i) = sin(real(i, real64) * 0.000001_real64)
         end do
         
-        large_var1 = variable(data1, name="large1", dim_names=["index"])
-        large_var2 = variable(data2, name="large2", dim_names=["index"])
+        large_var1 = new_array(data1, name="large1", dim_names=["index"])
+        large_var2 = new_array(data2, name="large2", dim_names=["index"])
         
         ! Benchmark arithmetic operations
         call system_clock(start_time, count_rate)
@@ -112,8 +112,8 @@ contains
             data(i) = sin(real(i, real64) * 0.0001_real64)
         end do
         
-        var = variable(data, name="io_test", dim_names=["index"])
-        ds = dataset()
+        var = new_array(data, name="io_test", dim_names=["index"])
+        ds = new_dataset()
         call add_variable(ds, var)
         
         filename = "benchmark_io.nc"
@@ -176,7 +176,7 @@ contains
             data(i) = sin(real(i, real64) * 0.000001_real64) + real(i, real64) * 0.000001_real64
         end do
         
-        var = variable(data, name="agg_test", dim_names=["index"])
+        var = new_array(data, name="agg_test", dim_names=["index"])
         
         ! Benchmark mean
         call system_clock(start_time, count_rate)
@@ -237,7 +237,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="parallel_test", dim_names=["index"])
+        var = new_array(data, name="parallel_test", dim_names=["index"])
         
         ! Serial benchmark
         call set_num_threads(1)
@@ -295,7 +295,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="chunk_test", dim_names=["index"])
+        var = new_array(data, name="chunk_test", dim_names=["index"])
         
         ! Set chunk size
         call set_chunk_size(10000)  ! 10K chunks
@@ -343,7 +343,7 @@ contains
                         real(i, real64) * 0.001_real64  ! Trend
         end do
         
-        ts_var = variable(ts_data, name="time_series", dim_names=["time"])
+        ts_var = new_array(ts_data, name="time_series", dim_names=["time"])
         
         ! Benchmark rolling mean
         call system_clock(start_time, count_rate)

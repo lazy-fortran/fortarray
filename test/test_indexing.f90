@@ -54,7 +54,7 @@ contains
         
         ! Create test data
         data_1d = [(real(i, real64), i=1,10)]
-        var = variable(data_1d, dim_names=["x"])
+        var = new_array(data_1d, dim_names=["x"])
         
         ! Test getting values
         do i = 1, 10
@@ -105,7 +105,7 @@ contains
                 data_2d(i,j) = real(i + (j-1)*10, real64)
             end do
         end do
-        var = variable(data_2d, dim_names=["row", "col"])
+        var = new_array(data_2d, dim_names=["row", "col"])
         
         ! Test getting values
         do j = 1, 4
@@ -148,7 +148,7 @@ contains
                 end do
             end do
         end do
-        var = variable(data_3d, dim_names=["x", "y", "z"])
+        var = new_array(data_3d, dim_names=["x", "y", "z"])
         
         ! Test specific values
         value = get_item(var, 1, 1, 1, stat=stat)
@@ -196,7 +196,7 @@ contains
                 end do
             end do
         end do
-        var = variable(data_3d, dim_names=["x  ", "y  ", "z  "])
+        var = new_array(data_3d, dim_names=["x  ", "y  ", "z  "])
         
         ! Test N-dimensional indexing
         indices = [1, 1, 1]
@@ -241,7 +241,7 @@ contains
         test_passed = .true.
         
         ! Create scalar variable
-        var = variable_scalar(42.0_real64, name="scalar_test")
+        var = variable_scalar_real64(42.0_real64, name="scalar_test")
         
         ! For scalar variables, we might want to support get_item with no indices
         ! For now, test that it's a 0D variable
@@ -292,7 +292,7 @@ contains
         coord%values_char = ["Station_A ", "Station_B ", "Station_C ", "Station_D ", "Station_E "]
         
         ! Create variable with coordinate
-        var = variable(data_1d, dim_names=["station"], coords=[coord])
+        var = new_array(data_1d, dim_names=["station"], coords=[coord])
         
         ! Test label indexing
         label_idx = create_label_index(label="Station_C")
@@ -346,7 +346,7 @@ contains
         coords(2)%name = "col"
         coords(2)%values_char = ["col1 ", "col2 "]
         
-        var = variable(data_2d, dim_names=[("row "), ("col ")], coords=coords)
+        var = new_array(data_2d, dim_names=[("row "), ("col ")], coords=coords)
         
         ! Test multi-dimensional label indexing
         label_indices(1) = create_label_index(label="row2")
@@ -390,7 +390,7 @@ contains
         coord%name = "time"
         coord%values_r64 = [0.0_real64, 0.5_real64, 1.0_real64, 1.5_real64, 2.0_real64]
         
-        var = variable(data_1d, dim_names=["time"], coords=[coord])
+        var = new_array(data_1d, dim_names=["time"], coords=[coord])
         
         ! Test numeric label indexing
         label_idx = create_label_index(value=1.0_real64)
@@ -423,7 +423,7 @@ contains
         
         ! Create variable
         data_1d = 0.0_real64
-        var = variable(data_1d, dim_names=["x"])
+        var = new_array(data_1d, dim_names=["x"])
         
         ! Set values
         call set_item(var, 1, value=10.0_real64, stat=stat)
@@ -462,7 +462,7 @@ contains
         
         ! Create variable
         data_2d = 0.0_real64
-        var = variable(data_2d, dim_names=["row", "col"])
+        var = new_array(data_2d, dim_names=["row", "col"])
         
         ! Set diagonal
         call set_item(var, 1, 1, value=1.0_real64, stat=stat)
@@ -501,7 +501,7 @@ contains
         
         ! Create variable
         data_3d = 0.0_real64
-        var = variable(data_3d, dim_names=["x", "y", "z"])
+        var = new_array(data_3d, dim_names=["x", "y", "z"])
         
         ! Set corners
         call set_item(var, 1, 1, 1, value=111.0_real64, stat=stat)
@@ -537,7 +537,7 @@ contains
         
         ! Create variable
         data_3d = 0.0_real64
-        var = variable(data_3d, dim_names=["a  ", "b  ", "c  "])
+        var = new_array(data_3d, dim_names=["a  ", "b  ", "c  "])
         
         ! Set specific values
         indices = [1, 2, 1]
@@ -585,7 +585,7 @@ contains
         
         ! Create variable
         data_1d = 1.0_real64
-        var = variable(data_1d, dim_names=["x"])
+        var = new_array(data_1d, dim_names=["x"])
         
         ! Test lower bound
         value = get_item(var, 0, stat=stat, error_msg=error_msg)
@@ -631,7 +631,7 @@ contains
         
         ! Create 2D variable
         data_2d = 1.0_real64
-        var = variable(data_2d, dim_names=["x", "y"])
+        var = new_array(data_2d, dim_names=["x", "y"])
         
         ! Try to index with wrong number of dimensions
         value = get_item(var, 1, stat=stat)  ! Only 1 index for 2D
@@ -671,7 +671,7 @@ contains
         
         ! Create variable without coordinates
         data_1d = 1.0_real64
-        var = variable(data_1d, dim_names=["x"])
+        var = new_array(data_1d, dim_names=["x"])
         
         ! Try label-based indexing without coordinates
         label_idx = create_label_index(label="test")

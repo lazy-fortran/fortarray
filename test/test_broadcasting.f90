@@ -49,8 +49,8 @@ contains
         data1 = reshape([(real(i, real64), i=1,12)], [3,4])
         data2 = reshape([(real(i*2, real64), i=1,12)], [3,4])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test dimension alignment check
         if (.not. can_broadcast(var1, var2)) then
@@ -88,9 +88,9 @@ contains
         test_passed = .true.
         
         ! Create scalar and array
-        scalar_var = variable_scalar(scalar_val, name="scalar")
+        scalar_var = variable_scalar_real64(scalar_val, name="scalar")
         array_data = reshape([(real(i, real64), i=1,12)], [3,4])
-        array_var = variable(array_data, name="array", dim_names=["x", "y"])
+        array_var = new_array(array_data, name="array", dim_names=["x", "y"])
         
         ! Test scalar can broadcast to array
         if (.not. can_broadcast(scalar_var, array_var)) then
@@ -140,8 +140,8 @@ contains
         vec_data = [(real(i, real64), i=1,4)]
         mat_data = reshape([(real(i, real64), i=1,12)], [3,4])
         
-        vec_var = variable(vec_data, name="vector", dim_names=["y"])
-        mat_var = variable(mat_data, name="matrix", dim_names=["x", "y"])
+        vec_var = new_array(vec_data, name="vector", dim_names=["y"])
+        mat_var = new_array(mat_data, name="matrix", dim_names=["x", "y"])
         
         ! Test 1D can broadcast to 2D along matching dimension
         if (.not. can_broadcast(vec_var, mat_var)) then
@@ -194,8 +194,8 @@ contains
         data1 = reshape([1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64], [1,4])
         data2 = reshape([(real(i, real64), i=1,12)], [3,4])
         
-        mat1 = variable(data1, name="mat1", dim_names=["x", "y"])
-        mat2 = variable(data2, name="mat2", dim_names=["x", "y"])
+        mat1 = new_array(data1, name="mat1", dim_names=["x", "y"])
+        mat2 = new_array(data2, name="mat2", dim_names=["x", "y"])
         
         ! Test broadcasting compatibility
         if (.not. can_broadcast(mat1, mat2)) then
@@ -237,8 +237,8 @@ contains
         data1 = reshape([1.0_real64, 2.0_real64, 3.0_real64], [1,3,1])
         data2 = reshape([(real(i, real64), i=1,8)], [2,1,4])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y", "z"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y", "z"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y", "z"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y", "z"])
         
         ! Test broadcasting compatibility
         if (.not. can_broadcast(var1, var2)) then
@@ -279,8 +279,8 @@ contains
         data1 = reshape([(real(i, real64), i=1,12)], [3,4])
         data2 = reshape([(real(i, real64), i=1,30)], [5,6])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test broadcasting incompatibility
         if (can_broadcast(var1, var2)) then
@@ -313,8 +313,8 @@ contains
         data1d = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64]
         data3d = reshape([(real(i, real64), i=1,24)], [2,3,4])
         
-        var1d = variable(data1d, name="var1d", dim_names=["z"])
-        var3d = variable(data3d, name="var3d", dim_names=["x", "y", "z"])
+        var1d = new_array(data1d, name="var1d", dim_names=["z"])
+        var3d = new_array(data3d, name="var3d", dim_names=["x", "y", "z"])
         
         ! Test 1D can broadcast to 3D
         if (.not. can_broadcast(var1d, var3d)) then
@@ -356,8 +356,8 @@ contains
         data1 = reshape([(real(i, real64), i=1,1000)], [1000,1])
         data2 = reshape([(real(i, real64), i=1,1000)], [1,1000])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test broadcasting performance
         call cpu_time(start_time)

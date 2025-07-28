@@ -59,7 +59,7 @@ contains
                      0.1_real64 * sin(2.0_real64 * 3.14159_real64 * real(i, real64) / 7.0_real64)
         end do
         
-        data_var = variable(data, name="temperature", dim_names=["time"])
+        data_var = new_array(data, name="temperature", dim_names=["time"])
         
         ! Create time coordinate
         call create_coordinate(time_coord, 365, "real64", stat)
@@ -110,7 +110,7 @@ contains
             data(i) = real(i, real64) + 10.0_real64 * sin(real(i, real64) * 0.1_real64)
         end do
         
-        data_var = variable(data, name="hourly_data", dim_names=["time"])
+        data_var = new_array(data, name="hourly_data", dim_names=["time"])
         
         call create_coordinate(time_coord, 100, "real64", stat)
         if (stat == 0) then
@@ -162,7 +162,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        data_var = variable(data, name="sparse_data", dim_names=["time"])
+        data_var = new_array(data, name="sparse_data", dim_names=["time"])
         
         call create_coordinate(time_coord, 10, "real64", stat)
         if (stat == 0) then
@@ -216,7 +216,7 @@ contains
             daily_data(i) = 20.0_real64 + 10.0_real64 * sin(2.0_real64 * 3.14159_real64 * real(i, real64) / 365.0_real64)
         end do
         
-        daily_var = variable(daily_data, name="daily_temp", dim_names=["time"])
+        daily_var = new_array(daily_data, name="daily_temp", dim_names=["time"])
         
         call create_coordinate(time_coord, 365, "real64", stat)
         if (stat == 0) then
@@ -267,7 +267,7 @@ contains
             hourly_data(i) = 100.0_real64 + real(mod(i, 24), real64)  ! Pattern based on hour
         end do
         
-        hourly_var = variable(hourly_data, name="hourly_values", dim_names=["time"])
+        hourly_var = new_array(hourly_data, name="hourly_values", dim_names=["time"])
         
         call create_coordinate(time_coord, 168, "real64", stat)
         if (stat == 0) then
@@ -317,7 +317,7 @@ contains
             monthly_data(i) = 20.0_real64 + 10.0_real64 * sin(2.0_real64 * 3.14159_real64 * real(i, real64) / 12.0_real64)
         end do
         
-        monthly_var = variable(monthly_data, name="monthly_temp", dim_names=["time"])
+        monthly_var = new_array(monthly_data, name="monthly_temp", dim_names=["time"])
         
         call create_coordinate(time_coord, 12, "real64", stat)
         if (stat == 0) then
@@ -365,7 +365,7 @@ contains
         do i = 1, 100
             data(i) = real(i, real64) + 5.0_real64 * sin(real(i, real64) * 0.2_real64)
         end do
-        data_var = variable(data, name="noisy_data", dim_names=["time"])
+        data_var = new_array(data, name="noisy_data", dim_names=["time"])
         
         ! Apply 7-point rolling mean
         window_size = 7
@@ -409,7 +409,7 @@ contains
         do i = 1, 30
             data(i) = real(i, real64)
         end do
-        data_var = variable(data, name="sequential", dim_names=["time"])
+        data_var = new_array(data, name="sequential", dim_names=["time"])
         
         ! Apply 3-point rolling sum
         window_size = 3
@@ -455,7 +455,7 @@ contains
                      3.0_real64 * sin(2.0_real64 * 3.14159_real64 * real(i, real64) / 7.0_real64)
         end do
         
-        data_var = variable(data, name="temp_2years", dim_names=["time"])
+        data_var = new_array(data, name="temp_2years", dim_names=["time"])
         
         call create_coordinate(time_coord, 730, "real64", stat)
         if (stat == 0) then
@@ -509,7 +509,7 @@ contains
         do i = 1, 10
             data(i) = real(i, real64)
         end do
-        data_var = variable(data, name="sequential", dim_names=["time"])
+        data_var = new_array(data, name="sequential", dim_names=["time"])
         
         ! Shift by 2 positions
         shift_amount = 2
@@ -546,7 +546,7 @@ contains
         do i = 1, 10
             data(i) = real(i, real64)**2
         end do
-        data_var = variable(data, name="quadratic", dim_names=["time"])
+        data_var = new_array(data, name="quadratic", dim_names=["time"])
         
         ! Calculate first difference
         diff_var = time_diff(data_var, 1)
@@ -581,7 +581,7 @@ contains
         
         ! Create simple data
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        data_var = variable(data, name="simple", dim_names=["time"])
+        data_var = new_array(data, name="simple", dim_names=["time"])
         
         ! Calculate cumulative sum
         cumsum_var = time_cumsum(data_var)

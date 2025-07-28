@@ -273,7 +273,7 @@ contains
     ! ======= FILTERING METHODS =======
     
     !> Filter by condition (xarray where() equivalent)
-    function fortarray_filter_condition(this, condition, other_value) result(result_array)
+    module function fortarray_filter_condition(this, condition, other_value) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t), intent(in) :: condition  ! Boolean array
         real(real64), intent(in), optional :: other_value
@@ -286,7 +286,7 @@ contains
     end function fortarray_filter_condition
     
     !> Filter by boolean mask
-    function fortarray_filter_mask(this, mask) result(result_array)
+    module function fortarray_filter_mask(this, mask) result(result_array)
         class(fortarray_t), intent(in) :: this
         logical, dimension(:), intent(in) :: mask
         type(fortarray_t) :: result_array
@@ -329,7 +329,7 @@ contains
     end function fortarray_mean_all
     
     !> Compute mean over specified dimensions
-    function fortarray_mean_dims(this, dims) result(result_array)
+    module function fortarray_mean_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -369,7 +369,7 @@ contains
     end function fortarray_sum_all
     
     !> Compute sum over specified dimensions
-    function fortarray_sum_dims(this, dims) result(result_array)
+    module function fortarray_sum_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -383,14 +383,14 @@ contains
     ! ======= PLACEHOLDER IMPLEMENTATIONS FOR REMAINING METHODS =======
     ! (Following BACKLOG.md: implement FULL functionality, no shortcuts)
     
-    function fortarray_std_all(this) result(result_array)
+    module function fortarray_std_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: std_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_std_all
     
-    function fortarray_std_dims(this, dims) result(result_array)
+    module function fortarray_std_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -398,14 +398,14 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_std_dims
     
-    function fortarray_var_all(this) result(result_array)
+    module function fortarray_var_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: var_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_var_all
     
-    function fortarray_var_dims(this, dims) result(result_array)
+    module function fortarray_var_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -413,14 +413,14 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_var_dims
     
-    function fortarray_min_all(this) result(result_array)
+    module function fortarray_min_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: min_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_min_all
     
-    function fortarray_min_dims(this, dims) result(result_array)
+    module function fortarray_min_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -428,14 +428,14 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_min_dims
     
-    function fortarray_max_all(this) result(result_array)
+    module function fortarray_max_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: max_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_max_all
     
-    function fortarray_max_dims(this, dims) result(result_array)
+    module function fortarray_max_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -443,14 +443,14 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_max_dims
     
-    function fortarray_median(this) result(result_array)
+    module function fortarray_median(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: median not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_median
     
-    function fortarray_quantile(this, q) result(result_array)
+    module function fortarray_quantile(this, q) result(result_array)
         class(fortarray_t), intent(in) :: this
         real(real64), intent(in) :: q
         type(fortarray_t) :: result_array
@@ -458,7 +458,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_quantile
     
-    function fortarray_values_all(this) result(result_array)
+    module function fortarray_values_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         
@@ -469,7 +469,7 @@ contains
         
     end function fortarray_values_all
     
-    function fortarray_values_copy(this) result(result_array)
+    module function fortarray_values_copy(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         integer :: i
@@ -543,7 +543,7 @@ contains
         
     end function fortarray_values_copy
     
-    function fortarray_to_netcdf_file(this, filename) result(status)
+    module function fortarray_to_netcdf_file(this, filename) result(status)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: filename
         integer :: status
@@ -551,7 +551,7 @@ contains
         status = -1
     end function fortarray_to_netcdf_file
     
-    function fortarray_to_numpy_like(this) result(result_array)
+    module function fortarray_to_numpy_like(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: to_numpy_like not yet implemented"
@@ -559,7 +559,7 @@ contains
         result_array%initialized = .false.
     end function fortarray_to_numpy_like
     
-    function fortarray_to_pandas_like(this) result(result_array)
+    module function fortarray_to_pandas_like(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: to_pandas_like not yet implemented"
@@ -567,7 +567,7 @@ contains
         result_array%initialized = .false.
     end function fortarray_to_pandas_like
     
-    function fortarray_fillna_value(this, fill_value) result(result_array)
+    module function fortarray_fillna_value(this, fill_value) result(result_array)
         class(fortarray_t), intent(in) :: this
         real(real64), intent(in) :: fill_value
         type(fortarray_t) :: result_array
@@ -639,7 +639,7 @@ contains
         
     end function fortarray_fillna_value
     
-    function fortarray_fillna_method(this, method) result(result_array)
+    module function fortarray_fillna_method(this, method) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: method
         type(fortarray_t) :: result_array
@@ -647,43 +647,58 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_fillna_method
     
-    function fortarray_dropna_any(this) result(result_array)
+    module function fortarray_dropna_any(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: dropna_any not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_dropna_any
     
-    function fortarray_dropna_all(this) result(result_array)
+    module function fortarray_dropna_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: dropna_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_dropna_all
     
-    function fortarray_interpolate_na_linear(this) result(result_array)
+    module function fortarray_interpolate_na_linear(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: interpolate_na_linear not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_interpolate_na_linear
     
-    function fortarray_interpolate_na_cubic(this) result(result_array)
+    module function fortarray_interpolate_na_cubic(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: interpolate_na_cubic not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_interpolate_na_cubic
     
-    function fortarray_ffill(this) result(result_array)
+    module function fortarray_ffill(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         integer :: i
         real(real64) :: last_valid
         
-        ! Create copy of input array
-        result_array = create_empty_like(this)
+        ! Create copy of input array with proper initialization
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = this%data%dtype
         result_array%data%n_elements = this%n_elements
@@ -738,21 +753,21 @@ contains
         
     end function fortarray_ffill
     
-    function fortarray_bfill(this) result(result_array)
+    module function fortarray_bfill(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: bfill not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_bfill
     
-    function fortarray_transpose_all(this) result(result_array)
+    module function fortarray_transpose_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: transpose_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_transpose_all
     
-    function fortarray_transpose_order(this, order) result(result_array)
+    module function fortarray_transpose_order(this, order) result(result_array)
         class(fortarray_t), intent(in) :: this
         integer, dimension(:), intent(in) :: order
         type(fortarray_t) :: result_array
@@ -760,7 +775,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_transpose_order
     
-    function fortarray_stack_dims(this, dims) result(result_array)
+    module function fortarray_stack_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -768,7 +783,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_stack_dims
     
-    function fortarray_unstack_dims(this, dims) result(result_array)
+    module function fortarray_unstack_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -776,14 +791,14 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_unstack_dims
     
-    function fortarray_squeeze_all(this) result(result_array)
+    module function fortarray_squeeze_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
         write(error_unit, '(A)') "ERROR: squeeze_all not yet implemented"
         result_array = create_empty_like(this)
     end function fortarray_squeeze_all
     
-    function fortarray_squeeze_dims(this, dims) result(result_array)
+    module function fortarray_squeeze_dims(this, dims) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), dimension(:), intent(in) :: dims
         type(fortarray_t) :: result_array
@@ -791,7 +806,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_squeeze_dims
     
-    function fortarray_expand_dims_axis(this, axis) result(result_array)
+    module function fortarray_expand_dims_axis(this, axis) result(result_array)
         class(fortarray_t), intent(in) :: this
         integer, intent(in) :: axis
         type(fortarray_t) :: result_array
@@ -799,7 +814,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_expand_dims_axis
     
-    function fortarray_groupby_coord(this, coord_name) result(result_array)
+    module function fortarray_groupby_coord(this, coord_name) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: coord_name
         type(fortarray_t) :: result_array
@@ -807,7 +822,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_groupby_coord
     
-    function fortarray_groupby_bins(this, coord_name, bins) result(result_array)
+    module function fortarray_groupby_bins(this, coord_name, bins) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: coord_name
         integer, intent(in) :: bins
@@ -816,7 +831,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_groupby_bins
     
-    function fortarray_resample_freq(this, freq) result(result_array)
+    module function fortarray_resample_freq(this, freq) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: freq
         type(fortarray_t) :: result_array
@@ -824,7 +839,7 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_resample_freq
     
-    function fortarray_rolling_window(this, window) result(result_array)
+    module function fortarray_rolling_window(this, window) result(result_array)
         class(fortarray_t), intent(in) :: this
         integer, intent(in) :: window
         type(fortarray_t) :: result_array
@@ -1941,9 +1956,24 @@ contains
         type(fortarray_t) :: result_array
         integer :: i
         
-        ! Create copy of input array
-        result_array = create_empty_like(this)
+        ! Create copy of input array with proper initialization
         result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize data storage
         result_array%data%initialized = .true.
         result_array%data%dtype = this%data%dtype
         result_array%data%n_elements = this%n_elements
@@ -2007,16 +2037,35 @@ contains
         ! For now, just echo the functionality request
         write(error_unit, '(A)') "INFO: where_complex expression: ", expression
         
-        ! Create copy of input array as placeholder
-        result_array = create_empty_like(this)
+        ! Create copy of input array with proper initialization
+        result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize data storage
+        result_array%data%initialized = .true.
         result_array%data%dtype = this%data%dtype
         result_array%data%n_elements = this%n_elements
-        result_array%initialized = .true.
         
         ! Copy data
         select case(this%data%dtype)
         case(DTYPE_REAL64)
             if (allocated(this%data%values_r64)) then
+                if (.not. allocated(result_array%data%values_r64)) then
+                    allocate(result_array%data%values_r64(this%n_elements))
+                end if
                 result_array%data%values_r64(:) = this%data%values_r64(:)
             end if
         case default

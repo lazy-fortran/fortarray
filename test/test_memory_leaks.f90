@@ -55,7 +55,7 @@ contains
         
         ! Repeated allocation and deallocation
         do iter = 1, 1000
-            var = variable(data, name="test", dim_names=["index"])
+            var = new_array(data, name="test", dim_names=["index"])
             
             ! Check basic properties
             if (var%n_elements /= 1000) then
@@ -96,11 +96,11 @@ contains
         
         ! Repeated dataset operations
         do iter = 1, 100
-            ds = dataset()
+            ds = new_dataset()
             
-            var1 = variable(data1, name="var1", dim_names=["x"])
-            var2 = variable(data2, name="var2", dim_names=["x"])
-            var3 = variable(data3, name="var3", dim_names=["x"])
+            var1 = new_array(data1, name="var1", dim_names=["x"])
+            var2 = new_array(data2, name="var2", dim_names=["x"])
+            var3 = new_array(data3, name="var3", dim_names=["x"])
             
             call add_variable(ds, var1)
             call add_variable(ds, var2)
@@ -191,7 +191,7 @@ contains
         
         ! Repeated variable operations to test storage
         do iter = 1, 200
-            var = variable(test_data, name="storage_test", dim_names=["index"])
+            var = new_array(test_data, name="storage_test", dim_names=["index"])
             
             if (var%n_elements /= 200) then
                 test_passed = .false.
@@ -228,7 +228,7 @@ contains
         
         ! Repeated large operations
         do iter = 1, 10
-            large_var = variable(large_data, name="large", dim_names=["index"])
+            large_var = new_array(large_data, name="large", dim_names=["index"])
             
             ! Perform memory-intensive operations
             result = large_var * 2.0_real64
@@ -268,8 +268,8 @@ contains
             data2(i) = sin(real(i, real64) * 0.01_real64)
         end do
         
-        var1 = variable(data1, name="var1", dim_names=["index"])
-        var2 = variable(data2, name="var2", dim_names=["index"])
+        var1 = new_array(data1, name="var1", dim_names=["index"])
+        var2 = new_array(data2, name="var2", dim_names=["index"])
         
         ! Many repeated operations
         do iter = 1, 1000
@@ -316,8 +316,8 @@ contains
         do iter = 1, 10
             write(filename, '(A,I0,A)') "test_io_", iter, ".nc"
             
-            var = variable(data, name="io_test", dim_names=["index"])
-            ds = dataset()
+            var = new_array(data, name="io_test", dim_names=["index"])
+            ds = new_dataset()
             call add_variable(ds, var)
             
             ! Write
@@ -366,7 +366,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="arith_test", dim_names=["index"])
+        var = new_array(data, name="arith_test", dim_names=["index"])
         
         ! Chain arithmetic operations
         do iter = 1, 100
@@ -406,7 +406,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="agg_test", dim_names=["index"])
+        var = new_array(data, name="agg_test", dim_names=["index"])
         
         ! Repeated aggregations
         do iter = 1, 200

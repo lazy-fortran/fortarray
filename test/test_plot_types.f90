@@ -58,7 +58,7 @@ contains
             x_data(i) = real(i-1, real64) * 0.1_real64
             y_data(i) = sin(x_data(i)) + 0.1_real64 * cos(5.0_real64 * x_data(i))
         end do
-        var = variable(y_data, name="signal", dim_names=["x"])
+        var = new_array(y_data, name="signal", dim_names=["x"])
         
         ! Test basic line plot
         opts%linestyle = "-"
@@ -95,9 +95,9 @@ contains
             y3(i) = sin(x_data(i)) * cos(x_data(i))
         end do
         
-        vars(1) = variable(y1, name="sin", dim_names=["x"])
-        vars(2) = variable(y2, name="cos", dim_names=["x"])
-        vars(3) = variable(y3, name="sin*cos", dim_names=["x"])
+        vars(1) = new_array(y1, name="sin", dim_names=["x"])
+        vars(2) = new_array(y2, name="cos", dim_names=["x"])
+        vars(3) = new_array(y3, name="sin*cos", dim_names=["x"])
         
         ! Plot multiple lines
         opts%title = "Multiple Line Plot"
@@ -129,7 +129,7 @@ contains
         do i = 1, 20
             data(i) = real(i, real64)**2
         end do
-        var = variable(data, name="parabola", dim_names=["x"])
+        var = new_array(data, name="parabola", dim_names=["x"])
         
         ! Test different line styles
         opts%linestyle = "--"
@@ -180,10 +180,10 @@ contains
             colors(i) = sqrt(x_data(i)**2 + y_data(i)**2)
         end do
         
-        x_var = variable(x_data, name="x_random", dim_names=["points"])
-        y_var = variable(y_data, name="y_random", dim_names=["points"])
-        size_var = variable(sizes, name="sizes", dim_names=["points"])
-        color_var = variable(colors, name="colors", dim_names=["points"])
+        x_var = new_array(x_data, name="x_random", dim_names=["points"])
+        y_var = new_array(y_data, name="y_random", dim_names=["points"])
+        size_var = new_array(sizes, name="sizes", dim_names=["points"])
+        color_var = new_array(colors, name="colors", dim_names=["points"])
         
         ! Basic scatter plot
         call scatter_plot_advanced(x_var, y_var, opts)
@@ -222,7 +222,7 @@ contains
         do i = 1, 30
             data(i) = sin(real(i, real64) * 0.3_real64) * exp(-real(i, real64) * 0.05_real64)
         end do
-        var = variable(data, name="discrete_signal", dim_names=["n"])
+        var = new_array(data, name="discrete_signal", dim_names=["n"])
         
         ! Stem plot
         opts%marker = "o"
@@ -250,7 +250,7 @@ contains
         
         ! Create bar data
         data = [15.0_real64, 25.0_real64, 35.0_real64, 20.0_real64, 30.0_real64]
-        values = variable(data, name="sales", dim_names=["category"])
+        values = new_array(data, name="sales", dim_names=["category"])
         
         ! Basic bar plot
         call bar_plot_advanced(values, opts)
@@ -287,7 +287,7 @@ contains
             call random_normal(data(i), mean, std)
         end do
         
-        var = variable(data, name="normal_dist", dim_names=["samples"])
+        var = new_array(data, name="normal_dist", dim_names=["samples"])
         
         ! Basic histogram
         opts%title = "Histogram of Normal Distribution"
@@ -327,7 +327,7 @@ contains
                            0.1_real64 * real(i + j, real64)
             end do
         end do
-        var = variable(data, name="wave_field", dim_names=["x", "y"])
+        var = new_array(data, name="wave_field", dim_names=["x", "y"])
         var%shape = [50, 50]
         
         ! Contour with specific levels
@@ -369,7 +369,7 @@ contains
                 data(idx) = exp(-(x**2 + y**2) / 2.0_real64)
             end do
         end do
-        var = variable(data, name="gaussian_2d", dim_names=["x", "y"])
+        var = new_array(data, name="gaussian_2d", dim_names=["x", "y"])
         var%shape = [100, 100]
         
         ! Filled contour
@@ -407,7 +407,7 @@ contains
                 data(idx) = sin(sqrt(x**2 + y**2)) / sqrt(x**2 + y**2 + 0.1_real64)
             end do
         end do
-        var = variable(data, name="sinc_function", dim_names=["x", "y"])
+        var = new_array(data, name="sinc_function", dim_names=["x", "y"])
         var%shape = [30, 30]
         
         ! Surface plot
@@ -445,7 +445,7 @@ contains
                 data(idx) = real(i + j, real64)
             end do
         end do
-        var = variable(data, name="plane", dim_names=["x", "y"])
+        var = new_array(data, name="plane", dim_names=["x", "y"])
         var%shape = [20, 20]
         
         ! Mesh plot
@@ -478,8 +478,8 @@ contains
                             3.0_real64 * sin(2.0_real64 * 3.14159_real64 * real(i, real64) / 7.0_real64)
         end do
         
-        time_var = variable(time, name="day_of_year", dim_names=["time"])
-        data_var = variable(temperature, name="temperature", dim_names=["time"])
+        time_var = new_array(time, name="day_of_year", dim_names=["time"])
+        data_var = new_array(temperature, name="temperature", dim_names=["time"])
         
         ! Time series plot
         opts%xlabel = "Day of Year"
@@ -517,10 +517,10 @@ contains
             y4(i) = exp(-x(i) * 0.1_real64)
         end do
         
-        vars(1) = variable(y1, name="sin", dim_names=["x"])
-        vars(2) = variable(y2, name="cos", dim_names=["x"])
-        vars(3) = variable(y3, name="tan", dim_names=["x"])
-        vars(4) = variable(y4, name="exp", dim_names=["x"])
+        vars(1) = new_array(y1, name="sin", dim_names=["x"])
+        vars(2) = new_array(y2, name="cos", dim_names=["x"])
+        vars(3) = new_array(y3, name="tan", dim_names=["x"])
+        vars(4) = new_array(y4, name="exp", dim_names=["x"])
         
         ! Create 2x2 subplot grid
         call subplot_grid(2, 2, vars, opts)
@@ -554,8 +554,8 @@ contains
             y2(i) = 100.0_real64 * exp(real(i, real64) * 0.02_real64)
         end do
         
-        var1 = variable(y1, name="sine", dim_names=["x"])
-        var2 = variable(y2, name="exponential", dim_names=["x"])
+        var1 = new_array(y1, name="sine", dim_names=["x"])
+        var2 = new_array(y2, name="exponential", dim_names=["x"])
         
         ! Twin axes plot
         opts1%color = "blue"

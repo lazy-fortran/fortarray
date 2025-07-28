@@ -56,7 +56,7 @@ contains
         do i = 1, 10000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="large_data", dim_names=["x"])
+        var = new_array(data, name="large_data", dim_names=["x"])
         
         ! Define chunk size
         chunk_info = define_chunks(var, chunk_size=1000)
@@ -104,7 +104,7 @@ contains
         do i = 1, 100
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Create chunk iterator
         iterator = create_chunk_iterator(var, chunk_size=25)
@@ -157,7 +157,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Define chunked operation (square each element)
         op = create_chunked_operation("square", chunk_size=100)
@@ -208,7 +208,7 @@ contains
         do i = 1, 10000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="large_data", dim_names=["x"])
+        var = new_array(data, name="large_data", dim_names=["x"])
         
         ! Configure out-of-core processing
         temp_file = "test_chunked_temp.nc"
@@ -257,7 +257,7 @@ contains
         do i = 1, 5000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test chunked sum
         result = sum_chunked(var, chunk_size=500)
@@ -308,8 +308,8 @@ contains
             data1(i) = real(i, real64)
             data2(i) = real(i * 2, real64)
         end do
-        var1 = variable(data1, name="var1", dim_names=["x"])
-        var2 = variable(data2, name="var2", dim_names=["x"])
+        var1 = new_array(data1, name="var1", dim_names=["x"])
+        var2 = new_array(data2, name="var2", dim_names=["x"])
         
         ! Test chunked addition
         result = add_chunked(var1, var2, chunk_size=100)
@@ -358,7 +358,7 @@ contains
         do i = 1, 97
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Process with chunk size that doesn't divide evenly
         result = multiply_chunked(var, 2.0_real64, chunk_size=10)
@@ -401,7 +401,7 @@ contains
                 data(i, j) = real(i + (j-1)*100, real64)
             end do
         end do
-        var = variable(data, name="test_2d", dim_names=["x", "y"])
+        var = new_array(data, name="test_2d", dim_names=["x", "y"])
         
         ! Define 2D chunks
         chunk_info = define_chunks(var, chunk_shape=[25, 25])
@@ -447,7 +447,7 @@ contains
         do i = 1, 10000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Configure adaptive chunking
         config = create_adaptive_config(min_size=100, max_size=2000, &
@@ -494,7 +494,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Create chunk cache
         cache = create_chunk_cache(max_chunks=4, chunk_size=250)
@@ -544,7 +544,7 @@ contains
         do i = 1, 4000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Configure parallel processing
         config = create_parallel_config(n_threads=4, chunk_size=1000)
@@ -595,7 +595,7 @@ contains
         do i = 1, 10000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Start memory monitoring
         monitor = create_memory_monitor()
@@ -640,7 +640,7 @@ contains
         do i = 1, 5000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Configure chunked I/O
         filename = "test_chunked_io.nc"
@@ -697,7 +697,7 @@ contains
         do i = 1, 100000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Time regular processing
         call cpu_time(start_time)
@@ -749,7 +749,7 @@ contains
         do i = 1, 100
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test invalid chunk size
         chunk_info = define_chunks(var, chunk_size=0, stat=stat)

@@ -44,7 +44,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test isnull
         null_mask = isnull(var)
@@ -83,7 +83,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Fill missing with constant
         result = fillna(var, 0.0_real64)
@@ -122,7 +122,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Drop missing values
         result = dropna(var)

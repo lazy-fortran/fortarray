@@ -89,11 +89,11 @@ contains
         end if
         
         ! Create variables (simplified)
-        temp_var = variable(temp_data, name="temperature", dim_names=["time"])
+        temp_var = new_array(temp_data, name="temperature", dim_names=["time"])
         temp_var%units = "degrees_C"
         temp_var%standard_name = "air_temperature"
         
-        precip_var = variable(precip_data, name="precipitation", dim_names=["time"])
+        precip_var = new_array(precip_data, name="precipitation", dim_names=["time"])
         precip_var%units = "mm/day"
         precip_var%standard_name = "precipitation_flux"
         
@@ -109,7 +109,7 @@ contains
         precip_var%has_coord(1) = .true.
         
         ! Create dataset
-        ds = dataset()
+        ds = new_dataset()
         call add_variable(ds, temp_var)
         call add_variable(ds, precip_var)
         
@@ -181,7 +181,7 @@ contains
             large_data(i) = sin(real(i, real64) * 0.01_real64) + 0.1_real64 * real(i, real64)
         end do
         
-        large_var = variable(large_data, name="large_data", dim_names=["index"])
+        large_var = new_array(large_data, name="large_data", dim_names=["index"])
         
         ! Test aggregations
         mean_result = mean(large_var)
@@ -230,7 +230,7 @@ contains
                         5.0_real64 * sin(2.0_real64 * 3.14159_real64 * real(i, real64) / 365.0_real64)  ! Annual cycle
         end do
         
-        ts_var = variable(ts_data, name="time_series", dim_names=["time"])
+        ts_var = new_array(ts_data, name="time_series", dim_names=["time"])
         
         ! Test seasonal operations
         seasonal_var = seasonal_mean(ts_var)
@@ -279,7 +279,7 @@ contains
             par_data(i) = real(i, real64)
         end do
         
-        par_var = variable(par_data, name="parallel_test", dim_names=["index"])
+        par_var = new_array(par_data, name="parallel_test", dim_names=["index"])
         
         ! Test parallel vs serial results
         original_threads = get_num_threads()
@@ -328,7 +328,7 @@ contains
         test_passed = .true.
         
         err_data = [(real(i, real64), i = 1, 10)]
-        err_var = variable(err_data, name="error_test", dim_names=["index"])
+        err_var = new_array(err_data, name="error_test", dim_names=["index"])
         
         ! Test out-of-bounds access
         if (get_item(err_var, 20) == get_item(err_var, 1)) then

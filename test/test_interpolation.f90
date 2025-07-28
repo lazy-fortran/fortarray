@@ -66,7 +66,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -128,7 +128,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -189,7 +189,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -243,7 +243,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -299,7 +299,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -337,7 +337,7 @@ contains
         
         ! Create 2x3 test data
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [2, 3]
         
         ! Interpolation points
@@ -373,7 +373,7 @@ contains
         
         ! Single point interpolation
         data = [42.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         interp_points = [1.0_real64]
         
@@ -414,7 +414,7 @@ contains
             interp_points(i) = real(i, real64) + 0.5_real64
         end do
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         result = interp1d(var, interp_points(1:100), method="linear")
         
