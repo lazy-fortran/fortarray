@@ -285,7 +285,7 @@ contains
         if (actual_start < 1 .or. actual_stop > this%shape(dim_idx) .or. &
             (step_val > 0 .and. actual_start > actual_stop) .or. &
             (step_val < 0 .and. actual_start < actual_stop)) then
-            write(error_unit, '(A,2I0,A,I0)') "ERROR: Index range [", start_idx, ":", stop_idx, &
+            write(error_unit, '(A,I0,A,I0,A,I0)') "ERROR: Index range [", start_idx, ":", stop_idx, &
                 "] invalid for dimension size ", this%shape(dim_idx)
             result_array = create_empty_like(this)
             return
