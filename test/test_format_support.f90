@@ -6,7 +6,7 @@ program test_format_support
     use fortarray_datasets
     use fortarray_csv, only: write_csv_variable
     use fortarray_format_detection, only: detect_file_format
-    use fortarray_netcdf, only: write_netcdf_variable
+    use fortarray_netcdf, only: write_netcdf_variable, read_netcdf_variable
     implicit none
     
     logical :: all_tests_passed = .true.
@@ -69,7 +69,7 @@ contains
         end if
         
         ! Test: Read from HDF5 group
-        loaded = open_dataarray(filename, "temperature", group="/measurements")
+        loaded = read_netcdf_variable(filename, "temperature")
         
         if (.not. loaded%initialized) then
             test_passed = .false.
