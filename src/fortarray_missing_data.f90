@@ -481,7 +481,8 @@ contains
                 
                 ! Find end of missing region
                 j = i
-                do while (j <= size(values) .and. is_missing(values(j)))
+                do while (j <= size(values))
+                    if (.not. is_missing(values(j))) exit
                     j = j + 1
                 end do
                 end_idx = j - 1

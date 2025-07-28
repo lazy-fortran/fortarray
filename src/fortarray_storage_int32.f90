@@ -31,7 +31,7 @@ contains
         if (present(initial_value)) init_val = initial_value
         
         storage%initialized = .true.
-        storage%dtype = 1  ! int32
+        storage%dtype = DTYPE_INT32  ! int32
         storage%n_elements = n_elements
         
         allocate(storage%values_i32(n_elements), stat=stat)
@@ -51,7 +51,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = -1
             return
         end if
@@ -92,7 +92,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = -1
             return
         end if
@@ -131,7 +131,7 @@ contains
         
         stat = 0
         
-        if (storage_in%dtype /= 1) then
+        if (storage_in%dtype /= DTYPE_INT32) then
             stat = -1
             return
         end if
@@ -156,7 +156,7 @@ contains
         step = 1
         if (present(stride)) step = stride
         
-        if (storage_in%dtype /= 1) then
+        if (storage_in%dtype /= DTYPE_INT32) then
             stat = -1
             return
         end if
@@ -193,7 +193,7 @@ contains
         start_i = 1
         if (present(start_idx)) start_i = max(1, start_idx)
         
-        if (storage%dtype /= 1) return
+        if (storage%dtype /= DTYPE_INT32) return
         
         do i = start_i, storage%n_elements
             if (storage%values_i32(i) == value) then
@@ -217,7 +217,7 @@ contains
         asc = .true.
         if (present(ascending)) asc = ascending
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = -1
             return
         end if
@@ -249,7 +249,7 @@ contains
         
         stat = 0
         
-        if (storage_in%dtype /= 1) then
+        if (storage_in%dtype /= DTYPE_INT32) then
             stat = -1
             return
         end if
@@ -303,7 +303,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 1 .or. storage%n_elements == 0) then
+        if (storage%dtype /= DTYPE_INT32 .or. storage%n_elements == 0) then
             stat = -1
             return
         end if

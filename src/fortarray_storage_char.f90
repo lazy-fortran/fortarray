@@ -35,7 +35,7 @@ contains
         if (present(initial_value)) init_val = initial_value
         
         storage%initialized = .true.
-        storage%dtype = 5  ! char
+        storage%dtype = DTYPE_CHAR  ! char
         storage%n_elements = n_elements
         
         allocate(character(len=char_length) :: storage%values_char(n_elements), stat=stat)
@@ -57,7 +57,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -99,7 +99,7 @@ contains
         
         stat = 0
         
-        if (storage_in%dtype /= 5) then
+        if (storage_in%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -120,7 +120,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -142,7 +142,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -173,7 +173,7 @@ contains
         if (present(start_idx)) start_i = max(1, start_idx)
         if (present(case_sensitive)) case_sens = case_sensitive
         
-        if (storage%dtype /= 5) return
+        if (storage%dtype /= DTYPE_CHAR) return
         
         if (case_sens) then
             do i = start_i, storage%n_elements
@@ -208,7 +208,7 @@ contains
         asc = .true.
         if (present(ascending)) asc = ascending
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -240,7 +240,7 @@ contains
         
         stat = 0
         
-        if (storage_in%dtype /= 5) then
+        if (storage_in%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -292,7 +292,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -311,7 +311,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
@@ -330,7 +330,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = -1
             return
         end if
