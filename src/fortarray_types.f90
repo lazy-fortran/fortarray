@@ -135,6 +135,7 @@ module fortarray_types
         procedure :: isel => fortarray_isel  ! Generic isel for both point and range
         procedure :: isel_point => fortarray_isel_point
         procedure :: isel_range => fortarray_isel_range
+        procedure :: isel_indices => fortarray_isel_indices
         
         ! Aggregation methods
         procedure :: mean => fortarray_mean_all
@@ -275,6 +276,13 @@ module fortarray_types
             integer, intent(in), optional :: step_idx
             type(fortarray_t) :: result_array
         end function fortarray_isel_range
+        
+        module function fortarray_isel_indices(this, dim_name, indices) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: dim_name
+            integer, dimension(:), intent(in) :: indices
+            type(fortarray_t) :: result_array
+        end function fortarray_isel_indices
         
         module function fortarray_mean_all(this) result(result_array)
             class(fortarray_t), intent(in) :: this

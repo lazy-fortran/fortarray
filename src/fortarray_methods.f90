@@ -210,7 +210,7 @@ contains
         integer, intent(in) :: index
         type(fortarray_t) :: result_array
         
-        integer :: dim_idx
+        integer :: dim_idx, actual_index
         
         ! Find dimension by name
         dim_idx = find_dimension_by_name(this, dim_name)
@@ -220,15 +220,22 @@ contains
             return
         end if
         
+        ! Handle negative indexing (Python-style)
+        if (index < 0) then
+            actual_index = this%shape(dim_idx) + index + 1  ! -1 maps to last element
+        else
+            actual_index = index
+        end if
+        
         ! Check bounds
-        if (index < 1 .or. index > this%shape(dim_idx)) then
+        if (actual_index < 1 .or. actual_index > this%shape(dim_idx)) then
             write(error_unit, '(A,I0,A,I0)') "ERROR: Index ", index, " out of bounds for dimension size ", this%shape(dim_idx)
             result_array = create_empty_like(this)
             return
         end if
         
         ! Perform index selection
-        result_array = slice_along_dimension(this, dim_idx, index)
+        result_array = slice_along_dimension(this, dim_idx, actual_index)
         
     end function fortarray_isel_point
     
@@ -240,7 +247,7 @@ contains
         integer, intent(in), optional :: step_idx
         type(fortarray_t) :: result_array
         
-        integer :: dim_idx, step_val
+        integer :: dim_idx, step_val, actual_start, actual_stop
         
         ! Set default step
         step_val = 1
@@ -254,8 +261,23 @@ contains
             return
         end if
         
+        ! Handle negative indexing
+        if (start_idx < 0) then
+            actual_start = this%shape(dim_idx) + start_idx + 1
+        else
+            actual_start = start_idx
+        end if
+        
+        if (stop_idx < 0) then
+            actual_stop = this%shape(dim_idx) + stop_idx + 1
+        else
+            actual_stop = stop_idx
+        end if
+        
         ! Check bounds
-        if (start_idx < 1 .or. stop_idx > this%shape(dim_idx) .or. start_idx > stop_idx) then
+        if (actual_start < 1 .or. actual_stop > this%shape(dim_idx) .or. &
+            (step_val > 0 .and. actual_start > actual_stop) .or. &
+            (step_val < 0 .and. actual_start < actual_stop)) then
             write(error_unit, '(A,2I0,A,I0)') "ERROR: Index range [", start_idx, ":", stop_idx, &
                 "] invalid for dimension size ", this%shape(dim_idx)
             result_array = create_empty_like(this)
@@ -263,7 +285,7 @@ contains
         end if
         
         ! Perform range selection
-        result_array = slice_range_along_dimension(this, dim_idx, start_idx, stop_idx, step_val)
+        result_array = slice_range_along_dimension(this, dim_idx, actual_start, actual_stop, step_val)
         
     end function fortarray_isel_range
     
@@ -274,9 +296,92 @@ contains
         integer, dimension(:), intent(in) :: indices
         type(fortarray_t) :: result_array
         
-        ! Not yet implemented - placeholder
-        write(error_unit, '(A)') "ERROR: isel_indices not yet implemented"
-        result_array = create_empty_like(this)
+        integer :: dim_idx, i, j, k, n_indices, n_before, n_after
+        integer :: idx, src_idx, dest_idx, actual_idx
+        integer, allocatable :: new_shape(:)
+        real(real64), allocatable :: values_r64(:), result_values(:)
+        character(len=:), allocatable :: var_name
+        
+        ! Find dimension by name
+        dim_idx = find_dimension_by_name(this, dim_name)
+        if (dim_idx == 0) then
+            write(error_unit, '(A,A,A)') "ERROR: Dimension '", trim(dim_name), "' not found"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        n_indices = size(indices)
+        if (n_indices == 0) then
+            write(error_unit, '(A)') "ERROR: Empty indices array"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Check all indices are valid (handle negative indices)
+        do i = 1, n_indices
+            if (indices(i) < 0) then
+                actual_idx = this%shape(dim_idx) + indices(i) + 1
+            else
+                actual_idx = indices(i)
+            end if
+            
+            if (actual_idx < 1 .or. actual_idx > this%shape(dim_idx)) then
+                write(error_unit, '(A,I0,A,I0)') "ERROR: Index ", indices(i), &
+                    " out of bounds for dimension size ", this%shape(dim_idx)
+                result_array = create_empty_like(this)
+                return
+            end if
+        end do
+        
+        ! Create new shape - same as original but with dim_idx replaced by n_indices
+        allocate(new_shape(this%n_dims))
+        new_shape = this%shape
+        new_shape(dim_idx) = n_indices
+        
+        ! Calculate elements before and after the indexed dimension
+        n_before = 1
+        do i = 1, dim_idx - 1
+            n_before = n_before * this%shape(i)
+        end do
+        
+        n_after = 1
+        do i = dim_idx + 1, this%n_dims
+            n_after = n_after * this%shape(i)
+        end do
+        
+        ! Extract values
+        call get_values_r64(this%data, values_r64)
+        allocate(result_values(product(new_shape)))
+        
+        ! Copy selected indices
+        dest_idx = 1
+        do k = 1, n_after
+            do j = 1, n_indices
+                ! Handle negative index
+                if (indices(j) < 0) then
+                    idx = this%shape(dim_idx) + indices(j) + 1
+                else
+                    idx = indices(j)
+                end if
+                
+                do i = 1, n_before
+                    src_idx = (k-1)*n_before*this%shape(dim_idx) + &
+                             (idx-1)*n_before + i
+                    result_values(dest_idx) = values_r64(src_idx)
+                    dest_idx = dest_idx + 1
+                end do
+            end do
+        end do
+        
+        ! Create result array
+        var_name = trim(this%name) // "_fancy"
+        result_array = create_fortarray_with_shape(result_values, new_shape, &
+                                                 this%dim_names, var_name)
+        
+        ! Copy and update coordinates
+        if (allocated(this%coords)) then
+            call copy_coords_with_fancy_indexing(this, result_array, dim_idx, indices)
+        end if
         
     end function fortarray_isel_indices
     
@@ -1432,6 +1537,82 @@ contains
         end do
         
     end subroutine copy_coords_with_slice
+    
+    !> Helper to copy coordinates with fancy indexing
+    subroutine copy_coords_with_fancy_indexing(src, dest, dim_idx, indices)
+        type(fortarray_t), intent(in) :: src
+        type(fortarray_t), intent(inout) :: dest
+        integer, intent(in) :: dim_idx
+        integer, dimension(:), intent(in) :: indices
+        integer :: i, j, k, idx
+        
+        if (.not. allocated(src%coords)) return
+        
+        allocate(dest%coords(dest%n_dims))
+        allocate(dest%has_coord(dest%n_dims))
+        
+        do i = 1, src%n_dims
+            if (i == dim_idx .and. src%has_coord(i)) then
+                ! Apply fancy indexing to the coordinate
+                dest%has_coord(i) = .true.
+                
+                select case(src%coords(i)%dtype)
+                case(DTYPE_REAL64)
+                    allocate(dest%coords(i)%values_r64(size(indices)))
+                    do j = 1, size(indices)
+                        if (indices(j) < 0) then
+                            idx = src%coords(i)%length + indices(j) + 1
+                        else
+                            idx = indices(j)
+                        end if
+                        dest%coords(i)%values_r64(j) = src%coords(i)%values_r64(idx)
+                    end do
+                case(DTYPE_REAL32)
+                    allocate(dest%coords(i)%values_r32(size(indices)))
+                    do j = 1, size(indices)
+                        if (indices(j) < 0) then
+                            idx = src%coords(i)%length + indices(j) + 1
+                        else
+                            idx = indices(j)
+                        end if
+                        dest%coords(i)%values_r32(j) = src%coords(i)%values_r32(idx)
+                    end do
+                case(DTYPE_INT64)
+                    allocate(dest%coords(i)%values_i64(size(indices)))
+                    do j = 1, size(indices)
+                        if (indices(j) < 0) then
+                            idx = src%coords(i)%length + indices(j) + 1
+                        else
+                            idx = indices(j)
+                        end if
+                        dest%coords(i)%values_i64(j) = src%coords(i)%values_i64(idx)
+                    end do
+                case(DTYPE_INT32)
+                    allocate(dest%coords(i)%values_i32(size(indices)))
+                    do j = 1, size(indices)
+                        if (indices(j) < 0) then
+                            idx = src%coords(i)%length + indices(j) + 1
+                        else
+                            idx = indices(j)
+                        end if
+                        dest%coords(i)%values_i32(j) = src%coords(i)%values_i32(idx)
+                    end do
+                end select
+                
+                dest%coords(i)%name = src%coords(i)%name
+                dest%coords(i)%dtype = src%coords(i)%dtype
+                dest%coords(i)%length = size(indices)
+                dest%coords(i)%initialized = .true.
+            else if (src%has_coord(i)) then
+                ! Copy coordinate as-is
+                dest%coords(i) = src%coords(i)
+                dest%has_coord(i) = .true.
+            else
+                dest%has_coord(i) = .false.
+            end if
+        end do
+        
+    end subroutine copy_coords_with_fancy_indexing
     
     !> Create fortarray with specific shape
     function create_fortarray_with_shape(values, shape, dim_names, name) result(var)
