@@ -1,7 +1,7 @@
 program test_enhanced_selection
     use fortarray
     use fortarray_types
-    use fortarray_constructors, only: new_array
+    use fortarray_constructors, only: new_array, create_coordinate
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     implicit none
     
@@ -27,9 +27,10 @@ program test_enhanced_selection
 contains
     
     subroutine test_nearest_neighbor_selection()
-        type(fortarray_t) :: arr, coord, result
+        type(fortarray_t) :: arr, result
+        type(coordinate_t) :: x_coord
         real(real64), dimension(10) :: data_1d, coord_values
-        integer :: i
+        integer :: i, stat
         
         print *, "Testing nearest-neighbor selection..."
         
@@ -40,12 +41,13 @@ contains
         end do
         
         arr = new_array(data_1d, dim_names=["x"])
-        coord = new_array(coord_values, dim_names=["x"])
         
-        ! Add coordinate to array
-        if (allocated(arr%coords)) deallocate(arr%coords)
-        allocate(arr%coords(1))
-        arr%coords(1) = coord%coords(1)
+        ! Create and set coordinate properly
+        call create_coordinate(x_coord, 10, "real64", stat)
+        x_coord%values_r64 = coord_values
+        x_coord%name = "x"
+        arr%coords(1) = x_coord
+        arr%has_coord(1) = .true.
         
         ! Test 1: Nearest neighbor to 7.0 (should find index 4 with coord value 8)
         print *, "  Test 1: sel_nearest for value 7.0"
@@ -92,15 +94,15 @@ contains
         end if
         
         call finalize_variable(arr)
-        call finalize_variable(coord)
         call finalize_variable(result)
         
     end subroutine test_nearest_neighbor_selection
     
     subroutine test_interpolation_selection()
-        type(fortarray_t) :: arr, coord, result
+        type(fortarray_t) :: arr, result
+        type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data_1d, coord_values
-        integer :: i
+        integer :: i, stat
         
         print *, "Testing interpolation-based selection..."
         
@@ -111,12 +113,13 @@ contains
         end do
         
         arr = new_array(data_1d, dim_names=["x"])
-        coord = new_array(coord_values, dim_names=["x"])
         
-        ! Add coordinate to array
-        if (allocated(arr%coords)) deallocate(arr%coords)
-        allocate(arr%coords(1))
-        arr%coords(1) = coord%coords(1)
+        ! Create and set coordinate properly
+        call create_coordinate(x_coord, 5, "real64", stat)
+        x_coord%values_r64 = coord_values
+        x_coord%name = "x"
+        arr%coords(1) = x_coord
+        arr%has_coord(1) = .true.
         
         ! Test 1: Linear interpolation between points
         print *, "  Test 1: sel_interp for value 2.5"
@@ -158,7 +161,6 @@ contains
         end if
         
         call finalize_variable(arr)
-        call finalize_variable(coord)
         call finalize_variable(result)
         
     end subroutine test_interpolation_selection
@@ -268,46 +270,44 @@ contains
     
     subroutine test_multi_coordinate_selection()
         type(fortarray_t) :: arr, result
-        real(real64), dimension(6) :: data_1d, x_coords, y_coords
+        type(coordinate_t) :: x_coord, y_coord
+        real(real64), dimension(3,2) :: data_2d
+        real(real64), dimension(3) :: x_coord_vals
+        real(real64), dimension(2) :: y_coord_vals
         character(len=10), dimension(2) :: coord_names
         real(real64), dimension(2) :: coord_values
-        integer :: i
+        integer :: i, j, stat
         
         print *, "Testing multi-coordinate selection..."
         
-        ! Create test data with multiple coordinates
-        do i = 1, 6
-            data_1d(i) = real(i * 100, real64)
-            x_coords(i) = real(i, real64)
-            y_coords(i) = real(i * 2, real64)
+        ! Create 2D test data
+        do i = 1, 3
+            do j = 1, 2
+                data_2d(i,j) = real(i*100 + j*10, real64)
+            end do
         end do
+        x_coord_vals = [1.0_real64, 2.0_real64, 3.0_real64]
+        y_coord_vals = [10.0_real64, 20.0_real64]
         
-        arr = new_array(data_1d, dim_names=["x", "y"])
+        arr = new_array(data_2d, dim_names=["x", "y"])
         
-        ! Set up coordinates
-        if (allocated(arr%coords)) deallocate(arr%coords)
-        allocate(arr%coords(2))
+        ! Set up coordinates properly
+        call create_coordinate(x_coord, 3, "real64", stat)
+        x_coord%values_r64 = x_coord_vals
+        x_coord%name = "x"
         
-        ! X coordinate
-        arr%coords(1)%initialized = .true.
-        arr%coords(1)%name = "x"
-        arr%coords(1)%length = 6
-        arr%coords(1)%dtype = DTYPE_REAL64
-        allocate(arr%coords(1)%values_r64(6))
-        arr%coords(1)%values_r64 = x_coords
+        call create_coordinate(y_coord, 2, "real64", stat)
+        y_coord%values_r64 = y_coord_vals
+        y_coord%name = "y"
         
-        ! Y coordinate
-        arr%coords(2)%initialized = .true.
-        arr%coords(2)%name = "y"
-        arr%coords(2)%length = 6
-        arr%coords(2)%dtype = DTYPE_REAL64
-        allocate(arr%coords(2)%values_r64(6))
-        arr%coords(2)%values_r64 = y_coords
+        arr%coords(1) = x_coord
+        arr%coords(2) = y_coord
+        arr%has_coord = .true.
         
         ! Test 1: Multi-coordinate exact selection
         print *, "  Test 1: sel_multi with exact method"
         coord_names = ["x", "y"]
-        coord_values = [3.0_real64, 6.0_real64]
+        coord_values = [2.0_real64, 20.0_real64]
         result = arr%sel_multi(coord_names, coord_values, "exact")
         
         if (result%initialized) then
@@ -323,9 +323,10 @@ contains
     end subroutine test_multi_coordinate_selection
     
     subroutine test_method_choice_selection()
-        type(fortarray_t) :: arr, coord, result
+        type(fortarray_t) :: arr, result
+        type(coordinate_t) :: x_coord
         real(real64), dimension(5) :: data_1d, coord_values
-        integer :: i
+        integer :: i, stat
         
         print *, "Testing generic method choice selection..."
         
@@ -336,12 +337,13 @@ contains
         end do
         
         arr = new_array(data_1d, dim_names=["x"])
-        coord = new_array(coord_values, dim_names=["x"])
         
-        ! Add coordinate to array
-        if (allocated(arr%coords)) deallocate(arr%coords)
-        allocate(arr%coords(1))
-        arr%coords(1) = coord%coords(1)
+        ! Create and set coordinate properly
+        call create_coordinate(x_coord, 5, "real64", stat)
+        x_coord%values_r64 = coord_values
+        x_coord%name = "x"
+        arr%coords(1) = x_coord
+        arr%has_coord(1) = .true.
         
         ! Test 1: Exact method
         print *, "  Test 1: sel_method with exact method"
@@ -377,16 +379,16 @@ contains
         end if
         
         call finalize_variable(arr)
-        call finalize_variable(coord)
         call finalize_variable(result)
         
     end subroutine test_method_choice_selection
     
     subroutine test_performance_enhanced_selection()
-        type(fortarray_t) :: arr, coord, result
+        type(fortarray_t) :: arr, result
+        type(coordinate_t) :: x_coord
         real(real64), dimension(1000) :: data_1d, coord_values
         real(real64) :: t_start, t_end
-        integer :: i
+        integer :: i, stat
         
         print *, "Testing performance of enhanced selection methods..."
         
@@ -397,12 +399,13 @@ contains
         end do
         
         arr = new_array(data_1d, dim_names=["x"])
-        coord = new_array(coord_values, dim_names=["x"])
         
-        ! Add coordinate to array
-        if (allocated(arr%coords)) deallocate(arr%coords)
-        allocate(arr%coords(1))
-        arr%coords(1) = coord%coords(1)
+        ! Create and set coordinate properly
+        call create_coordinate(x_coord, 1000, "real64", stat)
+        x_coord%values_r64 = coord_values
+        x_coord%name = "x"
+        arr%coords(1) = x_coord
+        arr%has_coord(1) = .true.
         
         ! Test 1: Performance test for nearest neighbor
         print *, "  Test 1: Performance test - nearest neighbor on 1000 elements"
@@ -418,7 +421,6 @@ contains
         end if
         
         call finalize_variable(arr)
-        call finalize_variable(coord)
         call finalize_variable(result)
         
     end subroutine test_performance_enhanced_selection

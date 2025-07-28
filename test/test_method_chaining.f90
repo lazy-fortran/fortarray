@@ -161,8 +161,8 @@ contains
         
         if (temp3%n_dims == 0) then
             print *, "    PASS: Complex chain resulted in scalar"
-            ! Expected mean of: 211, 221, 231, 311, 321, 331 = 242.5
-            if (abs(temp3%data%values_r64(1) - 242.5_real64) < 1e-10) then
+            ! Expected mean of: 211, 221, 231, 311, 321, 331 = 271.0
+            if (abs(temp3%data%values_r64(1) - 271.0_real64) < 1e-10) then
                 print *, "    PASS: Complex chain value correct"
             else
                 print *, "    FAIL: Complex chain value incorrect:", temp3%data%values_r64(1)
