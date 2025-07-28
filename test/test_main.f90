@@ -16,7 +16,7 @@ program test_main
     ! Run each test program and collect results
     
     ! Test 1: Basic type tests
-    test_name = "test_dataframe_type"
+    test_name = "test_variable_type"
     call run_test(test_name, status)
     call update_stats(test_name, status, total_tests, total_passed)
     

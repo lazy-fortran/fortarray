@@ -36,14 +36,14 @@ contains
         ! Test creation for each type
         call create_storage(storage, 100, "int32", stat)
         if (stat /= 0) test_passed = .false.
-        if (storage%dtype /= 1) test_passed = .false.
+        if (storage%dtype /= DTYPE_INT32) test_passed = .false.
         if (storage%n_elements /= 100) test_passed = .false.
         if (.not. allocated(storage%values_i32)) test_passed = .false.
         call finalize_storage(storage)
         
         call create_storage(storage, 50, "real64", stat)
         if (stat /= 0) test_passed = .false.
-        if (storage%dtype /= 4) test_passed = .false.
+        if (storage%dtype /= DTYPE_REAL64) test_passed = .false.
         if (.not. allocated(storage%values_r64)) test_passed = .false.
         call finalize_storage(storage)
         
