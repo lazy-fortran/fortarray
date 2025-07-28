@@ -32,7 +32,7 @@ contains
         if (present(initial_value)) init_val = initial_value
         
         storage%initialized = .true.
-        storage%dtype = 4  ! real64
+        storage%dtype = DTYPE_REAL64  ! real64
         storage%n_elements = n_elements
         
         allocate(storage%values_r64(n_elements), stat=stat)
@@ -52,7 +52,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = -1
             return
         end if
@@ -95,7 +95,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = -1
             return
         end if
@@ -176,7 +176,7 @@ contains
         
         stat = 0
         
-        if (storage_in%dtype /= 4) then
+        if (storage_in%dtype /= DTYPE_REAL64) then
             stat = -1
             return
         end if
@@ -201,7 +201,7 @@ contains
         step = 1
         if (present(stride)) step = stride
         
-        if (storage_in%dtype /= 4) then
+        if (storage_in%dtype /= DTYPE_REAL64) then
             stat = -1
             return
         end if
@@ -242,7 +242,7 @@ contains
         if (present(start_idx)) start_i = max(1, start_idx)
         if (present(tolerance)) tol = tolerance
         
-        if (storage%dtype /= 4) return
+        if (storage%dtype /= DTYPE_REAL64) return
         
         do i = start_i, storage%n_elements
             if (abs(storage%values_r64(i) - value) <= tol) then
@@ -264,7 +264,7 @@ contains
         asc = .true.
         if (present(ascending)) asc = ascending
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = -1
             return
         end if
@@ -337,7 +337,7 @@ contains
         tol = epsilon(1.0_real64)
         if (present(tolerance)) tol = tolerance
         
-        if (storage_in%dtype /= 4) then
+        if (storage_in%dtype /= DTYPE_REAL64) then
             stat = -1
             return
         end if
@@ -389,7 +389,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 4 .or. storage%n_elements == 0) then
+        if (storage%dtype /= DTYPE_REAL64 .or. storage%n_elements == 0) then
             stat = -1
             return
         end if
@@ -419,7 +419,7 @@ contains
         
         stat = 0
         
-        if (storage%dtype /= 4 .or. storage%n_elements == 0) then
+        if (storage%dtype /= DTYPE_REAL64 .or. storage%n_elements == 0) then
             stat = -1
             return
         end if
