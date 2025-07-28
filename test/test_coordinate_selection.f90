@@ -61,9 +61,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -110,9 +108,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -160,9 +156,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -228,9 +222,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -296,9 +288,7 @@ contains
         y_coord%name = "y"
         y_coord%values_r64 = y_vals
         var = new_array(data, name="test_2d", dim_names=["x", "y"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(2), var%has_coord(2))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%coords(2) = y_coord
         var%has_coord(1) = .true.
@@ -409,9 +399,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -533,9 +521,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -608,9 +594,7 @@ contains
         z_coord%values_r64 = z_vals
         
         var = new_array(data, name="large_3d", dim_names=["x", "y", "z"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(3), var%has_coord(3))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%coords(2) = y_coord
         var%coords(3) = z_coord
@@ -666,9 +650,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -716,9 +698,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -763,9 +743,7 @@ contains
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         
@@ -843,9 +821,7 @@ contains
         y_coord%name = "y"
         y_coord%values_r64 = y_vals
         var = new_array(data, name="test_2d", dim_names=["x", "y"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(2), var%has_coord(2))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%coords(2) = y_coord
         var%has_coord(1) = .true.
@@ -860,7 +836,7 @@ contains
         end if
         
         ! Select with drop=.false.
-        result = var%sel_point("x", 2.0_real64)
+        result = var%sel_point("x", 2.0_real64, drop=.false.)
         
         if (result%n_dims /= 2 .or. result%shape(1) /= 1) then
             test_passed = .false.

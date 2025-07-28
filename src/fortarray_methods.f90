@@ -43,19 +43,23 @@ contains
     end function fortarray_sel
     
     !> Select by coordinate name and real64 value
-    module function fortarray_sel_point_r64(this, coord_name, value, method) result(result_array)
+    module function fortarray_sel_point_r64(this, coord_name, value, method, drop) result(result_array)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: coord_name
         real(real64), intent(in) :: value
         character(len=*), intent(in), optional :: method
+        logical, intent(in), optional :: drop
         type(fortarray_t) :: result_array
         
         character(len=20) :: sel_method
         integer :: coord_idx, value_idx
+        logical :: do_drop
         
-        ! Set default method
+        ! Set default method and drop behavior
         sel_method = METHOD_EXACT
         if (present(method)) sel_method = method
+        do_drop = .true.  ! Default: drop dimensions of size 1
+        if (present(drop)) do_drop = drop
         
         ! Find coordinate by name
         coord_idx = find_coordinate_by_name(this, coord_name)
@@ -65,8 +69,8 @@ contains
             return
         end if
         
-        ! Find value index
-        value_idx = find_coord_index(this%coords(coord_idx), value, sel_method, 0.0_real64)
+        ! Find value index (use reasonable tolerance for coordinate matching)
+        value_idx = find_coord_index(this%coords(coord_idx), value, sel_method, 0.15_real64)
         if (value_idx == 0) then
             write(error_unit, '(A,F0.6,A,A)') "ERROR: Value ", value, " not found in coordinate ", trim(coord_name)
             result_array = create_empty_like(this)
@@ -74,7 +78,13 @@ contains
         end if
         
         ! Perform selection using existing slice functionality
-        result_array = slice_along_dimension(this, coord_idx, value_idx)
+        if (do_drop) then
+            ! Default behavior: drop the selected dimension
+            result_array = slice_along_dimension(this, coord_idx, value_idx)
+        else
+            ! Keep dimension but make it size 1
+            result_array = slice_range_along_dimension(this, coord_idx, value_idx, value_idx, 1)
+        end if
         
     end function fortarray_sel_point_r64
     
@@ -922,14 +932,36 @@ contains
             end do
             
         case(METHOD_NEAREST)
-            ! Find nearest neighbor
+            ! Find nearest neighbor (prefer later index on ties)
             idx = 1
             min_dist = abs(coord_values(1) - value)
             do i = 2, n
                 dist = abs(coord_values(i) - value)
-                if (dist < min_dist) then
+                if (dist <= min_dist) then
                     min_dist = dist
                     idx = i
+                end if
+            end do
+            
+        case("ffill", "forward")
+            ! Forward fill: use last valid coordinate <= target
+            idx = 1
+            do i = 1, n
+                if (coord_values(i) <= value) then
+                    idx = i
+                else
+                    exit
+                end if
+            end do
+            
+        case("bfill", "backward")  
+            ! Backward fill: use next valid coordinate >= target
+            idx = n
+            do i = n, 1, -1
+                if (coord_values(i) >= value) then
+                    idx = i
+                else
+                    exit
                 end if
             end do
             
@@ -1107,7 +1139,7 @@ contains
         integer, intent(in) :: dim_idx, value_idx
         type(fortarray_t) :: result
         
-        integer :: i, j, new_idx
+        integer :: i, j, new_idx, src_idx
         integer, dimension(:), allocatable :: new_shape, new_indices
         integer :: n_elements_before, n_elements_after, slice_size
         real(real64), dimension(:), allocatable :: values_r64, result_values
@@ -1130,6 +1162,7 @@ contains
         if (var%n_dims == 1) then
             call get_values_r64(var%data, values_r64)
             result = create_scalar_fortarray(values_r64(value_idx), var%name, var%units)
+            result%long_name = var%long_name  ! Also copy long_name for scalar case
             return
         end if
         
@@ -1160,12 +1193,18 @@ contains
         call get_values_r64(var%data, values_r64)
         allocate(result_values(slice_size))
         
-        ! Copy the slice
+        ! Copy the slice with correct indexing
         new_idx = 1
         do i = 1, n_elements_before
             do j = 1, n_elements_after
-                result_values(new_idx) = values_r64((i-1)*var%shape(dim_idx)*n_elements_after + &
-                                                   (value_idx-1)*n_elements_after + j)
+                ! Calculate source index in column-major order
+                ! For dimension dim_idx, fix index to value_idx
+                ! Before dimensions: stride of 1 each
+                ! At dimension dim_idx: fixed at value_idx  
+                ! After dimensions: stride of product(shape[1:dim_idx])
+                src_idx = i + (value_idx - 1) * n_elements_before + &
+                         (j - 1) * n_elements_before * var%shape(dim_idx)
+                result_values(new_idx) = values_r64(src_idx)
                 new_idx = new_idx + 1
             end do
         end do
@@ -1180,6 +1219,10 @@ contains
         if (allocated(var%coords)) then
             call copy_coords_except_dim(var, result, dim_idx)
         end if
+        
+        ! Copy attributes from original variable
+        result%units = var%units
+        result%long_name = var%long_name
         
     end function slice_along_dimension
     

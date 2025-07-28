@@ -195,14 +195,36 @@ contains
             end do
             
         case(METHOD_NEAREST)
-            ! Find nearest neighbor
+            ! Find nearest neighbor (prefer later index on ties)
             idx = 1
             min_dist = abs(coord_values(1) - value)
             do i = 2, n
                 dist = abs(coord_values(i) - value)
-                if (dist < min_dist) then
+                if (dist <= min_dist) then
                     min_dist = dist
                     idx = i
+                end if
+            end do
+            
+        case("ffill", "forward")
+            ! Forward fill: use last valid coordinate <= target
+            idx = 1
+            do i = 1, n
+                if (coord_values(i) <= value) then
+                    idx = i
+                else
+                    exit
+                end if
+            end do
+            
+        case("bfill", "backward")  
+            ! Backward fill: use next valid coordinate >= target
+            idx = n
+            do i = n, 1, -1
+                if (coord_values(i) >= value) then
+                    idx = i
+                else
+                    exit
                 end if
             end do
             
