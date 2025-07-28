@@ -200,6 +200,11 @@ module fortarray_types
         procedure :: to_numpy => fortarray_to_numpy_like
         procedure :: to_pandas => fortarray_to_pandas_like
         
+        ! Table-style operations for interoperability
+        procedure :: head => fortarray_head
+        procedure :: tail => fortarray_tail
+        procedure :: describe => fortarray_describe
+        
         ! Enhanced selection methods (Sprint 7)
         procedure :: sel_nearest => fortarray_sel_nearest_r64
         procedure :: sel_interp => fortarray_sel_interp_linear
@@ -636,10 +641,32 @@ module fortarray_types
             type(fortarray_t) :: result_array
         end function fortarray_to_numpy_like
         
-        module function fortarray_to_pandas_like(this) result(result_array)
+        module function fortarray_to_pandas_like(this, index_from_coords, flatten_multiindex, &
+                                           preserve_metadata, datetime_index) result(result_array)
             class(fortarray_t), intent(in) :: this
+            logical, intent(in), optional :: index_from_coords
+            logical, intent(in), optional :: flatten_multiindex
+            logical, intent(in), optional :: preserve_metadata
+            logical, intent(in), optional :: datetime_index
             type(fortarray_t) :: result_array
         end function fortarray_to_pandas_like
+        
+        module function fortarray_head(this, n) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: n
+            type(fortarray_t) :: result_array
+        end function fortarray_head
+        
+        module function fortarray_tail(this, n) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: n
+            type(fortarray_t) :: result_array
+        end function fortarray_tail
+        
+        module function fortarray_describe(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_describe
         
         ! Enhanced selection methods (Sprint 7)
         module function fortarray_sel_nearest_r64(this, coord_name, value, method) result(result_array)
