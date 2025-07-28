@@ -2,12 +2,13 @@ submodule (fortarray_types) fortarray_methods
     !! Implementation of all xarray-compatible methods for fortarray_t
     !! This submodule contains ALL method implementations migrated from external functions
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
-    use ieee_arithmetic, only: ieee_value, ieee_quiet_nan
+    use ieee_arithmetic, only: ieee_value, ieee_quiet_nan, ieee_is_nan
     use fortarray_storage
     use fortarray_memory
     use fortarray_slicing
     use fortarray_indexing
     use fortarray_constructors, only: new_array, create_coordinate
+    use fortarray_missing_data, only: dropna
     ! DTYPE constants are in fortarray_types, available via parent module
     implicit none
     
@@ -868,13 +869,6 @@ contains
         end select
         
     end function fortarray_ffill
-    
-    module function fortarray_bfill(this) result(result_array)
-        class(fortarray_t), intent(in) :: this
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: bfill not yet implemented"
-        result_array = create_empty_like(this)
-    end function fortarray_bfill
     
     module function fortarray_transpose_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -3654,6 +3648,310 @@ contains
         end do
         
     end function fortarray_unstack
+    
+    ! ======= MISSING DATA ADVANCED HANDLING (SPRINT 11) =======
+    
+    !> Interpolate missing values with various methods
+    module function fortarray_interpolate_na(this, method, order, limit) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in), optional :: method
+        integer, intent(in), optional :: order
+        integer, intent(in), optional :: limit
+        type(fortarray_t) :: result_array
+        character(len=20) :: interp_method
+        integer :: interp_order, max_gap
+        real(real64), allocatable :: values(:)
+        integer :: i, j, k, start_idx, end_idx, n_missing
+        real(real64) :: slope, val
+        
+        ! Set defaults
+        interp_method = "linear"
+        if (present(method)) interp_method = method
+        interp_order = 1
+        if (present(order)) interp_order = order
+        max_gap = this%n_elements
+        if (present(limit)) max_gap = limit
+        
+        ! Create result as copy
+        result_array = this
+        
+        ! Only support real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: interpolate_na currently only supports real64 data"
+            return
+        end if
+        
+        ! Get values
+        allocate(values(this%n_elements))
+        values = this%data%values_r64
+        
+        select case(trim(interp_method))
+        case("linear")
+            ! Linear interpolation
+            i = 1
+            do while (i <= this%n_elements)
+                if (ieee_is_nan(values(i))) then
+                    ! Find start of NaN region
+                    start_idx = i
+                    
+                    ! Find end of NaN region
+                    j = i
+                    do while (j <= this%n_elements)
+                        if (.not. ieee_is_nan(values(j))) exit
+                        j = j + 1
+                    end do
+                    end_idx = j - 1
+                    n_missing = end_idx - start_idx + 1
+                    
+                    ! Interpolate if we have valid values on both sides and gap is within limit
+                    if (start_idx > 1 .and. j <= this%n_elements .and. n_missing <= max_gap) then
+                        slope = (values(j) - values(start_idx - 1)) / real(n_missing + 1, real64)
+                        
+                        do k = start_idx, end_idx
+                            values(k) = values(start_idx - 1) + slope * real(k - start_idx + 1, real64)
+                        end do
+                    end if
+                    
+                    i = end_idx + 1
+                else
+                    i = i + 1
+                end if
+            end do
+            
+        case("polynomial")
+            write(error_unit, '(A)') "WARNING: polynomial interpolation not yet implemented, fallback to linear"
+            ! Same as linear for now
+            i = 1
+            do while (i <= this%n_elements)
+                if (ieee_is_nan(values(i))) then
+                    start_idx = i
+                    j = i
+                    do while (j <= this%n_elements)
+                        if (.not. ieee_is_nan(values(j))) exit
+                        j = j + 1
+                    end do
+                    end_idx = j - 1
+                    n_missing = end_idx - start_idx + 1
+                    
+                    if (start_idx > 1 .and. j <= this%n_elements .and. n_missing <= max_gap) then
+                        slope = (values(j) - values(start_idx - 1)) / real(n_missing + 1, real64)
+                        do k = start_idx, end_idx
+                            values(k) = values(start_idx - 1) + slope * real(k - start_idx + 1, real64)
+                        end do
+                    end if
+                    i = end_idx + 1
+                else
+                    i = i + 1
+                end if
+            end do
+            
+        case("spline")
+            write(error_unit, '(A)') "WARNING: spline interpolation not yet implemented, fallback to linear"
+            ! Same as linear for now
+            i = 1
+            do while (i <= this%n_elements)
+                if (ieee_is_nan(values(i))) then
+                    start_idx = i
+                    j = i
+                    do while (j <= this%n_elements)
+                        if (.not. ieee_is_nan(values(j))) exit
+                        j = j + 1
+                    end do
+                    end_idx = j - 1
+                    n_missing = end_idx - start_idx + 1
+                    
+                    if (start_idx > 1 .and. j <= this%n_elements .and. n_missing <= max_gap) then
+                        slope = (values(j) - values(start_idx - 1)) / real(n_missing + 1, real64)
+                        do k = start_idx, end_idx
+                            values(k) = values(start_idx - 1) + slope * real(k - start_idx + 1, real64)
+                        end do
+                    end if
+                    i = end_idx + 1
+                else
+                    i = i + 1
+                end if
+            end do
+            
+        case("nearest")
+            ! Nearest neighbor interpolation
+            do i = 1, this%n_elements
+                if (ieee_is_nan(values(i))) then
+                    ! Find nearest non-NaN value
+                    if (i > 1 .and. .not. ieee_is_nan(values(i-1))) then
+                        values(i) = values(i-1)
+                    else if (i < this%n_elements .and. .not. ieee_is_nan(values(i+1))) then
+                        values(i) = values(i+1)
+                    end if
+                end if
+            end do
+            
+        case default
+            write(error_unit, '(A,A)') "ERROR: Unknown interpolation method: ", trim(interp_method)
+            return
+        end select
+        
+        ! Update result
+        result_array%data%values_r64 = values
+        
+    end function fortarray_interpolate_na
+    
+    !> Backward fill missing values
+    module function fortarray_bfill(this, limit) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: limit
+        type(fortarray_t) :: result_array
+        integer :: max_fill, fill_count
+        real(real64), allocatable :: values(:)
+        integer :: i
+        
+        ! Set limit
+        max_fill = this%n_elements
+        if (present(limit)) max_fill = limit
+        
+        ! Create result as copy
+        result_array = this
+        
+        ! Only support real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: bfill currently only supports real64 data"
+            return
+        end if
+        
+        ! Get values
+        allocate(values(this%n_elements))
+        values = this%data%values_r64
+        
+        ! Backward fill
+        fill_count = 0
+        do i = this%n_elements - 1, 1, -1
+            if (ieee_is_nan(values(i))) then
+                if (i < this%n_elements .and. .not. ieee_is_nan(values(i+1))) then
+                    if (fill_count < max_fill) then
+                        values(i) = values(i+1)
+                        fill_count = fill_count + 1
+                    end if
+                end if
+            else
+                fill_count = 0
+            end if
+        end do
+        
+        ! Update result
+        result_array%data%values_r64 = values
+        
+    end function fortarray_bfill
+    
+    !> Advanced dropna with axis and threshold support
+    module function fortarray_dropna_advanced(this, axis, how, thresh, subset) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: axis
+        character(len=*), intent(in), optional :: how
+        integer, intent(in), optional :: thresh
+        character(len=*), dimension(:), intent(in), optional :: subset
+        type(fortarray_t) :: result_array
+        character(len=10) :: drop_how
+        integer :: drop_axis, min_count
+        logical, allocatable :: row_mask(:), col_mask(:)
+        real(real64), allocatable :: values_2d(:,:), result_values(:,:)
+        integer :: i, j, n_valid, new_rows, new_cols
+        
+        ! Set defaults
+        drop_how = "any"
+        if (present(how)) drop_how = how
+        drop_axis = 0  ! Drop along all axes by default
+        if (present(axis)) drop_axis = axis
+        min_count = 0
+        if (present(thresh)) min_count = thresh
+        
+        ! For 1D arrays, use simple dropna
+        if (this%n_dims == 1) then
+            result_array = dropna(this)
+            return
+        end if
+        
+        ! Only support 2D real64 for now
+        if (this%n_dims /= 2 .or. this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: Advanced dropna currently only supports 2D real64 arrays"
+            result_array = this
+            return
+        end if
+        
+        ! Reshape to 2D
+        allocate(values_2d(this%shape(1), this%shape(2)))
+        values_2d = reshape(this%data%values_r64, [this%shape(1), this%shape(2)])
+        
+        ! Create masks
+        allocate(row_mask(this%shape(1)), col_mask(this%shape(2)))
+        row_mask = .true.
+        col_mask = .true.
+        
+        if (drop_axis == 1) then
+            ! Drop rows with NaN
+            do i = 1, this%shape(1)
+                n_valid = 0
+                do j = 1, this%shape(2)
+                    if (.not. ieee_is_nan(values_2d(i,j))) n_valid = n_valid + 1
+                end do
+                
+                if (min_count > 0) then
+                    row_mask(i) = (n_valid >= min_count)
+                else
+                    select case(drop_how)
+                    case("any")
+                        row_mask(i) = (n_valid == this%shape(2))
+                    case("all")
+                        row_mask(i) = (n_valid > 0)
+                    end select
+                end if
+            end do
+            
+        else if (drop_axis == 2) then
+            ! Drop columns with NaN
+            do j = 1, this%shape(2)
+                n_valid = 0
+                do i = 1, this%shape(1)
+                    if (.not. ieee_is_nan(values_2d(i,j))) n_valid = n_valid + 1
+                end do
+                
+                if (min_count > 0) then
+                    col_mask(j) = (n_valid >= min_count)
+                else
+                    select case(drop_how)
+                    case("any")
+                        col_mask(j) = (n_valid == this%shape(1))
+                    case("all")
+                        col_mask(j) = (n_valid > 0)
+                    end select
+                end if
+            end do
+        end if
+        
+        ! Count remaining rows/cols
+        new_rows = count(row_mask)
+        new_cols = count(col_mask)
+        
+        ! Create result
+        allocate(result_values(new_rows, new_cols))
+        
+        ! Copy non-dropped values
+        new_rows = 0
+        do i = 1, this%shape(1)
+            if (row_mask(i)) then
+                new_rows = new_rows + 1
+                new_cols = 0
+                do j = 1, this%shape(2)
+                    if (col_mask(j)) then
+                        new_cols = new_cols + 1
+                        result_values(new_rows, new_cols) = values_2d(i,j)
+                    end if
+                end do
+            end if
+        end do
+        
+        ! Create result array
+        result_array = new_array(result_values, name=trim(this%name) // "_dropna")
+        
+    end function fortarray_dropna_advanced
     
     ! ======= HELPER FUNCTIONS FOR DIMENSION MANIPULATION =======
     
