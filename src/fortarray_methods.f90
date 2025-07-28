@@ -926,12 +926,98 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_expand_dims_axis
     
-    module function fortarray_groupby_coord(this, coord_name) result(result_array)
+    module function fortarray_groupby_coord(this, coord_name) result(gb)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: coord_name
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: groupby_coord not yet implemented"
-        result_array = create_empty_like(this)
+        type(groupby_t) :: gb
+        
+        character(len=:), allocatable :: coord_base, time_component
+        integer :: dot_pos, coord_idx, i, component_value
+        real(real64), allocatable :: coord_values(:)
+        integer, allocatable :: component_values(:)
+        type(fortarray_t) :: coord_var
+        
+        ! Parse coordinate name (e.g., "time.month", "time.year", "time.season")
+        dot_pos = index(coord_name, '.')
+        if (dot_pos == 0) then
+            write(error_unit, '(A)') "ERROR: Time-based groupby requires format 'coord.component'"
+            gb%initialized = .false.
+            return
+        end if
+        
+        coord_base = coord_name(1:dot_pos-1)
+        time_component = coord_name(dot_pos+1:len(coord_name))
+        
+        ! Find the coordinate
+        coord_idx = find_coordinate_by_name(this, coord_base)
+        if (coord_idx == 0) then
+            write(error_unit, '(A,A)') "ERROR: Coordinate not found: ", coord_base
+            gb%initialized = .false.
+            return
+        end if
+        
+        ! Extract coordinate values
+        if (.not. allocated(this%coords(coord_idx)%values_r64)) then
+            write(error_unit, '(A)') "ERROR: Time coordinates must be real64"
+            gb%initialized = .false.
+            return
+        end if
+        
+        coord_values = this%coords(coord_idx)%values_r64
+        allocate(component_values(size(coord_values)))
+        
+        ! Extract time components based on requested component
+        select case(trim(time_component))
+        case('month')
+            ! Extract month from time values (assuming Julian day or similar)
+            do i = 1, size(coord_values)
+                component_value = extract_month(coord_values(i))
+                component_values(i) = component_value
+            end do
+            
+        case('year')
+            ! Extract year from time values
+            do i = 1, size(coord_values)
+                component_value = extract_year(coord_values(i))
+                component_values(i) = component_value
+            end do
+            
+        case('season')
+            ! Extract season from time values (1=Spring, 2=Summer, 3=Fall, 4=Winter)
+            do i = 1, size(coord_values)
+                component_value = extract_season(coord_values(i))
+                component_values(i) = component_value
+            end do
+            
+        case('dayofyear')
+            ! Extract day of year (1-366)
+            do i = 1, size(coord_values)
+                component_value = extract_dayofyear(coord_values(i))
+                component_values(i) = component_value
+            end do
+            
+        case('weekday')
+            ! Extract weekday (1=Sunday, 7=Saturday)
+            do i = 1, size(coord_values)
+                component_value = extract_weekday(coord_values(i))
+                component_values(i) = component_value
+            end do
+            
+        case default
+            write(error_unit, '(A,A)') "ERROR: Unsupported time component: ", trim(time_component)
+            gb%initialized = .false.
+            return
+        end select
+        
+        ! Create a groupby array from the extracted components
+        coord_var = new_array(component_values, name=coord_name, &
+                             dim_names=[coord_base])
+        
+        ! Use existing groupby implementation
+        gb = this%groupby(coord_base, coord_var)
+        
+        call finalize_variable(coord_var)
+        
     end function fortarray_groupby_coord
     
     module function fortarray_groupby_bins(this, coord_name, bins) result(result_array)
@@ -4365,7 +4451,10 @@ contains
         integer :: i, j, dim_idx, group_count, current_size
         character(len=MAX_NAME_LEN), allocatable :: unique_names(:)
         integer, allocatable :: group_starts(:), group_ends(:)
+        integer, allocatable :: group_member_lists(:,:)  ! Store all indices for each group
+        integer, allocatable :: group_member_counts(:)   ! Count of members in each group
         logical :: found_dim, found_group
+        
         
         ! Initialize groupby object
         gb%initialized = .false.
@@ -4412,12 +4501,10 @@ contains
         
         ! Count unique groups and create group information
         allocate(unique_names(groups%n_elements))
-        allocate(group_starts(groups%n_elements))
-        allocate(group_ends(groups%n_elements))
         
         group_count = 0
         
-        ! Handle different group data types
+        ! First pass: identify unique group names
         select case(groups%data%dtype)
         case(DTYPE_CHAR)
             ! Character/string groups
@@ -4426,7 +4513,6 @@ contains
                 do j = 1, group_count
                     if (trim(unique_names(j)) == trim(groups%data%values_char(i))) then
                         found_group = .true.
-                        group_ends(j) = i
                         exit
                     end if
                 end do
@@ -4434,8 +4520,6 @@ contains
                 if (.not. found_group) then
                     group_count = group_count + 1
                     unique_names(group_count) = trim(groups%data%values_char(i))
-                    group_starts(group_count) = i
-                    group_ends(group_count) = i
                 end if
             end do
             
@@ -4450,7 +4534,6 @@ contains
                 do j = 1, group_count
                     if (trim(unique_names(j)) == trim(int_str)) then
                         found_group = .true.
-                        group_ends(j) = i
                         exit
                     end if
                 end do
@@ -4458,8 +4541,6 @@ contains
                 if (.not. found_group) then
                     group_count = group_count + 1
                     unique_names(group_count) = trim(int_str)
-                    group_starts(group_count) = i
-                    group_ends(group_count) = i
                 end if
                 end block
             end do
@@ -4475,7 +4556,6 @@ contains
                 do j = 1, group_count
                     if (trim(unique_names(j)) == trim(real_str)) then
                         found_group = .true.
-                        group_ends(j) = i
                         exit
                     end if
                 end do
@@ -4483,8 +4563,6 @@ contains
                 if (.not. found_group) then
                     group_count = group_count + 1
                     unique_names(group_count) = trim(real_str)
-                    group_starts(group_count) = i
-                    group_ends(group_count) = i
                 end if
                 end block
             end do
@@ -4494,25 +4572,87 @@ contains
             return
         end select
         
+        ! Second pass: collect all indices for each group
+        allocate(group_member_lists(group_count, groups%n_elements))
+        allocate(group_member_counts(group_count))
+        group_member_counts = 0
+        
+        select case(groups%data%dtype)
+        case(DTYPE_CHAR)
+            do i = 1, groups%n_elements
+                do j = 1, group_count
+                    if (trim(unique_names(j)) == trim(groups%data%values_char(i))) then
+                        group_member_counts(j) = group_member_counts(j) + 1
+                        group_member_lists(j, group_member_counts(j)) = i
+                        exit
+                    end if
+                end do
+            end do
+            
+        case(DTYPE_INT32)
+            do i = 1, groups%n_elements
+                block
+                    character(len=32) :: int_str
+                    write(int_str, '(I0)') groups%data%values_i32(i)
+                    do j = 1, group_count
+                        if (trim(unique_names(j)) == trim(int_str)) then
+                            group_member_counts(j) = group_member_counts(j) + 1
+                            group_member_lists(j, group_member_counts(j)) = i
+                            exit
+                        end if
+                    end do
+                end block
+            end do
+            
+        case(DTYPE_REAL64)
+            do i = 1, groups%n_elements
+                block
+                    character(len=32) :: real_str
+                    write(real_str, '(F0.6)') groups%data%values_r64(i)
+                    do j = 1, group_count
+                        if (trim(unique_names(j)) == trim(real_str)) then
+                            group_member_counts(j) = group_member_counts(j) + 1
+                            group_member_lists(j, group_member_counts(j)) = i
+                            exit
+                        end if
+                    end do
+                end block
+            end do
+        end select
+        
         ! Set up groupby object
         gb%n_groups = group_count
         allocate(gb%group_names(group_count))
         allocate(gb%group_sizes(group_count))
-        allocate(gb%group_indices(group_count, 2))  ! Start and end indices
+        allocate(gb%group_indices(group_count, 2))  ! Store start and count
+        ! Allocate group_members with safe max dimension
+        current_size = 0
+        if (size(group_member_counts) > 0) then
+            current_size = maxval(group_member_counts)
+        end if
+        if (current_size <= 0) current_size = 1  ! Ensure at least 1 for allocation
+        allocate(gb%group_members(group_count, current_size))  ! Store actual indices
         
         ! Fill group information
         do i = 1, group_count
             gb%group_names(i) = unique_names(i)
-            gb%group_sizes(i) = group_ends(i) - group_starts(i) + 1
-            gb%group_indices(i, 1) = group_starts(i)
-            gb%group_indices(i, 2) = group_ends(i)
+            gb%group_sizes(i) = group_member_counts(i)
+            ! Store index information
+            gb%group_indices(i, 1) = 1  ! Start from 1 for group data extraction
+            gb%group_indices(i, 2) = group_member_counts(i)  ! Size of group
+            ! Store actual member indices
+            do j = 1, group_member_counts(i)
+                gb%group_members(i, j) = group_member_lists(i, j)
+            end do
         end do
+        
+        deallocate(group_member_lists, group_member_counts)
         
         ! Set parent array pointer (non-owning)
         gb%parent_array => this
         gb%initialized = .true.
         
-        deallocate(unique_names, group_starts, group_ends)
+        deallocate(unique_names)
         
     end function fortarray_groupby
     
@@ -4542,13 +4682,10 @@ contains
         
         ! Calculate mean for each group
         do i = 1, this%n_groups
-            group_start = this%group_indices(i, 1)
-            group_end = this%group_indices(i, 2)
-            
-            ! Extract group values
-            allocate(group_values(group_end - group_start + 1))
-            do j = group_start, group_end
-                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            ! Extract group values using stored member indices
+            allocate(group_values(this%group_sizes(i)))
+            do j = 1, this%group_sizes(i)
+                group_values(j) = this%parent_array%data%values_r64(this%group_members(i, j))
             end do
             
             ! Calculate mean
@@ -4601,13 +4738,10 @@ contains
         
         ! Calculate sum for each group
         do i = 1, this%n_groups
-            group_start = this%group_indices(i, 1)
-            group_end = this%group_indices(i, 2)
-            
-            ! Extract group values
-            allocate(group_values(group_end - group_start + 1))
-            do j = group_start, group_end
-                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            ! Extract group values using stored member indices
+            allocate(group_values(this%group_sizes(i)))
+            do j = 1, this%group_sizes(i)
+                group_values(j) = this%parent_array%data%values_r64(this%group_members(i, j))
             end do
             
             ! Calculate sum
@@ -4660,13 +4794,10 @@ contains
         
         ! Calculate std for each group
         do i = 1, this%n_groups
-            group_start = this%group_indices(i, 1)
-            group_end = this%group_indices(i, 2)
-            
-            ! Extract group values
-            allocate(group_values(group_end - group_start + 1))
-            do j = group_start, group_end
-                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            ! Extract group values using stored member indices
+            allocate(group_values(this%group_sizes(i)))
+            do j = 1, this%group_sizes(i)
+                group_values(j) = this%parent_array%data%values_r64(this%group_members(i, j))
             end do
             
             ! Calculate mean first
@@ -4730,13 +4861,10 @@ contains
         
         ! Calculate max for each group
         do i = 1, this%n_groups
-            group_start = this%group_indices(i, 1)
-            group_end = this%group_indices(i, 2)
-            
-            ! Extract group values
-            allocate(group_values(group_end - group_start + 1))
-            do j = group_start, group_end
-                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            ! Extract group values using stored member indices
+            allocate(group_values(this%group_sizes(i)))
+            do j = 1, this%group_sizes(i)
+                group_values(j) = this%parent_array%data%values_r64(this%group_members(i, j))
             end do
             
             ! Calculate max
@@ -4791,13 +4919,10 @@ contains
         
         ! Calculate min for each group
         do i = 1, this%n_groups
-            group_start = this%group_indices(i, 1)
-            group_end = this%group_indices(i, 2)
-            
-            ! Extract group values
-            allocate(group_values(group_end - group_start + 1))
-            do j = group_start, group_end
-                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            ! Extract group values using stored member indices
+            allocate(group_values(this%group_sizes(i)))
+            do j = 1, this%group_sizes(i)
+                group_values(j) = this%parent_array%data%values_r64(this%group_members(i, j))
             end do
             
             ! Calculate min
@@ -4863,14 +4988,12 @@ contains
             return
         end if
         
-        ! Extract group data
-        group_start = this%group_indices(group_idx, 1)
-        group_end = this%group_indices(group_idx, 2)
-        group_size = group_end - group_start + 1
+        ! Extract group data using stored member indices
+        group_size = this%group_sizes(group_idx)
         
         allocate(group_values(group_size))
         do i = 1, group_size
-            group_values(i) = this%parent_array%data%values_r64(group_start + i - 1)
+            group_values(i) = this%parent_array%data%values_r64(this%group_members(group_idx, i))
         end do
         
         ! Create result array
@@ -4988,13 +5111,10 @@ contains
         
         ! Transform each group and broadcast back
         do i = 1, this%n_groups
-            group_start = this%group_indices(i, 1)
-            group_end = this%group_indices(i, 2)
-            
-            ! Extract group values
-            allocate(group_values(group_end - group_start + 1))
-            do j = group_start, group_end
-                group_values(j - group_start + 1) = this%parent_array%data%values_r64(j)
+            ! Extract group values using stored member indices
+            allocate(group_values(this%group_sizes(i)))
+            do j = 1, this%group_sizes(i)
+                group_values(j) = this%parent_array%data%values_r64(this%group_members(i, j))
             end do
             
             select case(trim(operation))
@@ -5015,15 +5135,15 @@ contains
                     group_mean = huge(1.0_real64)
                 end if
                 
-                ! Broadcast to all positions in this group
-                do j = group_start, group_end
-                    result_values(j) = group_mean
+                ! Broadcast to all positions in this group using stored member indices
+                do j = 1, this%group_sizes(i)
+                    result_values(this%group_members(i, j)) = group_mean
                 end do
                 
             case default
                 write(error_unit, '(A,A)') "ERROR: Unknown transform operation: ", trim(operation)
-                do j = group_start, group_end
-                    result_values(j) = huge(1.0_real64)
+                do j = 1, this%group_sizes(i)
+                    result_values(this%group_members(i, j)) = huge(1.0_real64)
                 end do
             end select
             
@@ -5034,5 +5154,152 @@ contains
         result_array = new_array(result_values, name=trim(this%parent_array%name) // "_transform_" // trim(operation))
         
     end function groupby_transform
+    
+    ! ======= TIME COMPONENT EXTRACTION FUNCTIONS =======
+    
+    !> Extract month from time value (1-12)
+    function extract_month(time_value) result(month)
+        real(real64), intent(in) :: time_value
+        integer :: month
+        
+        ! Simplified implementation: assumes time_value is days since epoch
+        ! Real implementation would use proper calendar functions
+        integer :: julian_day, year, day_of_year
+        
+        julian_day = int(time_value)
+        call julian_to_gregorian(julian_day, year, day_of_year)
+        month = day_of_year_to_month(day_of_year, is_leap_year(year))
+    end function extract_month
+    
+    !> Extract year from time value
+    function extract_year(time_value) result(year)
+        real(real64), intent(in) :: time_value
+        integer :: year
+        
+        integer :: julian_day, day_of_year
+        
+        julian_day = int(time_value)
+        call julian_to_gregorian(julian_day, year, day_of_year)
+    end function extract_year
+    
+    !> Extract season from time value (1=Spring, 2=Summer, 3=Fall, 4=Winter)
+    function extract_season(time_value) result(season)
+        real(real64), intent(in) :: time_value
+        integer :: season
+        
+        integer :: month
+        month = extract_month(time_value)
+        
+        ! Map months to seasons (Northern Hemisphere)
+        if (month >= 3 .and. month <= 5) then
+            season = 1  ! Spring (Mar-May)
+        else if (month >= 6 .and. month <= 8) then
+            season = 2  ! Summer (Jun-Aug)
+        else if (month >= 9 .and. month <= 11) then
+            season = 3  ! Fall (Sep-Nov)  
+        else
+            season = 4  ! Winter (Dec-Feb)
+        end if
+    end function extract_season
+    
+    !> Extract day of year from time value (1-366)
+    function extract_dayofyear(time_value) result(day_of_year)
+        real(real64), intent(in) :: time_value
+        integer :: day_of_year
+        
+        integer :: julian_day, year
+        
+        julian_day = int(time_value)
+        call julian_to_gregorian(julian_day, year, day_of_year)
+    end function extract_dayofyear
+    
+    !> Extract weekday from time value (1=Sunday, 7=Saturday)
+    function extract_weekday(time_value) result(weekday)
+        real(real64), intent(in) :: time_value
+        integer :: weekday
+        
+        integer :: julian_day
+        
+        julian_day = int(time_value)
+        ! Julian day 0 (Jan 1, 4713 BC) was a Monday, so adjust
+        weekday = mod(julian_day + 1, 7) + 1
+    end function extract_weekday
+    
+    !> Convert Julian day to Gregorian calendar
+    subroutine julian_to_gregorian(julian_day, year, day_of_year)
+        integer, intent(in) :: julian_day
+        integer, intent(out) :: year, day_of_year
+        
+        ! Simplified implementation using modern epoch
+        ! Assumes julian_day is days since Jan 1, 2000
+        integer :: days_since_2000, leap_days, approx_year
+        
+        days_since_2000 = julian_day
+        
+        ! Approximate year calculation
+        approx_year = 2000 + days_since_2000 / 365
+        
+        ! Calculate leap days
+        leap_days = (approx_year - 2000) / 4 - (approx_year - 2000) / 100 + (approx_year - 2000) / 400
+        
+        ! Refine year calculation
+        year = 2000 + (days_since_2000 - leap_days) / 365
+        
+        ! Calculate day of year
+        day_of_year = days_since_2000 - (year - 2000) * 365 - leap_days + 1
+        
+        ! Handle edge cases
+        if (day_of_year <= 0) then
+            year = year - 1
+            if (is_leap_year(year)) then
+                day_of_year = day_of_year + 366
+            else
+                day_of_year = day_of_year + 365
+            end if
+        else if (day_of_year > 365 .and. (.not. is_leap_year(year) .or. day_of_year > 366)) then
+            year = year + 1
+            if (is_leap_year(year - 1)) then
+                day_of_year = day_of_year - 366
+            else
+                day_of_year = day_of_year - 365
+            end if
+        end if
+    end subroutine julian_to_gregorian
+    
+    !> Check if year is leap year
+    function is_leap_year(year) result(is_leap)
+        integer, intent(in) :: year
+        logical :: is_leap
+        
+        is_leap = (mod(year, 4) == 0 .and. mod(year, 100) /= 0) .or. (mod(year, 400) == 0)
+    end function is_leap_year
+    
+    !> Convert day of year to month
+    function day_of_year_to_month(day_of_year, is_leap) result(month)
+        integer, intent(in) :: day_of_year
+        logical, intent(in) :: is_leap
+        integer :: month
+        
+        integer, parameter :: days_in_month(12) = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        integer, parameter :: days_in_month_leap(12) = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        integer :: cumulative_days, i
+        
+        cumulative_days = 0
+        do i = 1, 12
+            if (is_leap) then
+                cumulative_days = cumulative_days + days_in_month_leap(i)
+            else
+                cumulative_days = cumulative_days + days_in_month(i)
+            end if
+            
+            if (day_of_year <= cumulative_days) then
+                month = i
+                return
+            end if
+        end do
+        
+        ! Should not reach here for valid day_of_year
+        month = 12
+    end function day_of_year_to_month
 
 end submodule fortarray_methods

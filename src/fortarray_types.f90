@@ -215,8 +215,9 @@ module fortarray_types
         procedure :: optimize_memory => fortarray_optimize_memory
         procedure :: sel_range_parallel => fortarray_sel_range_parallel
         
-        ! Groupby methods (Sprint 13)
+        ! Groupby methods (Sprint 13-14)
         procedure :: groupby => fortarray_groupby
+        procedure :: groupby_coord => fortarray_groupby_coord
         
     end type fortarray_t
     
@@ -270,6 +271,7 @@ module fortarray_types
         character(len=MAX_NAME_LEN), allocatable :: group_names(:)
         integer, allocatable :: group_sizes(:)
         integer, allocatable :: group_indices(:, :)  ! Start and end indices for each group
+        integer, allocatable :: group_members(:, :)   ! Actual member indices for each group
         
         ! Parent array reference (not owning)
         class(fortarray_t), pointer :: parent_array => null()
@@ -791,6 +793,12 @@ module fortarray_types
             type(groupby_t) :: gb
         end function fortarray_groupby
         
+        module function fortarray_groupby_coord(this, coord_name) result(gb)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            type(groupby_t) :: gb
+        end function fortarray_groupby_coord
+        
         ! Groupby aggregation methods
         module function groupby_mean(this, skipna) result(result_array)
             class(groupby_t), intent(in) :: this
@@ -917,6 +925,7 @@ contains
         if (allocated(gb%group_names)) deallocate(gb%group_names)
         if (allocated(gb%group_sizes)) deallocate(gb%group_sizes)
         if (allocated(gb%group_indices)) deallocate(gb%group_indices)
+        if (allocated(gb%group_members)) deallocate(gb%group_members)
         ! Note: parent_array is not owned, so we don't deallocate it
         if (associated(gb%parent_array)) gb%parent_array => null()
     end subroutine groupby_finalizer
