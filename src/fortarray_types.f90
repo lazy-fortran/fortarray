@@ -184,6 +184,13 @@ module fortarray_types
         procedure :: sel_multi => fortarray_sel_multi_coord
         procedure :: sel_method => fortarray_sel_method_choice
         
+        ! Dimension manipulation methods (Sprint 10)
+        procedure :: transpose => fortarray_transpose
+        procedure :: squeeze => fortarray_squeeze
+        procedure :: expand_dims => fortarray_expand_dims
+        procedure :: rename_dims => fortarray_rename_dims
+        procedure :: unstack => fortarray_unstack
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -239,6 +246,7 @@ module fortarray_types
     public :: DTYPE_REAL32, DTYPE_REAL64, DTYPE_CHAR, DTYPE_LOGICAL
     public :: ATTR_TYPE_STRING, ATTR_TYPE_NUMERIC, ATTR_TYPE_LOGICAL
     public :: attribute_t
+    public :: fortarray_stack  ! Stack function
     
     ! Interface block for external procedures
     interface
@@ -544,6 +552,45 @@ module fortarray_types
             real(real64), intent(in), optional :: tolerance
             type(fortarray_t) :: result_array
         end function fortarray_sel_method_choice
+        
+        ! Dimension manipulation methods (Sprint 10)
+        module function fortarray_transpose(this, axes) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, dimension(:), intent(in), optional :: axes
+            type(fortarray_t) :: result_array
+        end function fortarray_transpose
+        
+        module function fortarray_squeeze(this, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_squeeze
+        
+        module function fortarray_expand_dims(this, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in) :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_expand_dims
+        
+        module function fortarray_rename_dims(this, old_name, new_name, new_names) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in), optional :: old_name, new_name
+            character(len=*), dimension(:), intent(in), optional :: new_names
+            type(fortarray_t) :: result_array
+        end function fortarray_rename_dims
+        
+        module function fortarray_stack(arrays, axis, out_name) result(result_array)
+            type(fortarray_t), dimension(:), intent(in) :: arrays
+            integer, intent(in) :: axis
+            character(len=*), intent(in), optional :: out_name
+            type(fortarray_t) :: result_array
+        end function fortarray_stack
+        
+        module function fortarray_unstack(this, axis) result(arrays)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in) :: axis
+            type(fortarray_t), dimension(:), allocatable :: arrays
+        end function fortarray_unstack
         
     end interface
     
