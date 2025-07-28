@@ -80,53 +80,7 @@ contains
     !     
     ! end function sel
     
-    !> Select range of coordinate values
-    function sel_range(var, x, y, z) result(result)
-        type(fortarray_t), intent(in) :: var
-        real(real64), dimension(2), intent(in), optional :: x, y, z
-        type(fortarray_t) :: result
-        type(fortarray_t) :: temp
-        integer :: start_idx, end_idx
-        
-        result = var
-        
-        if (present(x) .and. var%n_dims >= 1) then
-            call find_range_indices(result, 1, x(1), x(2), start_idx, end_idx)
-            if (start_idx > 0 .and. end_idx > 0) then
-                temp = slice(result, create_slice(start_idx, end_idx))
-                if (.not. same_variable(result, var)) call finalize_variable(result)
-                result = temp
-            else
-                result = create_empty_like(var)
-                return
-            end if
-        end if
-        
-        if (present(y) .and. var%n_dims >= 2) then
-            call find_range_indices(result, 2, y(1), y(2), start_idx, end_idx)
-            if (start_idx > 0 .and. end_idx > 0) then
-                temp = slice(result, create_slice(), create_slice(start_idx, end_idx))
-                if (.not. same_variable(result, var)) call finalize_variable(result)
-                result = temp
-            else
-                result = create_empty_like(var)
-                return
-            end if
-        end if
-        
-        if (present(z) .and. var%n_dims >= 3) then
-            call find_range_indices(result, 3, z(1), z(2), start_idx, end_idx)
-            if (start_idx > 0 .and. end_idx > 0) then
-                temp = slice(result, create_slice(), create_slice(), create_slice(start_idx, end_idx))
-                if (.not. same_variable(result, var)) call finalize_variable(result)
-                result = temp
-            else
-                result = create_empty_like(var)
-                return
-            end if
-        end if
-        
-    end function sel_range
+    ! DELETED: sel_range function - replaced by type-bound procedure var%sel_range()
     
     !> Select between coordinate values (inclusive)
     function sel_between(var, time, time_end, x, x_end, y, y_end, z, z_end) result(result)
@@ -137,16 +91,15 @@ contains
         real(real64), intent(in), optional :: z, z_end
         type(fortarray_t) :: result
         
-        ! Use sel_range with appropriate dimension
+        ! Use new type-bound sel_range procedure
         if (present(time) .and. present(time_end)) then
-            ! Find time dimension
-            result = sel_range(var, x=[time, time_end])
+            result = var%sel_range("time", time, time_end)
         else if (present(x) .and. present(x_end)) then
-            result = sel_range(var, x=[x, x_end])
+            result = var%sel_range("x", x, x_end)
         else if (present(y) .and. present(y_end)) then
-            result = sel_range(var, y=[y, y_end])
+            result = var%sel_range("y", y, y_end)
         else if (present(z) .and. present(z_end)) then
-            result = sel_range(var, z=[z, z_end])
+            result = var%sel_range("z", z, z_end)
         else
             ! No range specified, return original
             result = var

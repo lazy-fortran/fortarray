@@ -1027,6 +1027,7 @@ contains
         call get_coord_values_r64(var%coords(dim), coord_values)
         n = size(coord_values)
         
+        
         do i = 1, n
             if (start_idx == 0 .and. coord_values(i) >= start_val) then
                 start_idx = i
