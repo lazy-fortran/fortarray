@@ -37,7 +37,7 @@ contains
 
     subroutine test_basic_constructor()
         type(fortarray_t) :: var
-        type(dataframe_t) :: df  ! Legacy
+        type(fortarray_t) :: df  ! Now using fortarray_t
         real(real64), dimension(10, 5) :: data_2d
         character(len=20), dimension(2) :: dim_names
         type(coordinate_t), dimension(2) :: coords
@@ -63,7 +63,7 @@ contains
                                  "Station_4 ", "Station_5 "]
         
         ! Create variable
-        var = variable(data_2d, dim_names=dim_names, coords=coords, &
+        var = new_array(data_2d, dim_names=dim_names, coords=coords, &
                       name="temperature", stat=stat, error_msg=error_msg)
         
         if (stat /= 0) then
@@ -83,11 +83,11 @@ contains
         if (var%coords(2)%length /= 5) test_passed = .false.
         
         ! Test legacy constructor
-        df = dataframe(data_2d, dim_names=dim_names, coords=coords, &
+        df = new_array(data_2d, dim_names, coords, &
                       name="temperature_legacy", stat=stat, error_msg=error_msg)
         
         ! No stat parameter for new_array - check initialized instead
-        if (trim(df%var%name) /= "temperature_legacy") test_passed = .false.
+        if (trim(df%name) /= "temperature_legacy") test_passed = .false.
         
         if (test_passed) then
             n_tests_passed = n_tests_passed + 1
@@ -98,7 +98,7 @@ contains
         
         ! Clean up
         call finalize_variable(var)
-        call finalize_dataframe(df)
+        call finalize_variable(df)
         call finalize_coordinate(coords(1))
         call finalize_coordinate(coords(2))
     end subroutine test_basic_constructor
@@ -122,7 +122,7 @@ contains
         call create_coordinate(coords(1), 10, "real64", stat)
         call create_coordinate(coords(2), 10, "real64", stat)  ! Wrong size!
         
-        var = variable(data_2d, dim_names=dim_names, coords=coords, &
+        var = new_array(data_2d, dim_names=dim_names, coords=coords, &
                       stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
@@ -156,7 +156,7 @@ contains
         ! Test duplicate dimension names
         dim_names = ["time ", "time ", "level"]  ! Duplicate!
         
-        var = variable(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = new_array(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.  ! Should have failed
@@ -172,7 +172,7 @@ contains
         ! Test invalid dimension names
         dim_names = ["time  ", "123abc", "level "]  ! Invalid identifier
         
-        var = variable(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = new_array(data_3d, dim_names=dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.  ! Should have failed
@@ -212,7 +212,7 @@ contains
         coords(2)%is_monotonic = .true.
         
         ! Constructor with check_monotonic=.true. should validate
-        var = variable(data_2d, dim_names=dim_names, coords=coords, &
+        var = new_array(data_2d, dim_names=dim_names, coords=coords, &
                       check_monotonic=.true., stat=stat, error_msg=error_msg)
         
         ! For now, we might allow non-monotonic coords with a warning
@@ -251,7 +251,7 @@ contains
         allocate(data_2d(10, 0))  ! Zero columns!
         dim_names = ["rows ", "cols "]
         
-        var = variable(data_2d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = new_array(data_2d, dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.  ! Should reject zero-sized dimensions
@@ -425,7 +425,7 @@ contains
         
         ! Create scalar variable
         scalar_value = 42.0_real64
-        var = variable_scalar(scalar_value, name="answer", stat=stat)
+        var = variable_scalar_real64(scalar_value, name="answer", stat=stat)
         
         ! No stat parameter for new_array - check initialized instead
         if (var%n_dims /= 0) test_passed = .false.  ! Scalar has 0 dimensions
@@ -459,7 +459,7 @@ contains
         
         ! Test dimension count mismatch
         dim_names = ["x ", "y ", "z "]
-        var = variable(data_2d, dim_names=dim_names, stat=stat, error_msg=error_msg)
+        var = new_array(data_2d, dim_names, stat=stat, error_msg=error_msg)
         
         if (stat == 0) then
             test_passed = .false.

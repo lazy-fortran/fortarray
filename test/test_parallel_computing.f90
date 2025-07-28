@@ -89,7 +89,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Sequential sum for reference
         sum_seq = sum(data)
@@ -135,8 +135,8 @@ contains
         end do
         !$omp end parallel do
         
-        var1 = variable(data1, name="var1", dim_names=["x"])
-        var2 = variable(data2, name="var2", dim_names=["x"])
+        var1 = new_array(data1, name="var1", dim_names=["x"])
+        var2 = new_array(data2, name="var2", dim_names=["x"])
         
         ! Parallel addition
         result = add_parallel(var1, var2)
@@ -179,7 +179,7 @@ contains
         do i = 1, 100000
             data(i) = sin(real(i, real64) * 0.01_real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Parallel mean
         mean_val = mean_parallel(var)
@@ -227,7 +227,7 @@ contains
         do i = 1, 50000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Apply function in parallel
         result = apply_parallel(var, sqrt_function)
@@ -268,7 +268,7 @@ contains
         do i = 1, 10000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test static scheduling
         call cpu_time(start_time)
@@ -311,7 +311,7 @@ contains
         do i = 1, 1000
             data(i) = real(mod(i, 10) + 1, real64)  ! Values 1-10
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test sum reduction
         sum_result = reduce_parallel(var, "sum")
@@ -357,7 +357,7 @@ contains
                 data1d(idx) = data2d(i, j)
             end do
         end do
-        var = variable(data1d, name="test_data", dim_names=["idx"])
+        var = new_array(data1d, name="test_data", dim_names=["idx"])
         
         ! Test nested parallel regions
         !$omp parallel num_threads(2)
@@ -396,7 +396,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Get number of threads
         !$ num_threads = omp_get_max_threads()
@@ -453,10 +453,10 @@ contains
         end do
         !$omp end parallel do
         
-        var = variable(data, name="test_var", dim_names=["x"])
+        var = new_array(data, name="test_var", dim_names=["x"])
         
         ! Create dataset
-        ds = dataset()
+        ds = new_dataset()
         call add_variable(ds, var)
         
         ! Write with parallel-aware settings
@@ -510,14 +510,14 @@ contains
         
         ! Create test data
         small_data = [(real(i, real64), i=1,10)]
-        var_small = variable(small_data, name="small", dim_names=["x"])
+        var_small = new_array(small_data, name="small", dim_names=["x"])
         
         !$omp parallel do
         do i = 1, 10000
             large_data(i) = real(i, real64)
         end do
         !$omp end parallel do
-        var_large = variable(large_data, name="large", dim_names=["x"])
+        var_large = new_array(large_data, name="large", dim_names=["x"])
         
         ! Broadcast and add in parallel
         result = broadcast_add_parallel(var_small, var_large)
@@ -563,7 +563,7 @@ contains
                 data(i) = real(i, real64)
             end if
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Fill missing values in parallel
         result = fillna_parallel(var, 0.0_real64)
@@ -616,7 +616,7 @@ contains
         end do
         !$omp end parallel do
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         call create_coordinate(x_coord, 10000, "real64", stat)
         x_coord%name = "x"
         x_coord%values_r64 = coord_vals
@@ -672,7 +672,7 @@ contains
         do i = 1, 1000000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Time sequential operation
         call cpu_time(start_time)
@@ -735,7 +735,7 @@ contains
         do i = 1, 100
             data(i) = real(i - 50, real64)  ! Some negative values
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test error handling in parallel region
         error_count = 0

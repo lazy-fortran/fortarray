@@ -847,7 +847,7 @@ contains
         filename = "test_write_scalar.nc"
         
         ! Create a scalar variable
-        var = variable_scalar(3.14159_real64, name="pi")
+        var = variable_scalar_real64(3.14159_real64, name="pi")
         
         ! Write to NetCDF
         stat = write_netcdf_variable(filename, var)
@@ -903,7 +903,7 @@ contains
         ! time_coord = coordinate("time", data, "seconds")
         
         ! Create variable with coordinate
-        var = variable(data, name="temperature", dim_names=["time"])
+        var = new_array(data, name="temperature", dim_names=["time"])
         ! coords=[time_coord] - TODO: Enable when coordinates implemented
         
         ! Add attributes
@@ -971,7 +971,7 @@ contains
         ! lon_coord = coordinate("lon", lon_data, "degrees_east")
         
         ! Create variable
-        var = variable(data, name="temperature", dim_names=["lat", "lon"])
+        var = new_array(data, name="temperature", dim_names=["lat", "lon"])
         ! coords=[lat_coord, lon_coord] - TODO: Enable when coordinates implemented
         
         ! Write to NetCDF
@@ -1029,7 +1029,7 @@ contains
         end do
         
         ! Create variable
-        var = variable(data, name="pressure", dim_names=["lat  ", "lon  ", "level"])
+        var = new_array(data, name="pressure", dim_names=["lat  ", "lon  ", "level"])
         
         ! Write to NetCDF
         stat = write_netcdf_variable(filename, var)
@@ -1087,7 +1087,7 @@ contains
         
         ! Create temperature data
         temp_data = 273.15_real64
-        temp = variable(temp_data, name="temperature", dim_names=["lat", "lon"])
+        temp = new_array(temp_data, name="temperature", dim_names=["lat", "lon"])
         ! coords=[lat_coord, lon_coord] - TODO: Enable when coordinate constructor is implemented
         
         ! Create dataset
@@ -1139,7 +1139,7 @@ contains
         
         ! Create variable with attributes
         data = [(real(i, real64), i=1,10)]
-        var = variable(data, name="temperature", dim_names=["x"])
+        var = new_array(data, name="temperature", dim_names=["x"])
         
         ! Add attributes
         var%units = "kelvin"
@@ -1223,15 +1223,15 @@ contains
         
         ! Create variables
         temp_data = 273.15_real64
-        temp = variable(temp_data, name="temperature", dim_names=["lat", "lon"])
+        temp = new_array(temp_data, name="temperature", dim_names=["lat", "lon"])
         temp%units = "K"
         
         pres_data = 1013.25_real64
-        pres = variable(pres_data, name="pressure", dim_names=["lat  ", "lon  ", "level"])
+        pres = new_array(pres_data, name="pressure", dim_names=["lat  ", "lon  ", "level"])
         pres%units = "hPa"
         
         vel_data = [(real(i, real32), i=1,10)]
-        vel = variable(vel_data, name="velocity", dim_names=["lat"])
+        vel = new_array(vel_data, name="velocity", dim_names=["lat"])
         vel%units = "m/s"
         
         ! Create dataset
@@ -1298,7 +1298,7 @@ contains
         data_orig = [(sin(real(i, real64) * 0.1_real64), i=1,100)]
         
         ! Create variable
-        var_orig = variable(data_orig, name="signal", dim_names=["time"])
+        var_orig = new_array(data_orig, name="signal", dim_names=["time"])
         var_orig%units = "dimensionless"
         var_orig%long_name = "Test Signal"
         
@@ -1363,7 +1363,7 @@ contains
         
         ! Create large variable
         data = [(real(i, real64), i=1,1000)]
-        var = variable(data, name="large_data", dim_names=["x"])
+        var = new_array(data, name="large_data", dim_names=["x"])
         
         ! Set compression options
         opts%compress = .true.
@@ -1407,7 +1407,7 @@ contains
         
         ! Create variable
         data = [(real(i, real64), i=1,10)]
-        var = variable(data, name="data", dim_names=["x"])
+        var = new_array(data, name="data", dim_names=["x"])
         
         ! Enable atomic write
         opts%atomic_write = .true.
@@ -1461,7 +1461,7 @@ contains
         
         ! Create temperature variable
         temp_data = 273.15_real64 + [(real(i, real64), i=1,10)]
-        temp = variable(temp_data, name="air_temperature", dim_names=["time"])
+        temp = new_array(temp_data, name="air_temperature", dim_names=["time"])
         temp%units = "K"
         temp%standard_name = "air_temperature"
         temp%long_name = "Air Temperature at 2m"
@@ -1521,7 +1521,7 @@ contains
         
         ! Create temperature variable
         temp_data = [(273.15_real64 + real(i, real64), i=1,5)]
-        temp = variable(temp_data, name="temperature", dim_names=["time"])
+        temp = new_array(temp_data, name="temperature", dim_names=["time"])
         
         call add_variable(dset, temp)
         

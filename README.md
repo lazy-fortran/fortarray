@@ -1,6 +1,6 @@
-# Foxel
+# FortArray
 
-A modern Fortran library for handling multi-dimensional labeled arrays and datasets, following NetCDF data model conventions.
+A modern Fortran library providing xarray-compatible labeled multi-dimensional arrays and datasets, following NetCDF data model conventions.
 
 ## Features
 
@@ -18,7 +18,7 @@ A modern Fortran library for handling multi-dimensional labeled arrays and datas
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/foxel.git
+git clone https://github.com/krystophny/foxel.git
 cd foxel
 fpm build --release
 ```
@@ -27,25 +27,25 @@ fpm build --release
 
 ```fortran
 program example
-    use foxel
+    use fortarray
     implicit none
     
     type(dataset_t) :: ds
-    type(variable_t) :: temp, pres
-    real(real64), allocatable :: temp_data(:,:,:)
+    type(fortarray_t) :: temp, pres, temp_subset, temp_mean
+    real(real64), allocatable :: temp_data(:,:)
     
-    ! Read a NetCDF file
-    ds = from_netcdf('weather_data.nc')
+    ! Create array with xarray-style constructors
+    temp_data = reshape([20.0, 21.0, 22.0, 23.0, 24.0, 25.0], [3, 2])
+    temp = new_array(temp_data, dim_names=["lat", "lon"])
     
-    ! Access variables
-    temp = ds%var('temperature')
-    pres = ds%var('pressure')
-    
-    ! Select data by coordinate values
-    temp_subset = temp%sel(time='2024-01-01', lat=45.0:55.0)
+    ! Select data by coordinate values (xarray-compatible)
+    temp_subset = temp%sel_point("lat", 2.0)
     
     ! Compute statistics along dimensions
-    temp_mean = temp%mean(dim='time')
+    temp_mean = temp%mean()
+    
+    ! Method chaining support
+    pres = temp%sel_point("lat", 1.0)%mean()
     
     ! Create new variable from array
     allocate(temp_data(360, 180, 24))
@@ -97,15 +97,15 @@ A collection of variables (NetCDF file):
 ```fortran
 ! Working with real climate data
 type(dataset_t) :: climate
-type(variable_t) :: temp, precip
+type(fortarray_t) :: temp, precip
 real(real64) :: global_mean
 
 ! Load ERA5 reanalysis data
-climate = from_netcdf('era5_2023.nc')
+call read_netcdf_dataset('era5_2023.nc', climate)
 
 ! Extract variables
-temp = climate%var('t2m')  ! 2-meter temperature
-precip = climate%var('tp')  ! Total precipitation
+temp = climate%variables(1)  ! 2-meter temperature
+precip = climate%variables(2)  ! Total precipitation
 
 ! Compute annual mean temperature
 temp_annual = temp%mean(dim='time')

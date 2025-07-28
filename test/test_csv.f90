@@ -278,7 +278,7 @@ contains
         
         ! Create test data
         data = reshape([1.1_real64, 2.2_real64, 3.3_real64, 4.4_real64, 5.5_real64, 6.6_real64], [3, 2])
-        var = variable(data, name="test_data", dim_names=["rows", "cols"])
+        var = new_array(data, name="test_data", dim_names=["rows", "cols"])
         
         ! Write to CSV
         stat = write_csv("test_output.csv", var)
@@ -320,7 +320,7 @@ contains
         data = reshape([1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64], [2, 3])
         ! For CSV header, we need to specify column names, not row/dimension names
         ! We need a way to specify column headers for CSV output
-        var = variable(data, name="test_data")
+        var = new_array(data, name="test_data")
         
         ! Write with header
         opts%has_header = .true.
@@ -367,7 +367,7 @@ contains
         data(2,1) = 3.0_real64
         data(2,2) = 4.0_real64
         
-        var = variable(data, name="test_missing", dim_names=["a", "b"])
+        var = new_array(data, name="test_missing", dim_names=["a", "b"])
         
         ! Write CSV
         stat = write_csv("test_output.csv", var)
@@ -398,7 +398,7 @@ contains
         
         ! Create original data
         data = reshape([1.5_real64, 2.7_real64, 3.9_real64, 4.1_real64, 5.3_real64, 6.8_real64], [3, 2])
-        var_orig = variable(data, name="round_trip", dim_names=["rows", "cols"])
+        var_orig = new_array(data, name="round_trip", dim_names=["rows", "cols"])
         
         ! Write to CSV
         stat = write_csv("test_round_trip.csv", var_orig)

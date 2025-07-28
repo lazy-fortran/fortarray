@@ -56,8 +56,8 @@ contains
         allocate(expected_flat(12))
         expected_flat = reshape(expected, [12])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test addition
         result = var1 + var2
@@ -105,8 +105,8 @@ contains
         allocate(expected_flat(12))
         expected_flat = reshape(expected, [12])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test subtraction
         result = var1 - var2
@@ -149,8 +149,8 @@ contains
         allocate(expected_flat(6))
         expected_flat = reshape(expected, [6])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test multiplication
         result = var1 * var2
@@ -193,8 +193,8 @@ contains
         allocate(expected_flat(4))
         expected_flat = reshape(expected, [4])
         
-        var1 = variable(data1, name="var1", dim_names=["x", "y"])
-        var2 = variable(data2, name="var2", dim_names=["x", "y"])
+        var1 = new_array(data1, name="var1", dim_names=["x", "y"])
+        var2 = new_array(data2, name="var2", dim_names=["x", "y"])
         
         ! Test division
         result = var1 / var2
@@ -237,8 +237,8 @@ contains
         allocate(expected_flat(4))
         expected_flat = reshape(expected, [4])
         
-        var1 = variable(data1, name="base", dim_names=["x", "y"])
-        var2 = variable(data2, name="exponent", dim_names=["x", "y"])
+        var1 = new_array(data1, name="base", dim_names=["x", "y"])
+        var2 = new_array(data2, name="exponent", dim_names=["x", "y"])
         
         ! Test power operation
         result = var1 ** var2
@@ -279,7 +279,7 @@ contains
         
         ! Create test data
         data = reshape([(real(i, real64), i=1,6)], [2,3])
-        var = variable(data, name="var", dim_names=["x", "y"])
+        var = new_array(data, name="var", dim_names=["x", "y"])
         
         ! Test scalar addition
         result = var + scalar_val
@@ -343,8 +343,8 @@ contains
         vec_data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64]
         mat_data = reshape([(real(i, real64), i=1,12)], [3,4])
         
-        vec = variable(vec_data, name="vector", dim_names=["y"])
-        mat = variable(mat_data, name="matrix", dim_names=["x", "y"])
+        vec = new_array(vec_data, name="vector", dim_names=["y"])
+        mat = new_array(mat_data, name="matrix", dim_names=["x", "y"])
         
         ! Test broadcasting addition
         result = vec + mat
@@ -394,9 +394,9 @@ contains
         data_r64 = reshape([2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64], [2,2])
         data_i32 = reshape([1_int32, 2_int32, 3_int32, 4_int32], [2,2])
         
-        var_r32 = variable(data_r32, name="r32")
-        var_r64 = variable(data_r64, name="r64")
-        var_i32 = variable(data_i32, name="i32")
+        var_r32 = new_array(data_r32, name="r32")
+        var_r64 = new_array(data_r64, name="r64")
+        var_i32 = new_array(data_i32, name="i32")
         
         ! Test real32 + real64 -> real64
         result = var_r32 + var_r64
@@ -438,8 +438,8 @@ contains
         data1 = reshape([1.0_real64, 0.0_real64, 3.0_real64, 4.0_real64], [2,2])
         data2 = reshape([2.0_real64, 0.0_real64, 5.0_real64, 6.0_real64], [2,2])
         
-        var1 = variable(data1, name="var1")
-        var2 = variable(data2, name="var2")
+        var1 = new_array(data1, name="var1")
+        var2 = new_array(data2, name="var2")
         
         ! Test division by zero produces NaN/Inf
         result = var1 / var2
@@ -477,8 +477,8 @@ contains
         data1 = reshape([1.0_real64, missing, 3.0_real64, 4.0_real64], [2,2])
         data2 = reshape([2.0_real64, 3.0_real64, missing, 6.0_real64], [2,2])
         
-        var1 = variable(data1, name="var1")
-        var2 = variable(data2, name="var2")
+        var1 = new_array(data1, name="var1")
+        var2 = new_array(data2, name="var2")
         
         ! Test that operations with missing values produce missing values
         result = var1 + var2
@@ -523,9 +523,9 @@ contains
         allocate(expected_flat(4))
         expected_flat = reshape(data_a + data_b * data_c, [4])
         
-        a = variable(data_a, name="a")
-        b = variable(data_b, name="b")
-        c = variable(data_c, name="c")
+        a = new_array(data_a, name="a")
+        b = new_array(data_b, name="b")
+        c = new_array(data_c, name="c")
         
         ! Test operator precedence and overloading
         result = a + b * c  ! Should be a + (b * c)
@@ -568,10 +568,10 @@ contains
         data_c = reshape([0.5_real64, 0.5_real64, 0.5_real64, 0.5_real64], [2,2])
         data_d = reshape([1.0_real64, 1.0_real64, 1.0_real64, 1.0_real64], [2,2])
         
-        a = variable(data_a, name="a")
-        b = variable(data_b, name="b")
-        c = variable(data_c, name="c")
-        d = variable(data_d, name="d")
+        a = new_array(data_a, name="a")
+        b = new_array(data_b, name="b")
+        c = new_array(data_c, name="c")
+        d = new_array(data_d, name="d")
         
         ! Test chained operations
         result = (a + b) * c - d

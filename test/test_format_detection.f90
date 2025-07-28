@@ -50,36 +50,36 @@ contains
         data = reshape([(real(i, real64), i=1,12)], [3,4])
         
         ! Create NetCDF file
-        var = variable(data, name="test_data", dim_names=["x", "y"])
-        ds = dataset()
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
+        ds = new_dataset()
         call add_variable(ds, var)
         stat = write_netcdf("test_data.nc", ds)
         call finalize_dataset(ds)
         call finalize_variable(var)
         
         ! Create NetCDF4 file (same content, different extension)
-        var = variable(data, name="test_data", dim_names=["x", "y"])
-        ds = dataset()
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
+        ds = new_dataset()
         call add_variable(ds, var)
         stat = write_netcdf("test_data.nc4", ds)
         call finalize_dataset(ds)
         call finalize_variable(var)
         
         ! Create HDF5 file (NetCDF4 is HDF5-based)
-        var = variable(data, name="test_data", dim_names=["x", "y"])
-        ds = dataset()
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
+        ds = new_dataset()
         call add_variable(ds, var)
         stat = write_netcdf("test_data.hdf5", ds)
         call finalize_dataset(ds)
         call finalize_variable(var)
         
         ! Create CSV file
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         stat = write_csv("test_data.csv", var)
         call finalize_variable(var)
         
         ! Create file with wrong extension
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         stat = write_csv("test_data.txt", var)
         call finalize_variable(var)
         

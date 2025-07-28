@@ -39,17 +39,17 @@ contains
         test_passed = .true.
         
         ! Create dataset
-        dset = dataset()
+        dset = new_dataset()
         dset%filename = "test_dataset.nc"
         
         ! Create variables
         data1 = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var1 = variable(data1, name="temperature", dim_names=["x"])
+        var1 = new_array(data1, name="temperature", dim_names=["x"])
         
         data2 = reshape([1.0_real64, 2.0_real64, 3.0_real64, &
                         4.0_real64, 5.0_real64, 6.0_real64, &
                         7.0_real64, 8.0_real64, 9.0_real64], [3, 3])
-        var2 = variable(data2, name="pressure", dim_names=["x", "y"])
+        var2 = new_array(data2, name="pressure", dim_names=["x", "y"])
         
         ! Add variables to dataset
         call add_variable(dset, var1, stat=stat)
@@ -110,10 +110,10 @@ contains
         test_passed = .true.
         
         ! Create dataset and variable
-        dset = dataset()
+        dset = new_dataset()
         dset%filename = "test_dataset.nc"
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_var", dim_names=["x"])
+        var = new_array(data, name="test_var", dim_names=["x"])
         
         ! Initially should not have variable
         if (has_variable(dset, "test_var")) then
@@ -159,11 +159,11 @@ contains
         test_passed = .true.
         
         ! Create dataset and variables
-        dset = dataset()
+        dset = new_dataset()
         dset%filename = "test_dataset.nc"
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var1 = variable(data, name="var1", dim_names=["x"])
-        var2 = variable(data, name="var2", dim_names=["x"])
+        var1 = new_array(data, name="var1", dim_names=["x"])
+        var2 = new_array(data, name="var2", dim_names=["x"])
         
         ! Add variables
         call add_variable(dset, var1)
@@ -230,12 +230,12 @@ contains
         test_passed = .true.
         
         ! Create dataset and variables
-        dset = dataset()
+        dset = new_dataset()
         dset%filename = "test_dataset.nc"
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var1 = variable(data, name="temperature", dim_names=["x"])
-        var2 = variable(data, name="pressure", dim_names=["x"])
-        var3 = variable(data, name="velocity", dim_names=["x"])
+        var1 = new_array(data, name="temperature", dim_names=["x"])
+        var2 = new_array(data, name="pressure", dim_names=["x"])
+        var3 = new_array(data, name="velocity", dim_names=["x"])
         
         ! Test empty dataset
         names = list_variables(dset)
@@ -298,12 +298,12 @@ contains
         test_passed = .true.
         
         ! Create dataset and variables
-        dset = dataset()
+        dset = new_dataset()
         dset%filename = "test_dataset.nc"
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var1 = variable(data, name="temperature", dim_names=["x"])
-        var2 = variable(data * 2.0_real64, name="pressure", dim_names=["x"])
-        var3 = variable(data * 3.0_real64, name="velocity", dim_names=["x"])
+        var1 = new_array(data, name="temperature", dim_names=["x"])
+        var2 = new_array(data * 2.0_real64, name="pressure", dim_names=["x"])
+        var3 = new_array(data * 3.0_real64, name="velocity", dim_names=["x"])
         
         ! Add all variables
         call add_variable(dset, var1)
@@ -377,10 +377,10 @@ contains
         test_passed = .true.
         
         ! Create initialized dataset and variable
-        dset = dataset()
+        dset = new_dataset()
         dset%filename = "test_dataset.nc"
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_var", dim_names=["x"])
+        var = new_array(data, name="test_var", dim_names=["x"])
         
         ! Test operations on uninitialized dataset
         uninit_dset%initialized = .false.

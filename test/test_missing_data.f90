@@ -55,7 +55,7 @@ contains
         ! Create data with specific fill value
         fill_val = -999.0_real64
         data = [1.0_real64, fill_val, 3.0_real64, fill_val, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         var%has_fill_value = .true.
         var%fill_value_r64 = fill_val
         
@@ -98,7 +98,7 @@ contains
         
         ! Create test data
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Create mask (select even values)
         mask_data = [.false., .true., .false., .true., .false., .true.]
@@ -152,7 +152,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Fill missing with constant
         result = fillna(var, 0.0_real64)
@@ -191,7 +191,7 @@ contains
         
         ! Create data with missing values
         data = [missing, 2.0_real64, missing, 4.0_real64, missing, missing, 7.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Forward fill
         result = fillna(var, method="forward")
@@ -231,7 +231,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, missing, 4.0_real64, missing, 6.0_real64, missing]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Backward fill
         result = fillna(var, method="backward")
@@ -272,7 +272,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, missing, 4.0_real64, missing, 10.0_real64, missing]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Linear interpolation
         result = fillna(var, method="linear")
@@ -312,7 +312,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Drop missing values
         result = dropna(var)
@@ -358,7 +358,7 @@ contains
                        missing, 5.0_real64, 6.0_real64, &
                        7.0_real64, 8.0_real64, 9.0_real64, &
                        10.0_real64, missing, 12.0_real64], [3,4])
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         
         ! Drop rows with any missing
         result = dropna(var, dim=1, how="any")
@@ -396,7 +396,7 @@ contains
                        4.0_real64, 5.0_real64, missing, &
                        7.0_real64, 8.0_real64, 9.0_real64, &
                        10.0_real64, 11.0_real64, 12.0_real64], [3,4])
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         
         ! Drop columns with any missing
         result = dropna(var, dim=2, how="any")
@@ -431,7 +431,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test isnull
         null_mask = isnull(var)
@@ -482,8 +482,8 @@ contains
         data1 = [1.0_real64, missing, 3.0_real64, 4.0_real64]
         data2 = [5.0_real64, 6.0_real64, missing, 8.0_real64]
         
-        var1 = variable(data1, name="data1", dim_names=["x"])
-        var2 = variable(data2, name="data2", dim_names=["x"])
+        var1 = new_array(data1, name="data1", dim_names=["x"])
+        var2 = new_array(data2, name="data2", dim_names=["x"])
         
         ! Test arithmetic with missing values
         result = var1 + var2
@@ -522,7 +522,7 @@ contains
         
         ! Create data with one missing value
         data = [1.0_real64, 2.0_real64, missing, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Operations should propagate missing
         result = var * 2.0_real64
@@ -563,7 +563,7 @@ contains
         
         ! Create data with missing values
         data = [1.0_real64, missing, 3.0_real64, missing, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test aggregations with skipna=.true. (default)
         result = mean(var)
@@ -603,7 +603,7 @@ contains
         
         ! Create data with NaN values
         data = [1.0_real64, nan_val, 3.0_real64, nan_val, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test NaN detection
         result = isnull(var)
@@ -648,7 +648,7 @@ contains
         
         ! Create data with different types of missing/special values
         data = [1.0_real64, missing, nan_val, 4.0_real64, inf_val, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test that huge() and NaN are detected as missing, but not infinity
         null_mask = isnull(var)

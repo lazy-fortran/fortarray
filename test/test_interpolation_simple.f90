@@ -51,7 +51,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -102,7 +102,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -153,7 +153,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.

@@ -55,7 +55,7 @@ contains
         do i = 1, 12
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [3, 4]
         
         ! Test apply along first dimension (sum along rows)
@@ -93,7 +93,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test apply user-defined function (square)
         result = apply_function(var, square_function)
@@ -134,7 +134,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 4.0_real64, 9.0_real64, 16.0_real64, 25.0_real64, 36.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test vectorized square root operation
         result = apply_vectorized(var, "sqrt")
@@ -176,8 +176,8 @@ contains
         real_data = [1.5_real64, 2.5_real64, 3.5_real64]
         int_data = [1, 2, 3]
         
-        var_real = variable(real_data, name="real_data", dim_names=["x"])
-        var_int = variable(int_data, name="int_data", dim_names=["x"])
+        var_real = new_array(real_data, name="real_data", dim_names=["x"])
+        var_int = new_array(int_data, name="int_data", dim_names=["x"])
         
         ! Test that result type is inferred correctly
         result_real = apply_function(var_real, identity_function)
@@ -215,7 +215,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test 1D cumulative sum
         result = apply_cumulative(var, "cumsum")
@@ -252,7 +252,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [2, 3]
         
         ! Test 2D function application
@@ -287,7 +287,7 @@ contains
         do i = 1, 24
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x", "y", "z"])
+        var = new_array(data, name="test_data", dim_names=["x", "y", "z"])
         var%shape = [2, 3, 4]
         
         ! Test 3D function application
@@ -319,7 +319,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test custom function application
         result = apply_function(var, exponential_function)
@@ -360,7 +360,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.

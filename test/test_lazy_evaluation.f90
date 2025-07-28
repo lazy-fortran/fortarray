@@ -54,8 +54,8 @@ contains
         data1 = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
         data2 = [10.0_real64, 20.0_real64, 30.0_real64, 40.0_real64, 50.0_real64]
         
-        var1 = variable(data1, name="var1", dim_names=["x"])
-        var2 = variable(data2, name="var2", dim_names=["x"])
+        var1 = new_array(data1, name="var1", dim_names=["x"])
+        var2 = new_array(data2, name="var2", dim_names=["x"])
         
         ! Create computation graph for lazy evaluation
         graph = create_computation_graph()
@@ -98,7 +98,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 4.0_real64, 9.0_real64, 16.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Create lazy operations (should not execute immediately)
         ! Start with basic operation that doesn't require chaining
@@ -151,7 +151,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="large_data", dim_names=["x"])
+        var = new_array(data, name="large_data", dim_names=["x"])
         
         ! Get initial memory usage (simplified)
         initial_memory = get_memory_usage()
@@ -203,7 +203,7 @@ contains
         do i = 1, 10000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="huge_data", dim_names=["x"])
+        var = new_array(data, name="huge_data", dim_names=["x"])
         
         ! Set chunk size for automatic chunking
         call set_chunk_size(1000)
@@ -255,8 +255,8 @@ contains
         data1 = [1.0_real64, 2.0_real64, 3.0_real64]
         data2 = [4.0_real64, 5.0_real64, 6.0_real64]
         
-        var1 = variable(data1, name="var1", dim_names=["x"])
-        var2 = variable(data2, name="var2", dim_names=["x"])
+        var1 = new_array(data1, name="var1", dim_names=["x"])
+        var2 = new_array(data2, name="var2", dim_names=["x"])
         
         ! Test lazy arithmetic: (var1 + var2) * var1
         ! TODO: Fix lazy_multiply to accept lazy_fortarray_t
@@ -308,7 +308,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [2, 3]
         
         ! Test lazy aggregation: mean of (var * 2)

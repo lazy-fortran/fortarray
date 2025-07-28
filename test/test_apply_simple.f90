@@ -40,7 +40,7 @@ contains
         
         ! Create 2x3 test data
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["x", "y"])
+        var = new_array(data, name="test_data", dim_names=["x", "y"])
         var%shape = [2, 3]
         
         ! Test apply sum along first dimension
@@ -78,7 +78,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 4.0_real64, 9.0_real64, 16.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test vectorized square root
         result = apply_vectorized(var, "sqrt")
@@ -117,7 +117,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test cumulative sum
         result = apply_cumulative(var, "cumsum")

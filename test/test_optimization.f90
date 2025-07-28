@@ -57,8 +57,8 @@ contains
             data2(i) = sin(real(i, real64) * 0.001_real64)
         end do
         
-        var1 = variable(data1, name="simd_test1", dim_names=["index"])
-        var2 = variable(data2, name="simd_test2", dim_names=["index"])
+        var1 = new_array(data1, name="simd_test1", dim_names=["index"])
+        var2 = new_array(data2, name="simd_test2", dim_names=["index"])
         
         ! Baseline: simple addition (should use SIMD automatically)
         call system_clock(start_time, count_rate)
@@ -116,7 +116,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="cache_test", dim_names=["index"])
+        var = new_array(data, name="cache_test", dim_names=["index"])
         
         ! Sequential access pattern (cache-friendly)
         call system_clock(start_time, count_rate)
@@ -176,7 +176,7 @@ contains
             end do
         end do
         
-        var = variable(reshape(data_2d, [1000*1000]), name="layout_test", dim_names=["flat"])
+        var = new_array(reshape(data_2d, [1000*1000]), name="layout_test", dim_names=["flat"])
         
         ! Test memory access patterns
         call system_clock(start_time, count_rate)
@@ -227,7 +227,7 @@ contains
             data(i) = real(i, real64) * 0.01_real64
         end do
         
-        var = variable(data, name="loop_test", dim_names=["index"])
+        var = new_array(data, name="loop_test", dim_names=["index"])
         
         ! Simple loop operations (should be well optimized)
         call system_clock(start_time, count_rate)
@@ -282,7 +282,7 @@ contains
             data(i) = sin(real(i, real64) * 0.0001_real64)
         end do
         
-        var = variable(data, name="parallel_test", dim_names=["index"])
+        var = new_array(data, name="parallel_test", dim_names=["index"])
         
         ! Test with different thread counts
         threads = 1
@@ -363,8 +363,8 @@ contains
             data2(i) = real(i, real64) * 0.02_real64
         end do
         
-        var1 = variable(data1, name="vec_test1", dim_names=["index"])
-        var2 = variable(data2, name="vec_test2", dim_names=["index"])
+        var1 = new_array(data1, name="vec_test1", dim_names=["index"])
+        var2 = new_array(data2, name="vec_test2", dim_names=["index"])
         
         ! Arithmetic operations (should vectorize well)
         call system_clock(start_time, count_rate)
@@ -416,7 +416,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="access_test", dim_names=["index"])
+        var = new_array(data, name="access_test", dim_names=["index"])
         
         ! Contiguous access
         call system_clock(start_time, count_rate)
@@ -471,7 +471,7 @@ contains
             data(i) = real(i, real64) * 0.001_real64
         end do
         
-        var = variable(data, name="intensity_test", dim_names=["index"])
+        var = new_array(data, name="intensity_test", dim_names=["index"])
         
         ! Low computational intensity (memory bound)
         call system_clock(start_time, count_rate)
@@ -526,7 +526,7 @@ contains
             data(i) = real(i, real64)
         end do
         
-        var = variable(data, name="algo_test", dim_names=["index"])
+        var = new_array(data, name="algo_test", dim_names=["index"])
         
         ! Naive approach: multiple passes
         call system_clock(start_time, count_rate)

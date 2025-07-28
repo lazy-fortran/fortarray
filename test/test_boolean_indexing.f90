@@ -52,7 +52,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Create boolean mask: values > 3
         mask = var > 3.0_real64
@@ -98,10 +98,10 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         mask_data = [.false., .true., .false., .true., .true.]
-        mask = variable(mask_data, name="mask", dim_names=["x"])
+        mask = new_array(mask_data, name="mask", dim_names=["x"])
         
         ! Apply mask
         result = where_boolean(mask, var)
@@ -142,7 +142,7 @@ contains
         
         ! 2x3 array - create directly as 1D for now
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["idx"])
+        var = new_array(data, name="test_data", dim_names=["idx"])
         ! Manually set shape for 2D
         deallocate(var%shape)
         allocate(var%shape(2))
@@ -153,7 +153,7 @@ contains
         var%dim_names = ["x", "y"]
         
         mask_data = [.true., .false., .true., .false., .true., .false.]
-        mask = variable(mask_data, name="mask", dim_names=["idx"])
+        mask = new_array(mask_data, name="mask", dim_names=["idx"])
         ! Manually set shape for 2D
         deallocate(mask%shape)
         allocate(mask%shape(2))
@@ -200,7 +200,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test: select values between 2 and 4 (inclusive)
         result = where_boolean((var >= 2.0_real64) .and. (var <= 4.0_real64), var)
@@ -238,7 +238,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test: (values > 2) AND (values < 5)
         result = where_boolean((var > 2.0_real64) .and. (var < 5.0_real64), var)
@@ -275,7 +275,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test: (values < 2) OR (values > 4)
         result = where_boolean((var < 2.0_real64) .or. (var > 4.0_real64), var)
@@ -312,7 +312,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Test: NOT(values == 3)
         result = where_boolean(.not.(var == 3.0_real64), var)
@@ -356,7 +356,7 @@ contains
         test_data(3) = ieee_value(1.0_real64, ieee_quiet_nan)
         test_data(4) = 4.0_real64
         test_data(5) = 5.0_real64
-        var = variable(test_data, name="test_data", dim_names=["x"])
+        var = new_array(test_data, name="test_data", dim_names=["x"])
         
         ! Test: select non-NaN values
         result = where_boolean(.not. isnull(var), var)
@@ -396,11 +396,11 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         fill_values = [-99.0_real64, -99.0_real64, -99.0_real64, -99.0_real64, -99.0_real64]
         mask_data = [.true., .false., .true., .false., .true.]
-        mask = variable(mask_data, name="mask", dim_names=["x"])
+        mask = new_array(mask_data, name="mask", dim_names=["x"])
         
         ! where(mask, var, fill_value)
         result = where_boolean(mask, var, -99.0_real64)
@@ -443,7 +443,7 @@ contains
         
         ! 2x3 array - create directly as 1D for now
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64, 6.0_real64]
-        var = variable(data, name="test_data", dim_names=["idx"])
+        var = new_array(data, name="test_data", dim_names=["idx"])
         ! Manually set shape for 2D
         deallocate(var%shape)
         allocate(var%shape(2))
@@ -455,7 +455,7 @@ contains
         
         ! 1D mask for first dimension
         mask_data = [.true., .false.]
-        mask = variable(mask_data, name="mask", dim_names=["x"])
+        mask = new_array(mask_data, name="mask", dim_names=["x"])
         
         ! Apply mask with broadcasting
         result = where_broadcast(mask, var)
@@ -496,10 +496,10 @@ contains
         
         ! Single element
         data = [42.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         mask_data = [.true.]
-        mask = variable(mask_data, name="mask", dim_names=["x"])
+        mask = new_array(mask_data, name="mask", dim_names=["x"])
         
         result = where_boolean(mask, var)
         
@@ -517,7 +517,7 @@ contains
         
         ! Test empty result
         mask_data = [.false.]
-        mask = variable(mask_data, name="mask", dim_names=["x"])
+        mask = new_array(mask_data, name="mask", dim_names=["x"])
         result = where_boolean(mask, var)
         
         if (result%n_elements /= 0) then
@@ -550,7 +550,7 @@ contains
         do i = 1, 1000
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Select even numbers
         ! Create mask for even numbers using comparison
@@ -558,7 +558,7 @@ contains
         do i = 1, 1000
             temp_data(i) = real(mod(i, 2), real64)
         end do
-        temp_var = variable(temp_data, name="temp", dim_names=["x"])
+        temp_var = new_array(temp_data, name="temp", dim_names=["x"])
         
         ! Create mask: temp_var == 0.0 (even numbers)
         even_mask = temp_var == 0.0_real64
@@ -603,7 +603,7 @@ contains
             x_coord%initialized = .true.
         end if
         
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         allocate(var%coords(1), var%has_coord(1))
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
@@ -645,7 +645,7 @@ contains
         do i = 1, 10
             data(i) = real(i, real64)
         end do
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         ! Complex condition: (x > 3 AND x < 7) OR x == 9
         ! Note: Creating separate masks due to operator precedence issues
@@ -693,7 +693,7 @@ contains
         test_passed = .true.
         
         data = [1.0_real64, 2.0_real64, 3.0_real64, 4.0_real64, 5.0_real64]
-        var = variable(data, name="test_data", dim_names=["x"])
+        var = new_array(data, name="test_data", dim_names=["x"])
         
         mask1_data = [.true., .false., .true., .false., .true.]
         mask1 = create_mask_from_logical_array(mask1_data, ["x"])
