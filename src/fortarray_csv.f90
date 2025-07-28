@@ -31,6 +31,10 @@ module fortarray_csv
     ! Public interfaces
     public :: read_csv
     public :: write_csv
+    public :: write_csv_variable
+    public :: write_csv_with_coords
+    public :: read_csv_with_coords
+    public :: read_csv_with_metadata
     public :: csv_options_t
     public :: CSV_SUCCESS, CSV_ERROR_OPEN, CSV_ERROR_READ
     public :: CSV_ERROR_WRITE, CSV_ERROR_FORMAT, CSV_ERROR_TYPE
@@ -432,5 +436,57 @@ contains
                     (trimmed_str == "nan")
         
     end function is_missing_value
+    
+    !> Write variable to CSV file (legacy interface)
+    function write_csv_variable(filename, arr, include_metadata) result(status)
+        character(len=*), intent(in) :: filename
+        type(fortarray_t), intent(in) :: arr
+        logical, intent(in), optional :: include_metadata
+        integer :: status
+        
+        type(csv_options_t) :: options
+        logical :: with_metadata
+        integer :: temp_status
+        character(len=1024) :: temp_error
+        
+        with_metadata = .false.
+        if (present(include_metadata)) with_metadata = include_metadata
+        
+        ! For now, use basic write_csv function
+        status = write_csv(filename, arr, options, temp_status, temp_error)
+        if (temp_status /= CSV_SUCCESS) status = temp_status
+        
+    end function write_csv_variable
+    
+    !> Write CSV with coordinates
+    function write_csv_with_coords(filename, arr) result(status)
+        character(len=*), intent(in) :: filename
+        type(fortarray_t), intent(in) :: arr
+        integer :: status
+        
+        ! Placeholder - would write coordinates as separate columns
+        status = write_csv_variable(filename, arr)
+        
+    end function write_csv_with_coords
+    
+    !> Read CSV with coordinates
+    function read_csv_with_coords(filename) result(arr)
+        character(len=*), intent(in) :: filename
+        type(fortarray_t) :: arr
+        
+        ! Placeholder - would parse coordinates from columns
+        arr = read_csv(filename)
+        
+    end function read_csv_with_coords
+    
+    !> Read CSV with metadata
+    function read_csv_with_metadata(filename) result(arr)
+        character(len=*), intent(in) :: filename
+        type(fortarray_t) :: arr
+        
+        ! Placeholder - would parse metadata from header comments
+        arr = read_csv(filename)
+        
+    end function read_csv_with_metadata
     
 end module fortarray_csv

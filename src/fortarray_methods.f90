@@ -12,6 +12,7 @@ submodule (fortarray_types) fortarray_methods
     use fortarray_constructors, only: new_array, create_coordinate
     use fortarray_missing_data, only: dropna
     use fortarray_netcdf, only: write_netcdf_variable
+    use fortarray_io, only: to_hdf5, to_zarr, to_binary
     ! DTYPE constants are in fortarray_types, available via parent module
     implicit none
     
@@ -802,6 +803,37 @@ contains
         status = write_netcdf_variable(filename, this)
         
     end function fortarray_to_netcdf_file
+    
+    !> Write array to HDF5 format
+    module function fortarray_to_hdf5(this, filename, group, append, options) result(status)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: filename
+        character(len=*), intent(in), optional :: group
+        logical, intent(in), optional :: append
+        type(write_options_t), intent(in), optional :: options
+        integer :: status
+        
+        status = to_hdf5(this, filename, group, append, options)
+    end function fortarray_to_hdf5
+    
+    !> Write array to Zarr format
+    module function fortarray_to_zarr(this, dirname, chunks) result(status)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: dirname
+        integer, dimension(:), intent(in), optional :: chunks
+        integer :: status
+        
+        status = to_zarr(this, dirname, chunks)
+    end function fortarray_to_zarr
+    
+    !> Write array to binary format
+    module function fortarray_to_binary(this, filename) result(status)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: filename
+        integer :: status
+        
+        status = to_binary(this, filename)
+    end function fortarray_to_binary
     
     module function fortarray_to_numpy_like(this) result(result_array)
         class(fortarray_t), intent(in) :: this

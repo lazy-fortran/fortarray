@@ -37,7 +37,8 @@ contains
         character(len=*), intent(out), optional :: error_msg
         type(fortarray_t) :: var
         
-        integer :: format_type, status
+        character(len=16) :: detected_format
+        integer :: status
         character(len=1024) :: err_msg
         type(dataset_t) :: ds
         character(len=256), dimension(:), allocatable :: var_names
@@ -47,14 +48,16 @@ contains
         var%initialized = .false.
         
         ! Detect file format
-        format_type = detect_file_format(filename, status, err_msg)
-        if (status /= 0) then
+        detected_format = detect_file_format(filename)
+        if (detected_format == "unknown") then
+            status = -1
+            err_msg = "Could not detect file format"
             goto 999
         end if
         
         ! Read based on format
-        select case(format_type)
-        case(FORMAT_NETCDF, FORMAT_NETCDF4, FORMAT_HDF5)
+        select case(trim(detected_format))
+        case("netcdf", "hdf5")
             ! For NetCDF/HDF5, read as dataset first
             ds = read_netcdf(filename, stat=status, error_msg=err_msg)
             if (status /= 0) then
@@ -93,11 +96,11 @@ contains
             
             call finalize_dataset(ds)
             
-        case(FORMAT_CSV)
+        case("csv")
             ! CSV files return a single 2D variable
             var = read_csv(filename, stat=status, error_msg=err_msg)
             
-        case(FORMAT_TEXT)
+        case("text")
             ! Try CSV reader for text files
             var = read_csv(filename, stat=status, error_msg=err_msg)
             if (status /= 0) then
@@ -122,7 +125,8 @@ contains
         character(len=*), intent(out), optional :: error_msg
         type(dataset_t) :: ds
         
-        integer :: format_type, status
+        character(len=16) :: detected_format
+        integer :: status
         character(len=1024) :: err_msg
         type(fortarray_t) :: var
         
@@ -131,18 +135,20 @@ contains
         ds = new_dataset()
         
         ! Detect file format
-        format_type = detect_file_format(filename, status, err_msg)
-        if (status /= 0) then
+        detected_format = detect_file_format(filename)
+        if (detected_format == "unknown") then
+            status = -1
+            err_msg = "Could not detect file format"
             goto 999
         end if
         
         ! Read based on format
-        select case(format_type)
-        case(FORMAT_NETCDF, FORMAT_NETCDF4, FORMAT_HDF5)
+        select case(trim(detected_format))
+        case("netcdf", "hdf5")
             ! NetCDF/HDF5 files naturally contain datasets
             ds = read_netcdf(filename, stat=status, error_msg=err_msg)
             
-        case(FORMAT_CSV)
+        case("csv")
             ! CSV files contain single variable, wrap in dataset
             var = read_csv(filename, stat=status, error_msg=err_msg)
             if (status == 0) then
@@ -150,7 +156,7 @@ contains
             end if
             call finalize_variable(var)
             
-        case(FORMAT_TEXT)
+        case("text")
             ! Try CSV reader for text files
             var = read_csv(filename, stat=status, error_msg=err_msg)
             if (status == 0) then
@@ -171,30 +177,23 @@ contains
         
     end function from_file_to_dataset
     
-    !> Detect file format from extension and content
-    function detect_file_format(filename, stat, error_msg) result(format_type)
+    !> Detect file format from extension and content (string result)
+    function detect_file_format(filename) result(format)
         character(len=*), intent(in) :: filename
-        integer, intent(out), optional :: stat
-        character(len=*), intent(out), optional :: error_msg
-        integer :: format_type
+        character(len=16) :: format
         
-        integer :: status, unit, io_status
-        character(len=1024) :: err_msg
+        integer :: unit, io_status
         character(len=256) :: extension
         character(len=8) :: magic_bytes
         integer :: dot_pos
         logical :: file_exists
         
-        status = 0
-        err_msg = ""
-        format_type = FORMAT_UNKNOWN
+        format = "unknown"
         
         ! Check if file exists
         inquire(file=filename, exist=file_exists)
         if (.not. file_exists) then
-            status = -1
-            write(err_msg, '(A,A,A)') "File not found: '", trim(filename), "'"
-            goto 999
+            return
         end if
         
         ! First try extension-based detection
@@ -204,62 +203,42 @@ contains
             call lowercase(extension)
             
             select case(trim(extension))
-            case('nc')
-                format_type = FORMAT_NETCDF
-            case('nc4')
-                format_type = FORMAT_NETCDF4
+            case('nc', 'nc4', 'netcdf')
+                format = "netcdf"
             case('hdf5', 'h5', 'hdf')
-                format_type = FORMAT_HDF5
+                format = "hdf5"
             case('csv')
-                format_type = FORMAT_CSV
+                format = "csv"
             case('txt', 'dat')
-                format_type = FORMAT_TEXT
+                format = "text"
+            case('bin')
+                format = "binary"
             end select
         end if
         
         ! If extension didn't help, try content-based detection
-        if (format_type == FORMAT_UNKNOWN .or. format_type == FORMAT_TEXT) then
+        if (format == "unknown" .or. format == "text") then
             ! Read magic bytes
             open(newunit=unit, file=filename, status='old', access='stream', &
                  form='unformatted', iostat=io_status)
-            if (io_status /= 0) then
-                status = -1
-                write(err_msg, '(A,A,A,I0)') "Failed to open file '", trim(filename), &
-                      "' for format detection, iostat=", io_status
-                goto 999
-            end if
-            
-            ! Read first 8 bytes
-            magic_bytes = ""
-            read(unit, iostat=io_status) magic_bytes
-            close(unit)
-            
-            ! Check magic bytes
-            if (magic_bytes(1:4) == HDF5_MAGIC) then
-                ! Could be HDF5 or NetCDF4
-                format_type = FORMAT_NETCDF4
-            else if (magic_bytes(1:3) == "CDF") then
-                ! Classic NetCDF
-                format_type = FORMAT_NETCDF
-            else
-                ! Try to detect CSV by reading as text
-                if (is_csv_content(filename)) then
-                    format_type = FORMAT_CSV
-                else if (format_type == FORMAT_UNKNOWN) then
-                    format_type = FORMAT_TEXT
+            if (io_status == 0) then
+                ! Read first 8 bytes  
+                magic_bytes = ""
+                read(unit, iostat=io_status) magic_bytes
+                close(unit)
+                
+                ! Check magic bytes
+                if (magic_bytes(1:4) == HDF5_MAGIC) then
+                    format = "hdf5"
+                else if (magic_bytes(1:3) == "CDF") then
+                    format = "netcdf"
+                else if (is_csv_content(filename)) then
+                    format = "csv"
+                else if (format == "unknown") then
+                    format = "text"
                 end if
             end if
         end if
-        
-        ! Validate format
-        if (format_type == FORMAT_UNKNOWN) then
-            status = -1
-            write(err_msg, '(A,A)') "Unable to determine format of file: ", trim(filename)
-        end if
-        
-999     continue
-        if (present(stat)) stat = status
-        if (present(error_msg)) error_msg = err_msg
         
     end function detect_file_format
     
