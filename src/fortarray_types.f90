@@ -196,6 +196,25 @@ module fortarray_types
         procedure :: bfill => fortarray_bfill
         procedure :: dropna => fortarray_dropna_advanced
         
+        ! Performance optimization layer (Sprint 12)
+        procedure :: sel_simd => fortarray_sel_simd
+        procedure :: sel_range_simd => fortarray_sel_range_simd
+        procedure :: sel_nearest_parallel => fortarray_sel_nearest_parallel
+        procedure :: interp_parallel => fortarray_interp_parallel
+        procedure :: sel_multipoint_parallel => fortarray_sel_multipoint_parallel
+        procedure :: optimize_layout => fortarray_optimize_layout
+        procedure :: prefetch_optimize => fortarray_prefetch_optimize
+        procedure :: chunk_optimize => fortarray_chunk_optimize
+        procedure :: sel_binary_search => fortarray_sel_binary_search
+        procedure :: sel_binary_interp => fortarray_sel_binary_interp
+        procedure :: sel_range_binary => fortarray_sel_range_binary
+        procedure :: sel_batch_sorted => fortarray_sel_batch_sorted
+        procedure :: sel_cached => fortarray_sel_cached
+        procedure :: invalidate_cache => fortarray_invalidate_cache
+        procedure :: get_cache_stats => fortarray_get_cache_stats
+        procedure :: optimize_memory => fortarray_optimize_memory
+        procedure :: sel_range_parallel => fortarray_sel_range_parallel
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -620,6 +639,105 @@ module fortarray_types
             character(len=*), dimension(:), intent(in), optional :: subset
             type(fortarray_t) :: result_array
         end function fortarray_dropna_advanced
+        
+        ! Performance optimization layer (Sprint 12)
+        module function fortarray_sel_simd(this, x) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_simd
+        
+        module function fortarray_sel_range_simd(this, x_min, x_max) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x_min, x_max
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_range_simd
+        
+        module function fortarray_sel_nearest_parallel(this, x) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_nearest_parallel
+        
+        module function fortarray_interp_parallel(this, x) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x
+            type(fortarray_t) :: result_array
+        end function fortarray_interp_parallel
+        
+        module function fortarray_sel_multipoint_parallel(this, x_values) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), dimension(:), intent(in) :: x_values
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_multipoint_parallel
+        
+        module function fortarray_optimize_layout(this, layout) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: layout
+            type(fortarray_t) :: result_array
+        end function fortarray_optimize_layout
+        
+        module function fortarray_prefetch_optimize(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_prefetch_optimize
+        
+        module function fortarray_chunk_optimize(this, chunk_size) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, dimension(:), intent(in) :: chunk_size
+            type(fortarray_t) :: result_array
+        end function fortarray_chunk_optimize
+        
+        module function fortarray_sel_binary_search(this, x) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_binary_search
+        
+        module function fortarray_sel_binary_interp(this, x) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_binary_interp
+        
+        module function fortarray_sel_range_binary(this, x_min, x_max) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x_min, x_max
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_range_binary
+        
+        module function fortarray_sel_batch_sorted(this, x_values) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), dimension(:), intent(in) :: x_values
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_batch_sorted
+        
+        module function fortarray_sel_cached(this, x) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_cached
+        
+        module subroutine fortarray_invalidate_cache(this)
+            class(fortarray_t), intent(inout) :: this
+        end subroutine fortarray_invalidate_cache
+        
+        module subroutine fortarray_get_cache_stats(this, hits, misses, hit_ratio)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(out) :: hits, misses
+            real(real64), intent(out) :: hit_ratio
+        end subroutine fortarray_get_cache_stats
+        
+        module function fortarray_optimize_memory(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_optimize_memory
+        
+        module function fortarray_sel_range_parallel(this, x_min, x_max) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: x_min, x_max
+            type(fortarray_t) :: result_array
+        end function fortarray_sel_range_parallel
         
     end interface
     
