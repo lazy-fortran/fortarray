@@ -317,6 +317,13 @@ contains
         real(real64) :: mean_value
         integer :: i
         
+        ! Check for empty array
+        if (this%n_elements == 0) then
+            write(error_unit, '(A)') "ERROR: Cannot compute mean of empty array"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
         ! Compute mean based on data type
         select case(this%data%dtype)
         case(DTYPE_REAL64)
@@ -1105,7 +1112,8 @@ contains
             allocate(result%data%values_i64(0))
         end select
         
-        result%initialized = .true.
+        ! Don't mark as initialized if truly empty
+        result%initialized = .false.
         
     end function create_empty_like
     
@@ -1287,11 +1295,11 @@ contains
         
         ! Copy the slice range
         new_idx = 1
-        do i = 1, n_elements_before
-            do j = actual_start, actual_stop, step
-                do k = 1, n_elements_after
-                    src_idx = (i-1)*n_elements_dim*n_elements_after + &
-                             (j-1)*n_elements_after + k
+        do k = 1, n_elements_after
+            do j = 1, n_elements_before
+                do i = actual_start, actual_stop, step
+                    src_idx = (k-1)*n_elements_before*n_elements_dim + &
+                             (j-1)*n_elements_dim + i
                     result_values(new_idx) = values_r64(src_idx)
                     new_idx = new_idx + 1
                 end do
@@ -2168,7 +2176,7 @@ contains
             nearest_idx = 1
             do i = 1, size(coord_values)
                 diff = abs(coord_values(i) - value)
-                if (diff < min_diff) then
+                if (diff <= min_diff) then
                     min_diff = diff
                     nearest_idx = i
                 end if
