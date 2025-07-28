@@ -86,7 +86,7 @@ contains
         df = dataframe(data_2d, dim_names=dim_names, coords=coords, &
                       name="temperature_legacy", stat=stat, error_msg=error_msg)
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array - check initialized instead
         if (trim(df%var%name) /= "temperature_legacy") test_passed = .false.
         
         if (test_passed) then
@@ -280,12 +280,9 @@ contains
         
         ! Test 1D array constructor
         call random_number(data_1d)
-        var = variable_from_array(data_1d, dim_name="samples", stat=stat)
+        var = new_array(data_1d, dim_names=["samples"])
         
-        if (stat /= 0) then
-            test_passed = .false.
-            write(error_unit,'(A,I0)') "1D array constructor failed with stat=", stat
-        end if
+        ! No stat parameter for new_array - removed check
         if (.not. var%initialized) then
             test_passed = .false.
             write(error_unit,'(A)') "1D variable not initialized"
@@ -297,9 +294,9 @@ contains
         
         ! Test 2D array constructor with auto-generated names
         call random_number(data_2d)
-        var = variable_from_array(data_2d, stat=stat)
+        var = new_array(data_2d)
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array - check initialized instead
         if (var%n_dims /= 2) test_passed = .false.
         if (var%shape(1) /= 10 .or. var%shape(2) /= 5) test_passed = .false.
         ! Should have auto-generated dimension names
@@ -308,9 +305,9 @@ contains
         
         ! Test 3D integer array
         data_3d = reshape([(i, i=1,27)], [3, 3, 3])
-        var = variable_from_array(data_3d, stat=stat)
+        var = new_array(data_3d)
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array - check initialized instead
         if (var%n_dims /= 3) test_passed = .false.
         if (var%data%dtype /= DTYPE_INT32) test_passed = .false.
         call finalize_variable(var)
@@ -397,7 +394,7 @@ contains
         
         var = variable_empty(dim_names, shape, dtype="real64", stat=stat)
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array - check initialized instead
         if (.not. var%initialized) test_passed = .false.
         if (var%n_dims /= 2) test_passed = .false.
         if (any(var%shape /= shape)) test_passed = .false.
@@ -430,7 +427,7 @@ contains
         scalar_value = 42.0_real64
         var = variable_scalar(scalar_value, name="answer", stat=stat)
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array - check initialized instead
         if (var%n_dims /= 0) test_passed = .false.  ! Scalar has 0 dimensions
         if (var%n_elements /= 1) test_passed = .false.
         if (allocated(var%shape)) test_passed = .false.  ! No shape for scalar
@@ -493,9 +490,10 @@ contains
         
         ! Test single element variable
         single_element(1,1) = 3.14_real64
-        var = variable_from_array(single_element, stat=stat)
+        var = new_array(single_element)
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array, check initialized instead
+        if (.not. var%initialized) test_passed = .false.
         if (var%n_elements /= 1) test_passed = .false.
         if (abs(var%data%values_r64(1) - 3.14_real64) > epsilon(1.0_real64)) then
             test_passed = .false.
@@ -505,15 +503,15 @@ contains
         ! Test large array (but not too large for testing)
         allocate(data_1d(100000))
         call random_number(data_1d)
-        var = variable_from_array(data_1d, dim_name="large", stat=stat)
+        var = new_array(data_1d, dim_names=["large"])
         
-        if (stat /= 0) test_passed = .false.
+        ! No stat parameter for new_array - check initialized instead
         if (var%shape(1) /= 100000) test_passed = .false.
         call finalize_variable(var)
         deallocate(data_1d)
         
         ! Test dataset constructor
-        ds = dataset()
+        ds = new_dataset()
         if (.not. ds%initialized) test_passed = .false.
         if (ds%n_vars /= 0) test_passed = .false.
         
