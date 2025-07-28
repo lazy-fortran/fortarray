@@ -1020,14 +1020,112 @@ contains
         
     end function fortarray_groupby_coord
     
-    module function fortarray_groupby_bins(this, coord_name, bins) result(result_array)
+    module function fortarray_groupby_bins(this, coord_name, bins) result(gb)
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: coord_name
         integer, intent(in) :: bins
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: groupby_bins not yet implemented"
-        result_array = create_empty_like(this)
+        type(groupby_t) :: gb
+        
+        integer :: coord_idx, i
+        real(real64), allocatable :: coord_values(:), bin_edges(:)
+        integer, allocatable :: bin_indices(:)
+        real(real64) :: coord_min, coord_max, bin_width
+        type(fortarray_t) :: bin_var
+        
+        ! Initialize groupby object
+        gb%initialized = .false.
+        
+        ! Find the coordinate
+        coord_idx = find_coordinate_by_name(this, coord_name)
+        if (coord_idx == 0) then
+            write(error_unit, '(A,A)') "ERROR: Coordinate not found: ", coord_name
+            return
+        end if
+        
+        ! Extract coordinate values
+        if (.not. allocated(this%coords(coord_idx)%values_r64)) then
+            write(error_unit, '(A)') "ERROR: Binning coordinates must be real64"
+            return
+        end if
+        
+        coord_values = this%coords(coord_idx)%values_r64
+        
+        ! Calculate bin edges
+        coord_min = minval(coord_values)
+        coord_max = maxval(coord_values)
+        bin_width = (coord_max - coord_min) / real(bins, real64)
+        
+        allocate(bin_edges(bins + 1))
+        do i = 1, bins + 1
+            bin_edges(i) = coord_min + real(i - 1, real64) * bin_width
+        end do
+        
+        ! Assign each coordinate value to a bin
+        allocate(bin_indices(size(coord_values)))
+        do i = 1, size(coord_values)
+            bin_indices(i) = assign_to_bin(coord_values(i), bin_edges, bins)
+        end do
+        
+        ! Create a groupby array from the bin indices
+        bin_var = new_array(bin_indices, name=trim(coord_name) // "_bins", &
+                           dim_names=[coord_name])
+        
+        ! Use existing groupby implementation
+        gb = this%groupby(coord_name, bin_var)
+        
+        call finalize_variable(bin_var)
+        
     end function fortarray_groupby_bins
+    
+    module function fortarray_groupby_quantiles(this, coord_name, n_quantiles) result(gb)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        integer, intent(in) :: n_quantiles
+        type(groupby_t) :: gb
+        
+        integer :: coord_idx, i
+        real(real64), allocatable :: coord_values(:), quantile_edges(:)
+        integer, allocatable :: quantile_indices(:)
+        type(fortarray_t) :: quantile_var
+        
+        ! Initialize groupby object
+        gb%initialized = .false.
+        
+        ! Find the coordinate
+        coord_idx = find_coordinate_by_name(this, coord_name)
+        if (coord_idx == 0) then
+            write(error_unit, '(A,A)') "ERROR: Coordinate not found: ", coord_name
+            return
+        end if
+        
+        ! Extract coordinate values
+        if (.not. allocated(this%coords(coord_idx)%values_r64)) then
+            write(error_unit, '(A)') "ERROR: Quantile binning coordinates must be real64"
+            return
+        end if
+        
+        coord_values = this%coords(coord_idx)%values_r64
+        
+        ! Calculate quantile edges
+        allocate(quantile_edges(n_quantiles + 1))
+        call create_quantile_bins(coord_values, n_quantiles, quantile_edges)
+        
+        ! Assign each coordinate value to a quantile bin
+        allocate(quantile_indices(size(coord_values)))
+        do i = 1, size(coord_values)
+            quantile_indices(i) = assign_to_bin(coord_values(i), quantile_edges, n_quantiles)
+        end do
+        
+        ! Create a groupby array from the quantile indices
+        quantile_var = new_array(quantile_indices, name=trim(coord_name) // "_quantiles", &
+                                dim_names=[coord_name])
+        
+        ! Use existing groupby implementation
+        gb = this%groupby(coord_name, quantile_var)
+        
+        call finalize_variable(quantile_var)
+        
+    end function fortarray_groupby_quantiles
     
     module function fortarray_resample_freq(this, freq) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -5301,5 +5399,87 @@ contains
         ! Should not reach here for valid day_of_year
         month = 12
     end function day_of_year_to_month
+    
+    ! ======= BINNING HELPER FUNCTIONS =======
+    
+    !> Assign a value to the appropriate bin
+    function assign_to_bin(value, bin_edges, n_bins) result(bin_index)
+        real(real64), intent(in) :: value
+        real(real64), intent(in) :: bin_edges(:)
+        integer, intent(in) :: n_bins
+        integer :: bin_index
+        
+        integer :: i
+        
+        ! Handle edge cases
+        if (value <= bin_edges(1)) then
+            bin_index = 1
+            return
+        else if (value >= bin_edges(n_bins + 1)) then
+            bin_index = n_bins
+            return
+        end if
+        
+        ! Find the appropriate bin (binary search could be used for large n_bins)
+        do i = 1, n_bins
+            if (value >= bin_edges(i) .and. value < bin_edges(i + 1)) then
+                bin_index = i
+                return
+            end if
+        end do
+        
+        ! Fallback (shouldn't reach here)
+        bin_index = n_bins
+    end function assign_to_bin
+    
+    !> Create quantile-based bin edges
+    subroutine create_quantile_bins(values, n_bins, bin_edges)
+        real(real64), intent(in) :: values(:)
+        integer, intent(in) :: n_bins
+        real(real64), intent(out) :: bin_edges(:)
+        
+        real(real64), allocatable :: sorted_values(:)
+        integer :: i, n_values, quantile_index
+        real(real64) :: quantile_step
+        
+        n_values = size(values)
+        allocate(sorted_values(n_values))
+        sorted_values = values
+        
+        ! Sort values using simple bubble sort (could be improved)
+        call simple_sort(sorted_values)
+        
+        quantile_step = real(n_values - 1, real64) / real(n_bins, real64)
+        
+        ! Set bin edges based on quantiles
+        bin_edges(1) = sorted_values(1)
+        do i = 2, n_bins
+            quantile_index = int((i - 1) * quantile_step) + 1
+            quantile_index = min(quantile_index, n_values)
+            bin_edges(i) = sorted_values(quantile_index)
+        end do
+        bin_edges(n_bins + 1) = sorted_values(n_values)
+    end subroutine create_quantile_bins
+    
+    !> Simple sorting routine
+    subroutine simple_sort(array)
+        real(real64), intent(inout) :: array(:)
+        
+        integer :: i, j, n
+        real(real64) :: temp
+        
+        n = size(array)
+        
+        ! Bubble sort (simple but inefficient for large arrays)
+        do i = 1, n - 1
+            do j = 1, n - i
+                if (array(j) > array(j + 1)) then
+                    temp = array(j)
+                    array(j) = array(j + 1)
+                    array(j + 1) = temp
+                end if
+            end do
+        end do
+    end subroutine simple_sort
 
 end submodule fortarray_methods

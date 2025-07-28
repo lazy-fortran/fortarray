@@ -215,9 +215,11 @@ module fortarray_types
         procedure :: optimize_memory => fortarray_optimize_memory
         procedure :: sel_range_parallel => fortarray_sel_range_parallel
         
-        ! Groupby methods (Sprint 13-14)
+        ! Groupby methods (Sprint 13-15)
         procedure :: groupby => fortarray_groupby
         procedure :: groupby_coord => fortarray_groupby_coord
+        procedure :: groupby_bins => fortarray_groupby_bins
+        procedure :: groupby_quantiles => fortarray_groupby_quantiles
         
     end type fortarray_t
     
@@ -798,6 +800,20 @@ module fortarray_types
             character(len=*), intent(in) :: coord_name
             type(groupby_t) :: gb
         end function fortarray_groupby_coord
+        
+        module function fortarray_groupby_bins(this, coord_name, bins) result(gb)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            integer, intent(in) :: bins
+            type(groupby_t) :: gb
+        end function fortarray_groupby_bins
+        
+        module function fortarray_groupby_quantiles(this, coord_name, n_quantiles) result(gb)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            integer, intent(in) :: n_quantiles
+            type(groupby_t) :: gb
+        end function fortarray_groupby_quantiles
         
         ! Groupby aggregation methods
         module function groupby_mean(this, skipna) result(result_array)
