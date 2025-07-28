@@ -6,6 +6,7 @@ module fortarray_arithmetic
     use fortarray_memory
     use fortarray_broadcasting
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
+    use ieee_arithmetic, only: ieee_is_nan
     implicit none
     private
     
@@ -125,8 +126,9 @@ contains
         real(real64) :: result
         real(real64), parameter :: missing = huge(1.0_real64)
         
-        ! If either value is missing, result is missing
-        if (abs(val1 - missing) < 1e-10 .or. abs(val2 - missing) < 1e-10) then
+        ! If either value is missing (huge or NaN), result is missing
+        if (abs(val1 - missing) < 1e-10 .or. abs(val2 - missing) < 1e-10 .or. &
+            ieee_is_nan(val1) .or. ieee_is_nan(val2)) then
             result = missing
         else
             select case(op)

@@ -318,8 +318,8 @@ contains
         if (present(how)) drop_how = how
         
         if (present(dim) .and. var%n_dims > 1) then
-            ! Multi-dimensional dropna not fully implemented
-            result = dropna_along_dim(var, dim, drop_how)
+            ! Use the advanced dropna implementation
+            result = var%dropna(axis=dim, how=drop_how)
         else
             ! 1D dropna
             values = get_values_as_real64(var)
