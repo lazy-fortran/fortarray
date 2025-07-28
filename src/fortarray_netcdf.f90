@@ -22,18 +22,6 @@ module fortarray_netcdf
     integer, parameter :: NC_ERROR_WRITE = -9
     integer, parameter :: NC_ERROR_CREATE = -10
     
-    ! Write options type for NetCDF writing
-    type :: write_options_t
-        logical :: compress = .false.
-        integer :: deflate_level = 6
-        logical :: shuffle = .false.
-        logical :: fletcher32 = .false.
-        integer, dimension(:), allocatable :: chunksizes
-        logical :: unlimited_dims = .false.
-        logical :: cf_compliant = .true.
-        logical :: atomic_write = .true.
-        character(len=256) :: temp_suffix = ".tmp"
-    end type write_options_t
     
     ! Public interfaces
     public :: read_netcdf
@@ -44,7 +32,6 @@ module fortarray_netcdf
     public :: list_netcdf_attributes
     public :: write_netcdf
     public :: write_netcdf_variable
-    public :: write_options_t
     public :: NC_SUCCESS, NC_ERROR_OPEN, NC_ERROR_READ
     public :: NC_ERROR_DIMS, NC_ERROR_VARS, NC_ERROR_ATTRS
     public :: NC_ERROR_TYPE, NC_ERROR_MEMORY, NC_ERROR_GROUPS

@@ -75,6 +75,21 @@ module fortarray_types
         final :: data_storage_finalizer
     end type data_storage_t
     
+    ! Write options type for various formats
+    type :: write_options_t
+        logical :: compress = .false.
+        character(len=16) :: compression = "gzip"
+        integer :: deflate_level = 6
+        logical :: shuffle = .false.
+        logical :: fletcher32 = .false.
+        character(len=16) :: format = "netcdf4"
+        integer, dimension(:), allocatable :: chunksizes
+        logical :: unlimited_dims = .false.
+        logical :: cf_compliant = .true.
+        logical :: atomic_write = .true.
+        character(len=256) :: temp_suffix = ".tmp"
+    end type write_options_t
+    
     ! Variable type - represents a NetCDF variable (was dataframe_t)
     type :: fortarray_t
         ! Basic properties
@@ -179,6 +194,9 @@ module fortarray_types
         procedure :: values => fortarray_values_all
         procedure :: values_copy => fortarray_values_copy
         procedure :: to_netcdf => fortarray_to_netcdf_file
+        procedure :: to_hdf5 => fortarray_to_hdf5
+        procedure :: to_zarr => fortarray_to_zarr
+        procedure :: to_binary => fortarray_to_binary
         procedure :: to_numpy => fortarray_to_numpy_like
         procedure :: to_pandas => fortarray_to_pandas_like
         
@@ -320,7 +338,7 @@ module fortarray_types
     end type dataframe_t
     
     ! Make types public
-    public :: fortarray_t, dataset_t, coordinate_t, data_storage_t, dimension_t
+    public :: fortarray_t, dataset_t, coordinate_t, data_storage_t, dimension_t, write_options_t
     public :: groupby_t  ! Groupby type for Sprint 13
     public :: dataframe_t  ! For backward compatibility
     public :: MAX_NAME_LEN, MAX_ATTR_LEN
@@ -590,6 +608,28 @@ module fortarray_types
             character(len=*), intent(in) :: filename
             integer :: status
         end function fortarray_to_netcdf_file
+        
+        module function fortarray_to_hdf5(this, filename, group, append, options) result(status)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: filename
+            character(len=*), intent(in), optional :: group
+            logical, intent(in), optional :: append
+            type(write_options_t), intent(in), optional :: options
+            integer :: status
+        end function fortarray_to_hdf5
+        
+        module function fortarray_to_zarr(this, dirname, chunks) result(status)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: dirname
+            integer, dimension(:), intent(in), optional :: chunks
+            integer :: status
+        end function fortarray_to_zarr
+        
+        module function fortarray_to_binary(this, filename) result(status)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: filename
+            integer :: status
+        end function fortarray_to_binary
         
         module function fortarray_to_numpy_like(this) result(result_array)
             class(fortarray_t), intent(in) :: this
