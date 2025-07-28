@@ -672,56 +672,7 @@ contains
     
     ! Helper functions that would need implementation
     
-    function read_csv_with_metadata(filename) result(arr)
-        character(len=*), intent(in) :: filename
-        type(fortarray_t) :: arr
-        ! Placeholder
-        arr%initialized = .false.
-    end function read_csv_with_metadata
     
-    function open_zarr_array(path) result(arr)
-        character(len=*), intent(in) :: path
-        type(fortarray_t) :: arr
-        ! Placeholder
-        arr%initialized = .false.
-    end function open_zarr_array
-    
-    function open_binary_array(filename) result(arr)
-        character(len=*), intent(in) :: filename
-        type(fortarray_t) :: arr
-        ! Placeholder
-        arr%initialized = .false.
-    end function open_binary_array
-    
-    function write_csv_with_coords(filename, arr) result(status)
-        character(len=*), intent(in) :: filename
-        type(fortarray_t), intent(in) :: arr
-        integer :: status
-        ! Placeholder
-        status = -1
-    end function write_csv_with_coords
-    
-    function read_csv_with_coords(filename) result(arr)
-        character(len=*), intent(in) :: filename
-        type(fortarray_t) :: arr
-        ! Placeholder
-        arr%initialized = .false.
-    end function read_csv_with_coords
-    
-    function convert_format(input_file, output_file, output_format) result(status)
-        character(len=*), intent(in) :: input_file, output_file, output_format
-        integer :: status
-        ! Placeholder
-        status = -1
-    end function convert_format
-    
-    subroutine list_hdf5_groups(filename, groups, n_groups)
-        character(len=*), intent(in) :: filename
-        character(len=256), dimension(:), allocatable, intent(out) :: groups
-        integer, intent(out) :: n_groups
-        ! Placeholder
-        n_groups = 0
-    end subroutine list_hdf5_groups
     
     subroutine finalize_fortarray(arr)
         type(fortarray_t), intent(inout) :: arr

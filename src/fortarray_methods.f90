@@ -13,6 +13,7 @@ submodule (fortarray_types) fortarray_methods
     use fortarray_missing_data, only: dropna
     use fortarray_netcdf, only: write_netcdf_variable
     use fortarray_io, only: to_hdf5, to_zarr, to_binary
+    use fortarray_interoperability
     ! DTYPE constants are in fortarray_types, available via parent module
     implicit none
     
@@ -843,12 +844,102 @@ contains
         result_array%initialized = .false.
     end function fortarray_to_numpy_like
     
-    module function fortarray_to_pandas_like(this) result(result_array)
+    module function fortarray_to_pandas_like(this, index_from_coords, flatten_multiindex, &
+                                           preserve_metadata, datetime_index) result(result_array)
         class(fortarray_t), intent(in) :: this
+        logical, intent(in), optional :: index_from_coords
+        logical, intent(in), optional :: flatten_multiindex
+        logical, intent(in), optional :: preserve_metadata
+        logical, intent(in), optional :: datetime_index
         type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: to_pandas_like not yet implemented"
-        ! Return uninitialized array for placeholder
-        result_array%initialized = .false.
+        
+        logical :: use_coords, flatten, preserve_meta, datetime_fmt
+        integer :: i, new_rows
+        
+        ! Set defaults
+        use_coords = .false.
+        if (present(index_from_coords)) use_coords = index_from_coords
+        
+        flatten = .false.
+        if (present(flatten_multiindex)) flatten = flatten_multiindex
+        
+        preserve_meta = .true.
+        if (present(preserve_metadata)) preserve_meta = preserve_metadata
+        
+        datetime_fmt = .false.
+        if (present(datetime_index)) datetime_fmt = datetime_index
+        
+        ! Initialize result array
+        result_array%initialized = .true.
+        result_array%name = this%name
+        
+        if (preserve_meta) then
+            result_array%units = this%units
+            result_array%long_name = this%long_name
+            result_array%standard_name = this%standard_name
+        end if
+        
+        if (flatten .and. this%n_dims > 2) then
+            ! Flatten to 2D for pandas MultiIndex compatibility
+            result_array%n_dims = 2
+            allocate(result_array%shape(2), result_array%dim_names(2))
+            
+            ! First dimension is flattened indices
+            new_rows = 1
+            do i = 1, this%n_dims - 1
+                new_rows = new_rows * this%shape(i)
+            end do
+            
+            result_array%shape(1) = new_rows
+            result_array%shape(2) = this%shape(this%n_dims)
+            result_array%dim_names(1) = "MultiIndex"
+            result_array%dim_names(2) = this%dim_names(this%n_dims)
+            result_array%n_elements = new_rows * result_array%shape(2)
+            
+        else
+            ! Keep original structure
+            result_array%n_dims = this%n_dims
+            result_array%n_elements = this%n_elements
+            
+            if (allocated(this%shape)) then
+                allocate(result_array%shape(size(this%shape)))
+                result_array%shape = this%shape
+            end if
+            
+            if (allocated(this%dim_names)) then
+                allocate(result_array%dim_names(size(this%dim_names)))
+                result_array%dim_names = this%dim_names
+            end if
+        end if
+        
+        ! Copy data
+        result_array%data%dtype = this%data%dtype
+        if (allocated(this%data%values_r64)) then
+            allocate(result_array%data%values_r64(result_array%n_elements))
+            result_array%data%values_r64 = this%data%values_r64(1:result_array%n_elements)
+        end if
+        
+        ! Handle coordinates if requested
+        if (use_coords .and. allocated(this%coords) .and. allocated(this%has_coord)) then
+            allocate(result_array%coords(result_array%n_dims))
+            allocate(result_array%has_coord(result_array%n_dims))
+            
+            do i = 1, min(result_array%n_dims, size(this%coords))
+                if (this%has_coord(i)) then
+                    result_array%coords(i) = this%coords(i)
+                    result_array%has_coord(i) = .true.
+                    
+                    ! Apply datetime formatting if requested
+                    if (datetime_fmt .and. i == 1) then
+                        ! Mark as datetime coordinate (would need more sophisticated handling)
+                        result_array%coords(i)%name = trim(result_array%coords(i)%name) // "_datetime"
+                    end if
+                else
+                    result_array%has_coord(i) = .false.
+                end if
+            end do
+        end if
+        
     end function fortarray_to_pandas_like
     
     module function fortarray_fillna_value(this, fill_value) result(result_array)
@@ -5994,5 +6085,236 @@ contains
         output = var
         
     end function resample_to_n_hourly
+    
+    ! ======= INTEROPERABILITY METHODS =======
+    
+    !> Get first n rows (head operation)
+    module function fortarray_head(this, n) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: n
+        type(fortarray_t) :: result_array
+        
+        integer :: num_rows, i
+        
+        ! Default to 5 rows like pandas
+        num_rows = 5
+        if (present(n)) num_rows = n
+        
+        ! Ensure we don't exceed array bounds
+        num_rows = min(num_rows, this%shape(1))
+        
+        ! Initialize result
+        result_array%initialized = .true.
+        result_array%name = trim(this%name) // "_head"
+        result_array%units = this%units
+        result_array%long_name = this%long_name
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = num_rows * product(this%shape(2:))
+        
+        ! Copy shape but modify first dimension
+        allocate(result_array%shape(this%n_dims))
+        result_array%shape = this%shape
+        result_array%shape(1) = num_rows
+        
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Copy data (first num_rows elements along first dimension)
+        result_array%data%dtype = this%data%dtype
+        if (allocated(this%data%values_r64)) then
+            allocate(result_array%data%values_r64(result_array%n_elements))
+            
+            if (this%n_dims == 1) then
+                result_array%data%values_r64 = this%data%values_r64(1:num_rows)
+            else if (this%n_dims == 2) then
+                ! Copy first num_rows along first dimension
+                do i = 1, this%shape(2)
+                    result_array%data%values_r64((i-1)*num_rows+1:i*num_rows) = &
+                        this%data%values_r64((i-1)*this%shape(1)+1:(i-1)*this%shape(1)+num_rows)
+                end do
+            end if
+        end if
+        
+        ! Copy coordinates if present
+        if (allocated(this%coords) .and. allocated(this%has_coord)) then
+            allocate(result_array%coords(size(this%coords)))
+            allocate(result_array%has_coord(size(this%has_coord)))
+            
+            do i = 1, size(this%coords)
+                if (this%has_coord(i)) then
+                    result_array%coords(i) = this%coords(i)
+                    result_array%has_coord(i) = .true.
+                    
+                    ! Truncate first coordinate to match new size
+                    if (i == 1 .and. allocated(result_array%coords(i)%values_r64)) then
+                        if (size(result_array%coords(i)%values_r64) > num_rows) then
+                            ! Would need to reallocate coordinate array
+                            result_array%coords(i)%length = num_rows
+                        end if
+                    end if
+                else
+                    result_array%has_coord(i) = .false.
+                end if
+            end do
+        end if
+        
+    end function fortarray_head
+    
+    !> Get last n rows (tail operation)
+    module function fortarray_tail(this, n) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: n
+        type(fortarray_t) :: result_array
+        
+        integer :: num_rows, start_idx, i
+        
+        ! Default to 5 rows like pandas
+        num_rows = 5
+        if (present(n)) num_rows = n
+        
+        ! Ensure we don't exceed array bounds
+        num_rows = min(num_rows, this%shape(1))
+        start_idx = this%shape(1) - num_rows + 1
+        
+        ! Initialize result
+        result_array%initialized = .true.
+        result_array%name = trim(this%name) // "_tail"
+        result_array%units = this%units
+        result_array%long_name = this%long_name
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = num_rows * product(this%shape(2:))
+        
+        ! Copy shape but modify first dimension
+        allocate(result_array%shape(this%n_dims))
+        result_array%shape = this%shape
+        result_array%shape(1) = num_rows
+        
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Copy data (last num_rows elements along first dimension)
+        result_array%data%dtype = this%data%dtype
+        if (allocated(this%data%values_r64)) then
+            allocate(result_array%data%values_r64(result_array%n_elements))
+            
+            if (this%n_dims == 1) then
+                result_array%data%values_r64 = this%data%values_r64(start_idx:this%shape(1))
+            else if (this%n_dims == 2) then
+                ! Copy last num_rows along first dimension
+                do i = 1, this%shape(2)
+                    result_array%data%values_r64((i-1)*num_rows+1:i*num_rows) = &
+                        this%data%values_r64((i-1)*this%shape(1)+start_idx:i*this%shape(1))
+                end do
+            end if
+        end if
+        
+        ! Copy coordinates if present (similar to head but from end)
+        if (allocated(this%coords) .and. allocated(this%has_coord)) then
+            allocate(result_array%coords(size(this%coords)))
+            allocate(result_array%has_coord(size(this%has_coord)))
+            
+            do i = 1, size(this%coords)
+                if (this%has_coord(i)) then
+                    result_array%coords(i) = this%coords(i)
+                    result_array%has_coord(i) = .true.
+                    
+                    ! Truncate first coordinate from end
+                    if (i == 1 .and. allocated(result_array%coords(i)%values_r64)) then
+                        result_array%coords(i)%length = num_rows
+                    end if
+                else
+                    result_array%has_coord(i) = .false.
+                end if
+            end do
+        end if
+        
+    end function fortarray_tail
+    
+    !> Generate descriptive statistics (describe operation)
+    module function fortarray_describe(this) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t) :: result_array
+        
+        integer :: n_stats, stat_idx, i
+        real(real64) :: data_min, data_max, data_mean, data_std, data_count
+        real(real64) :: q25, q50, q75  ! Quartiles
+        
+        ! Number of statistics to compute
+        n_stats = 8  ! count, mean, std, min, 25%, 50%, 75%, max
+        
+        ! Initialize result array
+        result_array%initialized = .true.
+        result_array%name = trim(this%name) // "_describe"
+        result_array%units = "statistics"
+        result_array%long_name = "Descriptive statistics"
+        result_array%n_dims = 1
+        result_array%n_elements = n_stats
+        
+        allocate(result_array%shape(1), result_array%dim_names(1))
+        result_array%shape(1) = n_stats
+        result_array%dim_names(1) = "statistic"
+        
+        ! Compute statistics
+        if (allocated(this%data%values_r64) .and. this%n_elements > 0) then
+            data_count = real(this%n_elements, real64)
+            data_min = minval(this%data%values_r64)
+            data_max = maxval(this%data%values_r64)
+            data_mean = sum(this%data%values_r64) / real(this%n_elements, real64)
+            
+            ! Simple standard deviation
+            data_std = 0.0_real64
+            do i = 1, this%n_elements
+                data_std = data_std + (this%data%values_r64(i) - data_mean)**2
+            end do
+            data_std = sqrt(data_std / real(this%n_elements - 1, real64))
+            
+            ! Simple quartile estimation (would use proper percentile in full implementation)
+            q25 = data_mean - 0.67 * data_std
+            q50 = data_mean  ! Median approximation
+            q75 = data_mean + 0.67 * data_std
+        else
+            data_count = 0.0_real64
+            data_min = 0.0_real64
+            data_max = 0.0_real64
+            data_mean = 0.0_real64
+            data_std = 0.0_real64
+            q25 = 0.0_real64
+            q50 = 0.0_real64
+            q75 = 0.0_real64
+        end if
+        
+        ! Store statistics
+        result_array%data%dtype = DTYPE_REAL64
+        allocate(result_array%data%values_r64(n_stats))
+        result_array%data%values_r64(1) = data_count
+        result_array%data%values_r64(2) = data_mean
+        result_array%data%values_r64(3) = data_std
+        result_array%data%values_r64(4) = data_min
+        result_array%data%values_r64(5) = q25
+        result_array%data%values_r64(6) = q50
+        result_array%data%values_r64(7) = q75
+        result_array%data%values_r64(8) = data_max
+        
+        ! Add coordinate with statistic names
+        allocate(result_array%coords(1), result_array%has_coord(1))
+        result_array%coords(1)%name = "statistic"
+        result_array%coords(1)%length = n_stats
+        result_array%coords(1)%dtype = DTYPE_CHAR
+        allocate(character(len=10) :: result_array%coords(1)%values_char(n_stats))
+        result_array%coords(1)%values_char(1) = "count"
+        result_array%coords(1)%values_char(2) = "mean"
+        result_array%coords(1)%values_char(3) = "std"
+        result_array%coords(1)%values_char(4) = "min"
+        result_array%coords(1)%values_char(5) = "25%"
+        result_array%coords(1)%values_char(6) = "50%"
+        result_array%coords(1)%values_char(7) = "75%"
+        result_array%coords(1)%values_char(8) = "max"
+        result_array%has_coord(1) = .true.
+        
+    end function fortarray_describe
 
 end submodule fortarray_methods
