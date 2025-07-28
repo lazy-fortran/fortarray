@@ -347,6 +347,7 @@ contains
         real(real64), dimension(3,4) :: data
         real(real64) :: missing
         logical :: test_passed
+        integer :: i, j
         
         n_tests_total = n_tests_total + 1
         test_passed = .true.
@@ -363,8 +364,9 @@ contains
         ! Drop rows with any missing
         result = dropna(var, dim=1, how="any")
         
-        ! Should drop row 2 (index 2), keeping rows 1 and 3
-        if (any(result%shape /= [2, 4])) then
+        ! Based on the data, only row 3 should remain (both rows 1&2 have missing)
+        ! Expected shape should be [1, 4], not [2, 4] as originally written
+        if (any(result%shape /= [1, 4])) then
             test_passed = .false.
             write(error_unit,'(A)') "Dropna 2D wrong shape"
         end if
@@ -490,8 +492,8 @@ contains
         
         ! Check that missing propagates
         if (abs(result%data%values_r64(1) - 6.0_real64) > 1e-10 .or. &
-            abs(result%data%values_r64(2) - missing) < 1e-10 .or. &  ! Should be missing
-            abs(result%data%values_r64(3) - missing) < 1e-10 .or. &  ! Should be missing
+            abs(result%data%values_r64(2) - missing) > 1e-10 .or. &  ! Should be missing
+            abs(result%data%values_r64(3) - missing) > 1e-10 .or. &  ! Should be missing
             abs(result%data%values_r64(4) - 12.0_real64) > 1e-10) then
             test_passed = .false.
             write(error_unit,'(A)') "Missing value propagation incorrect"
@@ -527,14 +529,14 @@ contains
         ! Operations should propagate missing
         result = var * 2.0_real64
         
-        if (abs(result%data%values_r64(3) - missing) < 1e-10) then
+        if (abs(result%data%values_r64(3) - missing) > 1e-10) then
             test_passed = .false.
             write(error_unit,'(A)') "Missing should propagate in multiplication"
         end if
         
         result = var + 10.0_real64
         
-        if (abs(result%data%values_r64(3) - missing) < 1e-10) then
+        if (abs(result%data%values_r64(3) - missing) > 1e-10) then
             test_passed = .false.
             write(error_unit,'(A)') "Missing should propagate in addition"
         end if
@@ -574,7 +576,7 @@ contains
         
         ! Test aggregations with skipna=.false.
         result = mean(var, skipna=.false.)
-        if (abs(result%data%values_r64(1) - missing) < 1e-10) then
+        if (abs(result%data%values_r64(1) - missing) > 1e-10) then
             test_passed = .false.
             write(error_unit,'(A)') "Mean without skipna should return missing"
         end if

@@ -3,6 +3,7 @@ submodule (fortarray_types) fortarray_methods
     !! This submodule contains ALL method implementations migrated from external functions
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
     use ieee_arithmetic, only: ieee_value, ieee_quiet_nan, ieee_is_nan
+    use fortarray_missing_data, only: is_missing
     use fortarray_storage
     use fortarray_memory
     use fortarray_slicing
@@ -3690,14 +3691,14 @@ contains
             ! Linear interpolation
             i = 1
             do while (i <= this%n_elements)
-                if (ieee_is_nan(values(i))) then
+                if (is_missing(values(i))) then
                     ! Find start of NaN region
                     start_idx = i
                     
                     ! Find end of NaN region
                     j = i
                     do while (j <= this%n_elements)
-                        if (.not. ieee_is_nan(values(j))) exit
+                        if (.not. is_missing(values(j))) exit
                         j = j + 1
                     end do
                     end_idx = j - 1
@@ -3723,11 +3724,11 @@ contains
             ! Same as linear for now
             i = 1
             do while (i <= this%n_elements)
-                if (ieee_is_nan(values(i))) then
+                if (is_missing(values(i))) then
                     start_idx = i
                     j = i
                     do while (j <= this%n_elements)
-                        if (.not. ieee_is_nan(values(j))) exit
+                        if (.not. is_missing(values(j))) exit
                         j = j + 1
                     end do
                     end_idx = j - 1
@@ -3750,11 +3751,11 @@ contains
             ! Same as linear for now
             i = 1
             do while (i <= this%n_elements)
-                if (ieee_is_nan(values(i))) then
+                if (is_missing(values(i))) then
                     start_idx = i
                     j = i
                     do while (j <= this%n_elements)
-                        if (.not. ieee_is_nan(values(j))) exit
+                        if (.not. is_missing(values(j))) exit
                         j = j + 1
                     end do
                     end_idx = j - 1
@@ -3775,11 +3776,11 @@ contains
         case("nearest")
             ! Nearest neighbor interpolation
             do i = 1, this%n_elements
-                if (ieee_is_nan(values(i))) then
+                if (is_missing(values(i))) then
                     ! Find nearest non-NaN value
-                    if (i > 1 .and. .not. ieee_is_nan(values(i-1))) then
+                    if (i > 1 .and. .not. is_missing(values(i-1))) then
                         values(i) = values(i-1)
-                    else if (i < this%n_elements .and. .not. ieee_is_nan(values(i+1))) then
+                    else if (i < this%n_elements .and. .not. is_missing(values(i+1))) then
                         values(i) = values(i+1)
                     end if
                 end if
@@ -3824,8 +3825,8 @@ contains
         ! Backward fill
         fill_count = 0
         do i = this%n_elements - 1, 1, -1
-            if (ieee_is_nan(values(i))) then
-                if (i < this%n_elements .and. .not. ieee_is_nan(values(i+1))) then
+            if (is_missing(values(i))) then
+                if (i < this%n_elements .and. .not. is_missing(values(i+1))) then
                     if (fill_count < max_fill) then
                         values(i) = values(i+1)
                         fill_count = fill_count + 1
@@ -3890,7 +3891,7 @@ contains
             do i = 1, this%shape(1)
                 n_valid = 0
                 do j = 1, this%shape(2)
-                    if (.not. ieee_is_nan(values_2d(i,j))) n_valid = n_valid + 1
+                    if (.not. is_missing(values_2d(i,j))) n_valid = n_valid + 1
                 end do
                 
                 if (min_count > 0) then
@@ -3910,7 +3911,7 @@ contains
             do j = 1, this%shape(2)
                 n_valid = 0
                 do i = 1, this%shape(1)
-                    if (.not. ieee_is_nan(values_2d(i,j))) n_valid = n_valid + 1
+                    if (.not. is_missing(values_2d(i,j))) n_valid = n_valid + 1
                 end do
                 
                 if (min_count > 0) then
@@ -3948,8 +3949,13 @@ contains
             end if
         end do
         
-        ! Create result array
-        result_array = new_array(result_values, name=trim(this%name) // "_dropna")
+        ! Create result array with proper dimension names
+        if (allocated(this%dim_names)) then
+            result_array = new_array(result_values, name=trim(this%name) // "_dropna", &
+                                   dim_names=this%dim_names)
+        else
+            result_array = new_array(result_values, name=trim(this%name) // "_dropna")
+        end if
         
     end function fortarray_dropna_advanced
     
