@@ -205,6 +205,11 @@ module fortarray_types
         procedure :: tail => fortarray_tail
         procedure :: describe => fortarray_describe
         
+        ! xarray compatibility methods (Sprint 21)
+        procedure :: select_coord_value => fortarray_select_coord_value
+        procedure :: select_indices => fortarray_select_indices
+        procedure :: multiply_scalar => fortarray_multiply_scalar
+        
         ! Enhanced selection methods (Sprint 7)
         procedure :: sel_nearest => fortarray_sel_nearest_r64
         procedure :: sel_interp => fortarray_sel_interp_linear
@@ -987,6 +992,27 @@ module fortarray_types
             character(len=*), intent(in) :: operation
             type(fortarray_t) :: result_array
         end function groupby_transform
+        
+        ! xarray compatibility methods (Sprint 21)
+        module function fortarray_select_coord_value(this, coord_name, value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in) :: value
+            type(fortarray_t) :: result_array
+        end function fortarray_select_coord_value
+        
+        module function fortarray_select_indices(this, dim, indices) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in) :: dim
+            integer, dimension(:), intent(in) :: indices
+            type(fortarray_t) :: result_array
+        end function fortarray_select_indices
+        
+        module function fortarray_multiply_scalar(this, scalar) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: scalar
+            type(fortarray_t) :: result_array
+        end function fortarray_multiply_scalar
         
     end interface
     
