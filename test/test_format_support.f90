@@ -6,6 +6,7 @@ program test_format_support
     use fortarray_datasets
     use fortarray_csv, only: write_csv_variable
     use fortarray_format_detection, only: detect_file_format
+    use fortarray_netcdf, only: write_netcdf_variable
     implicit none
     
     logical :: all_tests_passed = .true.
