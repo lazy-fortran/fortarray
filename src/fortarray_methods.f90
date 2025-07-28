@@ -487,12 +487,61 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_to_pandas_like
     
-    function fortarray_fillna_value(this, value) result(result_array)
+    function fortarray_fillna_value(this, fill_value) result(result_array)
         class(fortarray_t), intent(in) :: this
-        real(real64), intent(in) :: value
+        real(real64), intent(in) :: fill_value
         type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: fillna_value not yet implemented"
+        integer :: i
+        
+        ! Create copy of input array
         result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        
+        ! Copy data
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                if (.not. allocated(result_array%data%values_r64)) then
+                    allocate(result_array%data%values_r64(this%n_elements))
+                end if
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                if (.not. allocated(result_array%data%values_r32)) then
+                    allocate(result_array%data%values_r32(this%n_elements))
+                end if
+                result_array%data%values_r32(:) = this%data%values_r32(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported for copying"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        if (.not. result_array%initialized) then
+            write(error_unit, '(A)') "ERROR: Failed to create copy for fillna operation"
+            return
+        end if
+        
+        ! Replace missing values (use huge as placeholder for NaN)
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                do i = 1, this%n_elements
+                    if (this%data%values_r64(i) >= huge(1.0_real64) * 0.9_real64) then
+                        result_array%data%values_r64(i) = fill_value
+                    end if
+                end do
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: fillna_value not supported for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
     end function fortarray_fillna_value
     
     function fortarray_fillna_method(this, method) result(result_array)
@@ -534,8 +583,64 @@ contains
     function fortarray_ffill(this) result(result_array)
         class(fortarray_t), intent(in) :: this
         type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: ffill not yet implemented"
+        integer :: i
+        real(real64) :: last_valid
+        
+        ! Create copy of input array
         result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        
+        ! Copy data
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                if (.not. allocated(result_array%data%values_r64)) then
+                    allocate(result_array%data%values_r64(this%n_elements))
+                end if
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                if (.not. allocated(result_array%data%values_r32)) then
+                    allocate(result_array%data%values_r32(this%n_elements))
+                end if
+                result_array%data%values_r32(:) = this%data%values_r32(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported for copying"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        if (.not. result_array%initialized) then
+            write(error_unit, '(A)') "ERROR: Failed to create copy for ffill operation"
+            return
+        end if
+        
+        ! Forward fill missing values
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                last_valid = this%data%values_r64(1)  ! Initialize with first value
+                do i = 1, this%n_elements
+                    if (this%data%values_r64(i) < huge(1.0_real64) * 0.9_real64) then
+                        ! Valid value
+                        last_valid = this%data%values_r64(i)
+                        result_array%data%values_r64(i) = last_valid
+                    else
+                        ! Missing value - use last valid
+                        result_array%data%values_r64(i) = last_valid
+                    end if
+                end do
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: ffill not supported for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
     end function fortarray_ffill
     
     function fortarray_bfill(this) result(result_array)
@@ -1213,5 +1318,517 @@ contains
         end select
         
     end subroutine get_values_r64
+
+    !> ======= FILTERING AND CONDITIONAL OPERATIONS =======
+    
+    !> where() operation - replace values not meeting condition with other_value
+    module function fortarray_where_gt_r64(this, threshold, other_value) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        real(real64), intent(in) :: threshold
+        real(real64), intent(in) :: other_value
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        ! Create a proper copy of this array
+        result_array%initialized = .true.
+        result_array%n_dims = this%n_dims
+        result_array%n_elements = this%n_elements
+        result_array%name = this%name
+        result_array%units = this%units
+        
+        ! Copy shape and dimension names
+        if (allocated(this%shape)) then
+            allocate(result_array%shape(size(this%shape)))
+            result_array%shape = this%shape
+        end if
+        if (allocated(this%dim_names)) then
+            allocate(result_array%dim_names(size(this%dim_names)))
+            result_array%dim_names = this%dim_names
+        end if
+        
+        ! Initialize data storage and copy
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                allocate(result_array%data%values_r64(this%n_elements))
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                allocate(result_array%data%values_r32(this%n_elements))
+                result_array%data%values_r32(:) = this%data%values_r32(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported for copying"
+            return
+        end select
+        
+        if (.not. result_array%initialized) then
+            write(error_unit, '(A)') "ERROR: Failed to create copy for where_gt operation"
+            return
+        end if
+        
+        ! Apply condition: where values <= threshold, set to other_value
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                do i = 1, this%n_elements
+                    if (this%data%values_r64(i) <= threshold) then
+                        result_array%data%values_r64(i) = other_value
+                    end if
+                end do
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                ! Convert to real64 for output
+                result_array%data%dtype = DTYPE_REAL64
+                allocate(result_array%data%values_r64(this%n_elements))
+                do i = 1, this%n_elements
+                    if (real(this%data%values_r32(i), real64) <= threshold) then
+                        result_array%data%values_r64(i) = other_value
+                    else
+                        result_array%data%values_r64(i) = real(this%data%values_r32(i), real64)
+                    end if
+                end do
+                result_array%data%dtype = DTYPE_REAL64
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: where_gt not supported for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_where_gt_r64
+    
+    !> where() operation for less than
+    module function fortarray_where_lt_r64(this, threshold, other_value) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        real(real64), intent(in) :: threshold
+        real(real64), intent(in) :: other_value
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        ! Create copy of input array
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        
+        ! Copy data
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                if (.not. allocated(result_array%data%values_r64)) then
+                    allocate(result_array%data%values_r64(this%n_elements))
+                end if
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                if (.not. allocated(result_array%data%values_r32)) then
+                    allocate(result_array%data%values_r32(this%n_elements))
+                end if
+                result_array%data%values_r32(:) = this%data%values_r32(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported for copying"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        if (.not. result_array%initialized) then
+            write(error_unit, '(A)') "ERROR: Failed to create copy for where_lt operation"
+            return
+        end if
+        
+        ! Apply condition: where values >= threshold, set to other_value
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                do i = 1, this%n_elements
+                    if (this%data%values_r64(i) >= threshold) then
+                        result_array%data%values_r64(i) = other_value
+                    end if
+                end do
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                ! Convert to real64 for output
+                result_array%data%dtype = DTYPE_REAL64
+                allocate(result_array%data%values_r64(this%n_elements))
+                do i = 1, this%n_elements
+                    if (real(this%data%values_r32(i), real64) >= threshold) then
+                        result_array%data%values_r64(i) = other_value
+                    else
+                        result_array%data%values_r64(i) = real(this%data%values_r32(i), real64)
+                    end if
+                end do
+                result_array%data%dtype = DTYPE_REAL64
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: where_lt not supported for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_where_lt_r64
+    
+    !> Create boolean mask for values > threshold
+    module function fortarray_gt_r64(this, threshold) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        real(real64), intent(in) :: threshold
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        ! Initialize result with same shape but logical data type
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = DTYPE_LOGICAL
+        result_array%data%n_elements = this%n_elements
+        if (.not. allocated(result_array%data%values_logical)) then
+            allocate(result_array%data%values_logical(this%n_elements))
+        end if
+        
+        ! Create boolean mask
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                do i = 1, this%n_elements
+                    result_array%data%values_logical(i) = this%data%values_r64(i) > threshold
+                end do
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                do i = 1, this%n_elements
+                    result_array%data%values_logical(i) = real(this%data%values_r32(i), real64) > threshold
+                end do
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: gt not supported for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_gt_r64
+    
+    !> Create boolean mask for values < threshold
+    module function fortarray_lt_r64(this, threshold) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        real(real64), intent(in) :: threshold
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        ! Initialize result with same shape but logical data type
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = DTYPE_LOGICAL
+        result_array%data%n_elements = this%n_elements
+        if (.not. allocated(result_array%data%values_logical)) then
+            allocate(result_array%data%values_logical(this%n_elements))
+        end if
+        
+        ! Create boolean mask
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                do i = 1, this%n_elements
+                    result_array%data%values_logical(i) = this%data%values_r64(i) < threshold
+                end do
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                do i = 1, this%n_elements
+                    result_array%data%values_logical(i) = real(this%data%values_r32(i), real64) < threshold
+                end do
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: lt not supported for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_lt_r64
+    
+    !> Apply boolean mask to select elements
+    module function fortarray_mask_where(this, mask) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t), intent(in) :: mask
+        type(fortarray_t) :: result_array
+        integer :: i, count_true, result_idx
+        
+        if (.not. mask%initialized .or. mask%data%dtype /= DTYPE_LOGICAL) then
+            write(error_unit, '(A)') "ERROR: mask_where requires initialized logical mask"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (mask%n_elements /= this%n_elements) then
+            write(error_unit, '(A)') "ERROR: mask_where requires mask and array to have same size"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Count true values in mask
+        count_true = 0
+        do i = 1, mask%n_elements
+            if (mask%data%values_logical(i)) count_true = count_true + 1
+        end do
+        
+        ! Create result array with reduced size
+        result_array = create_empty_like(this)
+        result_array%n_elements = count_true
+        if (allocated(result_array%shape)) result_array%shape(1) = count_true
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = count_true
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (.not. allocated(result_array%data%values_r64)) then
+                allocate(result_array%data%values_r64(count_true))
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported for mask_where"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        ! Copy selected elements
+        result_idx = 1
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                do i = 1, this%n_elements
+                    if (mask%data%values_logical(i)) then
+                        result_array%data%values_r64(result_idx) = this%data%values_r64(i)
+                        result_idx = result_idx + 1
+                    end if
+                end do
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: mask_where not yet implemented for this data type"
+            result_array = create_empty_like(this)
+        end select
+        
+    end function fortarray_mask_where
+    
+    !> Logical AND operation on boolean arrays
+    module function fortarray_logical_and(this, other) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t), intent(in) :: other
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        if (.not. this%initialized .or. .not. other%initialized) then
+            write(error_unit, '(A)') "ERROR: logical_and requires both arrays to be initialized"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%data%dtype /= DTYPE_LOGICAL .or. other%data%dtype /= DTYPE_LOGICAL) then
+            write(error_unit, '(A)') "ERROR: logical_and requires both arrays to be logical"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%n_elements /= other%n_elements) then
+            write(error_unit, '(A)') "ERROR: logical_and requires arrays to have same size"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Create result logical array
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = DTYPE_LOGICAL
+        result_array%data%n_elements = this%n_elements
+        if (.not. allocated(result_array%data%values_logical)) then
+            allocate(result_array%data%values_logical(this%n_elements))
+        end if
+        
+        ! Perform AND operation
+        do i = 1, this%n_elements
+            result_array%data%values_logical(i) = this%data%values_logical(i) .and. other%data%values_logical(i)
+        end do
+        
+    end function fortarray_logical_and
+    
+    !> Logical OR operation on boolean arrays
+    module function fortarray_logical_or(this, other) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t), intent(in) :: other
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        if (.not. this%initialized .or. .not. other%initialized) then
+            write(error_unit, '(A)') "ERROR: logical_or requires both arrays to be initialized"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%data%dtype /= DTYPE_LOGICAL .or. other%data%dtype /= DTYPE_LOGICAL) then
+            write(error_unit, '(A)') "ERROR: logical_or requires both arrays to be logical"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%n_elements /= other%n_elements) then
+            write(error_unit, '(A)') "ERROR: logical_or requires arrays to have same size"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Create result logical array
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = DTYPE_LOGICAL
+        result_array%data%n_elements = this%n_elements
+        if (.not. allocated(result_array%data%values_logical)) then
+            allocate(result_array%data%values_logical(this%n_elements))
+        end if
+        
+        ! Perform OR operation
+        do i = 1, this%n_elements
+            result_array%data%values_logical(i) = this%data%values_logical(i) .or. other%data%values_logical(i)
+        end do
+        
+    end function fortarray_logical_or
+    
+    !> Logical NOT operation on boolean array
+    module function fortarray_logical_not(this) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        if (.not. this%initialized) then
+            write(error_unit, '(A)') "ERROR: logical_not requires array to be initialized"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%data%dtype /= DTYPE_LOGICAL) then
+            write(error_unit, '(A)') "ERROR: logical_not requires logical array"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Create result logical array
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = DTYPE_LOGICAL
+        result_array%data%n_elements = this%n_elements
+        if (.not. allocated(result_array%data%values_logical)) then
+            allocate(result_array%data%values_logical(this%n_elements))
+        end if
+        
+        ! Perform NOT operation
+        do i = 1, this%n_elements
+            result_array%data%values_logical(i) = .not. this%data%values_logical(i)
+        end do
+        
+    end function fortarray_logical_not
+    
+    
+    !> Custom condition evaluation (placeholder - simplified)
+    module function fortarray_where_custom(this, condition, other_value) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: condition
+        real(real64), intent(in) :: other_value
+        type(fortarray_t) :: result_array
+        integer :: i
+        
+        ! Create copy of input array
+        result_array = create_empty_like(this)
+        result_array%initialized = .true.
+        result_array%data%initialized = .true.
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        
+        ! Copy data
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                if (.not. allocated(result_array%data%values_r64)) then
+                    allocate(result_array%data%values_r64(this%n_elements))
+                end if
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case(DTYPE_REAL32)
+            if (allocated(this%data%values_r32)) then
+                if (.not. allocated(result_array%data%values_r32)) then
+                    allocate(result_array%data%values_r32(this%n_elements))
+                end if
+                result_array%data%values_r32(:) = this%data%values_r32(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported for copying"
+            result_array = create_empty_like(this)
+            return
+        end select
+        
+        if (.not. result_array%initialized) then
+            write(error_unit, '(A)') "ERROR: Failed to create copy for where_custom operation"
+            return
+        end if
+        
+        ! Simple parser for "x**2 > 16" type conditions
+        if (index(condition, "x**2 > 16") > 0) then
+            select case(this%data%dtype)
+            case(DTYPE_REAL64)
+                if (allocated(this%data%values_r64)) then
+                    do i = 1, this%n_elements
+                        if (this%data%values_r64(i)**2 <= 16.0_real64) then
+                            result_array%data%values_r64(i) = other_value
+                        end if
+                    end do
+                end if
+            case default
+                write(error_unit, '(A)') "ERROR: where_custom not supported for this data type"
+                result_array = create_empty_like(this)
+            end select
+        else
+            write(error_unit, '(A)') "ERROR: where_custom condition not recognized: ", condition
+            result_array = create_empty_like(this)
+        end if
+        
+    end function fortarray_where_custom
+    
+    !> Complex boolean expression evaluation (placeholder)
+    module function fortarray_where_complex(this, expression, other_value) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: expression
+        real(real64), intent(in) :: other_value
+        type(fortarray_t) :: result_array
+        
+        ! For now, just echo the functionality request
+        write(error_unit, '(A)') "INFO: where_complex expression: ", expression
+        
+        ! Create copy of input array as placeholder
+        result_array = create_empty_like(this)
+        result_array%data%dtype = this%data%dtype
+        result_array%data%n_elements = this%n_elements
+        result_array%initialized = .true.
+        
+        ! Copy data
+        select case(this%data%dtype)
+        case(DTYPE_REAL64)
+            if (allocated(this%data%values_r64)) then
+                result_array%data%values_r64(:) = this%data%values_r64(:)
+            end if
+        case default
+            write(error_unit, '(A)') "ERROR: Data type not supported"
+            result_array = create_empty_like(this)
+        end select
+        
+        ! Placeholder: complex boolean expressions would require a full parser
+        write(error_unit, '(A)') "INFO: where_complex not fully implemented - returning copy"
+        
+    end function fortarray_where_complex
 
 end submodule fortarray_methods

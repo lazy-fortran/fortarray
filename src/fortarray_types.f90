@@ -140,6 +140,20 @@ module fortarray_types
         procedure :: mean => fortarray_mean_all
         procedure :: sum => fortarray_sum_all
         
+        ! Filtering and conditional operations
+        procedure :: where_gt => fortarray_where_gt_r64
+        procedure :: where_lt => fortarray_where_lt_r64
+        procedure :: gt => fortarray_gt_r64
+        procedure :: lt => fortarray_lt_r64
+        procedure :: mask_where => fortarray_mask_where
+        procedure :: logical_and => fortarray_logical_and
+        procedure :: logical_or => fortarray_logical_or
+        procedure :: logical_not => fortarray_logical_not
+        procedure :: fillna_value => fortarray_fillna_value
+        procedure :: ffill => fortarray_ffill
+        procedure :: where_custom => fortarray_where_custom
+        procedure :: where_complex => fortarray_where_complex
+        
     end type fortarray_t
     
     ! Dataset type - represents a NetCDF file with multiple variables
@@ -255,6 +269,82 @@ module fortarray_types
             class(fortarray_t), intent(in) :: this
             type(fortarray_t) :: result_array
         end function fortarray_sum_all
+        
+        ! Filtering and conditional operations
+        module function fortarray_where_gt_r64(this, threshold, other_value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: threshold
+            real(real64), intent(in) :: other_value
+            type(fortarray_t) :: result_array
+        end function fortarray_where_gt_r64
+        
+        module function fortarray_where_lt_r64(this, threshold, other_value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: threshold
+            real(real64), intent(in) :: other_value
+            type(fortarray_t) :: result_array
+        end function fortarray_where_lt_r64
+        
+        module function fortarray_gt_r64(this, threshold) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: threshold
+            type(fortarray_t) :: result_array
+        end function fortarray_gt_r64
+        
+        module function fortarray_lt_r64(this, threshold) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: threshold
+            type(fortarray_t) :: result_array
+        end function fortarray_lt_r64
+        
+        module function fortarray_mask_where(this, mask) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t), intent(in) :: mask
+            type(fortarray_t) :: result_array
+        end function fortarray_mask_where
+        
+        module function fortarray_logical_and(this, other) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t), intent(in) :: other
+            type(fortarray_t) :: result_array
+        end function fortarray_logical_and
+        
+        module function fortarray_logical_or(this, other) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t), intent(in) :: other
+            type(fortarray_t) :: result_array
+        end function fortarray_logical_or
+        
+        module function fortarray_logical_not(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_logical_not
+        
+        module function fortarray_fillna_value(this, fill_value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: fill_value
+            type(fortarray_t) :: result_array
+        end function fortarray_fillna_value
+        
+        module function fortarray_ffill(this) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            type(fortarray_t) :: result_array
+        end function fortarray_ffill
+        
+        module function fortarray_where_custom(this, condition, other_value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: condition
+            real(real64), intent(in) :: other_value
+            type(fortarray_t) :: result_array
+        end function fortarray_where_custom
+        
+        module function fortarray_where_complex(this, expression, other_value) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: expression
+            real(real64), intent(in) :: other_value
+            type(fortarray_t) :: result_array
+        end function fortarray_where_complex
+        
     end interface
     
 contains
