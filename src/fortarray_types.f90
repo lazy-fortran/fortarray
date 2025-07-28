@@ -141,6 +141,20 @@ module fortarray_types
         procedure :: mean => fortarray_mean_all
         procedure :: sum => fortarray_sum_all
         
+        ! Advanced aggregation methods (Sprint 9)
+        procedure :: quantile => fortarray_quantile
+        procedure :: percentile => fortarray_percentile
+        procedure :: weighted_mean => fortarray_weighted_mean
+        procedure :: weighted_sum => fortarray_weighted_sum
+        procedure :: weighted_std => fortarray_weighted_std
+        procedure :: cumsum => fortarray_cumsum
+        procedure :: cumprod => fortarray_cumprod
+        procedure :: cummin => fortarray_cummin
+        procedure :: cummax => fortarray_cummax
+        procedure :: rolling_mean => fortarray_rolling_mean
+        procedure :: rolling_sum => fortarray_rolling_sum
+        procedure :: rolling_std => fortarray_rolling_std
+        
         ! Filtering and conditional operations
         procedure :: where_gt => fortarray_where_gt_r64
         procedure :: where_lt => fortarray_where_lt_r64
@@ -293,6 +307,92 @@ module fortarray_types
             class(fortarray_t), intent(in) :: this
             type(fortarray_t) :: result_array
         end function fortarray_sum_all
+        
+        ! Advanced aggregation methods (Sprint 9)
+        module function fortarray_quantile(this, q, axis, interpolation) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: q
+            character(len=*), intent(in), optional :: axis
+            character(len=*), intent(in), optional :: interpolation
+            type(fortarray_t) :: result_array
+        end function fortarray_quantile
+        
+        module function fortarray_percentile(this, p, axis, interpolation) result(percentile_val)
+            class(fortarray_t), intent(in) :: this
+            real(real64), intent(in) :: p
+            character(len=*), intent(in), optional :: axis
+            character(len=*), intent(in), optional :: interpolation
+            real(real64) :: percentile_val
+        end function fortarray_percentile
+        
+        module function fortarray_weighted_mean(this, weights, axis) result(weighted_mean_val)
+            class(fortarray_t), intent(in) :: this
+            class(fortarray_t), intent(in) :: weights
+            character(len=*), intent(in), optional :: axis
+            real(real64) :: weighted_mean_val
+        end function fortarray_weighted_mean
+        
+        module function fortarray_weighted_sum(this, weights, axis) result(weighted_sum_val)
+            class(fortarray_t), intent(in) :: this
+            class(fortarray_t), intent(in) :: weights
+            character(len=*), intent(in), optional :: axis
+            real(real64) :: weighted_sum_val
+        end function fortarray_weighted_sum
+        
+        module function fortarray_weighted_std(this, weights, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            class(fortarray_t), intent(in) :: weights
+            character(len=*), intent(in), optional :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_weighted_std
+        
+        module function fortarray_cumsum(this, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_cumsum
+        
+        module function fortarray_cumprod(this, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_cumprod
+        
+        module function fortarray_cummin(this, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_cummin
+        
+        module function fortarray_cummax(this, axis) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in), optional :: axis
+            type(fortarray_t) :: result_array
+        end function fortarray_cummax
+        
+        module function fortarray_rolling_mean(this, window, center, min_periods) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in) :: window
+            logical, intent(in), optional :: center
+            integer, intent(in), optional :: min_periods
+            type(fortarray_t) :: result_array
+        end function fortarray_rolling_mean
+        
+        module function fortarray_rolling_sum(this, window, center, min_periods) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in) :: window
+            logical, intent(in), optional :: center
+            integer, intent(in), optional :: min_periods
+            type(fortarray_t) :: result_array
+        end function fortarray_rolling_sum
+        
+        module function fortarray_rolling_std(this, window, center, min_periods) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            integer, intent(in) :: window
+            logical, intent(in), optional :: center
+            integer, intent(in), optional :: min_periods
+            type(fortarray_t) :: result_array
+        end function fortarray_rolling_std
         
         ! Filtering and conditional operations
         module function fortarray_where_gt_r64(this, threshold, other_value) result(result_array)

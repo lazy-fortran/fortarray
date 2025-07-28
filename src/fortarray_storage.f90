@@ -165,7 +165,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -187,7 +187,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 2) then
+        if (storage%dtype /= DTYPE_INT64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -209,7 +209,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 3) then
+        if (storage%dtype /= DTYPE_REAL32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -231,7 +231,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -253,7 +253,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -275,7 +275,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -297,7 +297,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 2) then
+        if (storage%dtype /= DTYPE_INT64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -319,7 +319,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 3) then
+        if (storage%dtype /= DTYPE_REAL32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -341,7 +341,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -363,7 +363,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 5) then
+        if (storage%dtype /= DTYPE_CHAR) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -386,7 +386,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -414,7 +414,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 2) then
+        if (storage%dtype /= DTYPE_INT64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -442,7 +442,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 3) then
+        if (storage%dtype /= DTYPE_REAL32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -470,7 +470,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -498,7 +498,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 1) then
+        if (storage%dtype /= DTYPE_INT32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -526,7 +526,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 2) then
+        if (storage%dtype /= DTYPE_INT64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -554,7 +554,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 3) then
+        if (storage%dtype /= DTYPE_REAL32) then
             stat = STORAGE_ERROR_TYPE
             return
         end if
@@ -582,7 +582,7 @@ contains
             return
         end if
         
-        if (storage%dtype /= 4) then
+        if (storage%dtype /= DTYPE_REAL64) then
             stat = STORAGE_ERROR_TYPE
             return
         end if

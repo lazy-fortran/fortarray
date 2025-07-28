@@ -2,6 +2,7 @@ submodule (fortarray_types) fortarray_methods
     !! Implementation of all xarray-compatible methods for fortarray_t
     !! This submodule contains ALL method implementations migrated from external functions
     use iso_fortran_env, only: int32, int64, real32, real64, error_unit
+    use ieee_arithmetic, only: ieee_value, ieee_quiet_nan
     use fortarray_storage
     use fortarray_memory
     use fortarray_slicing
@@ -572,13 +573,6 @@ contains
         result_array = create_empty_like(this)
     end function fortarray_median
     
-    module function fortarray_quantile(this, q) result(result_array)
-        class(fortarray_t), intent(in) :: this
-        real(real64), intent(in) :: q
-        type(fortarray_t) :: result_array
-        write(error_unit, '(A)') "ERROR: quantile not yet implemented"
-        result_array = create_empty_like(this)
-    end function fortarray_quantile
     
     module function fortarray_values_all(this) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -2596,5 +2590,633 @@ contains
         end select
         
     end function fortarray_sel_method_choice
+    
+    ! ======= ADVANCED AGGREGATION METHODS (Sprint 9) =======
+    
+    !> Calculate quantile(s) of the array
+    module function fortarray_quantile(this, q, axis, interpolation) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        real(real64), intent(in) :: q  ! Single quantile or array of quantiles
+        character(len=*), intent(in), optional :: axis
+        character(len=*), intent(in), optional :: interpolation  ! 'linear', 'lower', 'higher', 'midpoint', 'nearest'
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: sorted_data(:)
+        real(real64) :: pos, frac
+        integer :: n, idx, lo, hi
+        character(len=20) :: interp_method
+        
+        ! Set default interpolation method
+        interp_method = "linear"
+        if (present(interpolation)) interp_method = interpolation
+        
+        ! Only handle real64 data for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: quantile only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Get data size
+        n = this%n_elements
+        if (n == 0) then
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Copy and sort data
+        allocate(sorted_data(n))
+        sorted_data = this%data%values_r64
+        call quicksort_r64(sorted_data, 1, n)
+        
+        ! Calculate quantile position (0-based indexing)
+        pos = q * real(n - 1, real64)
+        
+        ! Determine indices for interpolation
+        lo = int(pos) + 1  ! Convert to 1-based indexing
+        hi = min(lo + 1, n)
+        frac = pos - real(lo - 1, real64)
+        
+        ! Bounds checking
+        if (lo < 1) lo = 1
+        if (hi > n) hi = n
+        
+        ! Calculate quantile based on interpolation method
+        select case(trim(interp_method))
+        case("linear")
+            ! Linear interpolation between lo and hi
+            if (lo == hi) then
+                result_array = new_array([sorted_data(lo)], name="quantile")
+            else
+                result_array = new_array([sorted_data(lo) * (1.0_real64 - frac) + sorted_data(hi) * frac], &
+                                       name="quantile")
+            end if
+        case("lower")
+            result_array = new_array([sorted_data(lo)], name="quantile")
+        case("higher")
+            result_array = new_array([sorted_data(hi)], name="quantile")
+        case("midpoint")
+            if (lo == hi) then
+                result_array = new_array([sorted_data(lo)], name="quantile")
+            else
+                result_array = new_array([(sorted_data(lo) + sorted_data(hi)) * 0.5_real64], name="quantile")
+            end if
+        case("nearest")
+            if (frac < 0.5_real64) then
+                result_array = new_array([sorted_data(lo)], name="quantile")
+            else
+                result_array = new_array([sorted_data(hi)], name="quantile")
+            end if
+        case default
+            write(error_unit, '(A,A,A)') "ERROR: Unknown interpolation method '", trim(interp_method), "'"
+            result_array = create_empty_like(this)
+        end select
+        
+        deallocate(sorted_data)
+        
+    end function fortarray_quantile
+    
+    !> Calculate quantiles for multiple q values
+    module function fortarray_quantile_multi(this, q_array, axis, interpolation) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        real(real64), dimension(:), intent(in) :: q_array  ! Array of quantiles
+        character(len=*), intent(in), optional :: axis
+        character(len=*), intent(in), optional :: interpolation
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: result_values(:)
+        type(fortarray_t) :: single_result
+        integer :: i, nq
+        
+        nq = size(q_array)
+        allocate(result_values(nq))
+        
+        ! Calculate each quantile
+        do i = 1, nq
+            single_result = this%quantile(q_array(i), axis, interpolation)
+            if (single_result%data%dtype == DTYPE_REAL64 .and. allocated(single_result%data%values_r64)) then
+                result_values(i) = single_result%data%values_r64(1)
+            else
+                result_values(i) = 0.0_real64  ! Error case
+            end if
+        end do
+        
+        ! Create result array
+        result_array = new_array(result_values, name="quantiles")
+        
+        deallocate(result_values)
+        
+    end function fortarray_quantile_multi
+    
+    !> Calculate percentile (convenience wrapper for quantile)
+    module function fortarray_percentile(this, p, axis, interpolation) result(percentile_val)
+        class(fortarray_t), intent(in) :: this
+        real(real64), intent(in) :: p  ! Percentile (0-100)
+        character(len=*), intent(in), optional :: axis
+        character(len=*), intent(in), optional :: interpolation
+        real(real64) :: percentile_val
+        
+        type(fortarray_t) :: result
+        
+        ! Convert percentile to quantile (0-1 range)
+        result = this%quantile(p / 100.0_real64, axis, interpolation)
+        
+        ! Extract scalar value
+        if (result%data%dtype == DTYPE_REAL64 .and. allocated(result%data%values_r64)) then
+            percentile_val = result%data%values_r64(1)
+        else
+            percentile_val = 0.0_real64  ! Error case
+        end if
+        
+    end function fortarray_percentile
+    
+    !> Calculate weighted mean
+    module function fortarray_weighted_mean(this, weights, axis) result(weighted_mean_val)
+        class(fortarray_t), intent(in) :: this
+        class(fortarray_t), intent(in) :: weights
+        character(len=*), intent(in), optional :: axis
+        real(real64) :: weighted_mean_val
+        
+        real(real64) :: sum_weighted, sum_weights
+        integer :: i
+        
+        ! Check dimensions match
+        if (this%n_elements /= weights%n_elements) then
+            write(error_unit, '(A)') "ERROR: Array and weights must have same size"
+            weighted_mean_val = 0.0_real64
+            return
+        end if
+        
+        ! Only handle real64 for now
+        if (this%data%dtype /= DTYPE_REAL64 .or. weights%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: weighted_mean only supports real64 data type"
+            weighted_mean_val = 0.0_real64
+            return
+        end if
+        
+        ! Calculate weighted mean
+        sum_weighted = 0.0_real64
+        sum_weights = 0.0_real64
+        
+        do i = 1, this%n_elements
+            sum_weighted = sum_weighted + this%data%values_r64(i) * weights%data%values_r64(i)
+            sum_weights = sum_weights + weights%data%values_r64(i)
+        end do
+        
+        if (sum_weights > 0.0_real64) then
+            weighted_mean_val = sum_weighted / sum_weights
+        else
+            weighted_mean_val = 0.0_real64
+        end if
+        
+    end function fortarray_weighted_mean
+    
+    !> Calculate weighted sum
+    module function fortarray_weighted_sum(this, weights, axis) result(weighted_sum_val)
+        class(fortarray_t), intent(in) :: this
+        class(fortarray_t), intent(in) :: weights
+        character(len=*), intent(in), optional :: axis
+        real(real64) :: weighted_sum_val
+        
+        integer :: i
+        
+        ! Check dimensions match
+        if (this%n_elements /= weights%n_elements) then
+            write(error_unit, '(A)') "ERROR: Array and weights must have same size"
+            weighted_sum_val = 0.0_real64
+            return
+        end if
+        
+        ! Only handle real64 for now
+        if (this%data%dtype /= DTYPE_REAL64 .or. weights%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: weighted_sum only supports real64 data type"
+            weighted_sum_val = 0.0_real64
+            return
+        end if
+        
+        ! Calculate weighted sum
+        weighted_sum_val = 0.0_real64
+        do i = 1, this%n_elements
+            weighted_sum_val = weighted_sum_val + this%data%values_r64(i) * weights%data%values_r64(i)
+        end do
+        
+    end function fortarray_weighted_sum
+    
+    !> Calculate weighted standard deviation
+    module function fortarray_weighted_std(this, weights, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        class(fortarray_t), intent(in) :: weights
+        character(len=*), intent(in), optional :: axis
+        type(fortarray_t) :: result_array
+        
+        real(real64) :: weighted_mean, weighted_var, sum_weights
+        real(real64) :: sum_squared_dev
+        integer :: i
+        
+        ! Calculate weighted mean first
+        weighted_mean = this%weighted_mean(weights, axis)
+        
+        ! Calculate weighted variance
+        sum_squared_dev = 0.0_real64
+        sum_weights = 0.0_real64
+        
+        do i = 1, this%n_elements
+            sum_squared_dev = sum_squared_dev + weights%data%values_r64(i) * &
+                            (this%data%values_r64(i) - weighted_mean)**2
+            sum_weights = sum_weights + weights%data%values_r64(i)
+        end do
+        
+        if (sum_weights > 0.0_real64) then
+            weighted_var = sum_squared_dev / sum_weights
+            result_array = new_array([sqrt(weighted_var)], name="weighted_std")
+        else
+            result_array = new_array([0.0_real64], name="weighted_std")
+        end if
+        
+    end function fortarray_weighted_std
+    
+    !> Calculate cumulative sum
+    module function fortarray_cumsum(this, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: axis
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: cumulative(:)
+        integer :: i
+        
+        ! Only handle 1D real64 for now
+        if (this%n_dims > 1 .and. .not. present(axis)) then
+            write(error_unit, '(A)') "ERROR: cumsum requires axis parameter for multi-dimensional arrays"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: cumsum only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate cumulative array
+        allocate(cumulative(this%n_elements))
+        
+        ! Calculate cumulative sum
+        cumulative(1) = this%data%values_r64(1)
+        do i = 2, this%n_elements
+            cumulative(i) = cumulative(i-1) + this%data%values_r64(i)
+        end do
+        
+        ! Create result array
+        result_array = new_array(cumulative, name="cumsum")
+        result_array%dim_names = this%dim_names
+        result_array%shape = this%shape
+        
+        deallocate(cumulative)
+        
+    end function fortarray_cumsum
+    
+    !> Calculate cumulative product
+    module function fortarray_cumprod(this, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: axis
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: cumulative(:)
+        integer :: i
+        
+        ! Only handle 1D real64 for now
+        if (this%n_dims > 1 .and. .not. present(axis)) then
+            write(error_unit, '(A)') "ERROR: cumprod requires axis parameter for multi-dimensional arrays"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: cumprod only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate cumulative array
+        allocate(cumulative(this%n_elements))
+        
+        ! Calculate cumulative product
+        cumulative(1) = this%data%values_r64(1)
+        do i = 2, this%n_elements
+            cumulative(i) = cumulative(i-1) * this%data%values_r64(i)
+        end do
+        
+        ! Create result array
+        result_array = new_array(cumulative, name="cumprod")
+        result_array%dim_names = this%dim_names
+        result_array%shape = this%shape
+        
+        deallocate(cumulative)
+        
+    end function fortarray_cumprod
+    
+    !> Calculate cumulative minimum
+    module function fortarray_cummin(this, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: axis
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: cumulative(:)
+        integer :: i
+        
+        ! Only handle 1D real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: cummin only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate cumulative array
+        allocate(cumulative(this%n_elements))
+        
+        ! Calculate cumulative minimum
+        cumulative(1) = this%data%values_r64(1)
+        do i = 2, this%n_elements
+            cumulative(i) = min(cumulative(i-1), this%data%values_r64(i))
+        end do
+        
+        ! Create result array
+        result_array = new_array(cumulative, name="cummin")
+        
+        deallocate(cumulative)
+        
+    end function fortarray_cummin
+    
+    !> Calculate cumulative maximum
+    module function fortarray_cummax(this, axis) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in), optional :: axis
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: cumulative(:)
+        integer :: i
+        
+        ! Only handle 1D real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: cummax only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate cumulative array
+        allocate(cumulative(this%n_elements))
+        
+        ! Calculate cumulative maximum
+        cumulative(1) = this%data%values_r64(1)
+        do i = 2, this%n_elements
+            cumulative(i) = max(cumulative(i-1), this%data%values_r64(i))
+        end do
+        
+        ! Create result array
+        result_array = new_array(cumulative, name="cummax")
+        
+        deallocate(cumulative)
+        
+    end function fortarray_cummax
+    
+    !> Calculate rolling mean
+    module function fortarray_rolling_mean(this, window, center, min_periods) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in) :: window
+        logical, intent(in), optional :: center
+        integer, intent(in), optional :: min_periods
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: rolling_values(:)
+        real(real64) :: window_sum
+        integer :: i, j, start_idx, end_idx, count
+        integer :: min_count
+        logical :: use_center
+        
+        ! Set defaults
+        use_center = .false.
+        if (present(center)) use_center = center
+        min_count = window
+        if (present(min_periods)) min_count = min_periods
+        
+        ! Only handle 1D real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: rolling_mean only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate result array
+        allocate(rolling_values(this%n_elements))
+        rolling_values = 0.0_real64  ! Initialize with zeros (will be NaN for insufficient data)
+        
+        ! Calculate rolling mean
+        do i = 1, this%n_elements
+            if (use_center) then
+                start_idx = max(1, i - window/2)
+                end_idx = min(this%n_elements, i + window/2)
+            else
+                start_idx = max(1, i - window + 1)
+                end_idx = i
+            end if
+            
+            ! Calculate window sum and count
+            window_sum = 0.0_real64
+            count = 0
+            do j = start_idx, end_idx
+                window_sum = window_sum + this%data%values_r64(j)
+                count = count + 1
+            end do
+            
+            ! Set result if enough values
+            if (count >= min_count) then
+                rolling_values(i) = window_sum / real(count, real64)
+            else
+                rolling_values(i) = ieee_value(0.0_real64, ieee_quiet_nan)
+            end if
+        end do
+        
+        ! Create result array
+        result_array = new_array(rolling_values, name="rolling_mean")
+        result_array%dim_names = this%dim_names
+        result_array%shape = this%shape
+        
+        deallocate(rolling_values)
+        
+    end function fortarray_rolling_mean
+    
+    !> Calculate rolling sum
+    module function fortarray_rolling_sum(this, window, center, min_periods) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in) :: window
+        logical, intent(in), optional :: center
+        integer, intent(in), optional :: min_periods
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: rolling_values(:)
+        real(real64) :: window_sum
+        integer :: i, j, start_idx, end_idx, count
+        integer :: min_count
+        logical :: use_center
+        
+        ! Set defaults
+        use_center = .false.
+        if (present(center)) use_center = center
+        min_count = 1
+        if (present(min_periods)) min_count = min_periods
+        
+        ! Only handle 1D real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: rolling_sum only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate result array
+        allocate(rolling_values(this%n_elements))
+        
+        ! Calculate rolling sum
+        do i = 1, this%n_elements
+            if (use_center) then
+                start_idx = max(1, i - window/2)
+                end_idx = min(this%n_elements, i + window/2)
+            else
+                start_idx = max(1, i - window + 1)
+                end_idx = i
+            end if
+            
+            ! Calculate window sum
+            window_sum = 0.0_real64
+            count = 0
+            do j = start_idx, end_idx
+                window_sum = window_sum + this%data%values_r64(j)
+                count = count + 1
+            end do
+            
+            ! Set result if enough values
+            if (count >= min_count) then
+                rolling_values(i) = window_sum
+            else
+                rolling_values(i) = ieee_value(0.0_real64, ieee_quiet_nan)
+            end if
+        end do
+        
+        ! Create result array
+        result_array = new_array(rolling_values, name="rolling_sum")
+        result_array%dim_names = this%dim_names
+        result_array%shape = this%shape
+        
+        deallocate(rolling_values)
+        
+    end function fortarray_rolling_sum
+    
+    !> Calculate rolling standard deviation
+    module function fortarray_rolling_std(this, window, center, min_periods) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        integer, intent(in) :: window
+        logical, intent(in), optional :: center
+        integer, intent(in), optional :: min_periods
+        type(fortarray_t) :: result_array
+        
+        real(real64), allocatable :: rolling_values(:)
+        real(real64) :: window_mean, window_var, sum_sq_diff
+        integer :: i, j, start_idx, end_idx, count
+        integer :: min_count
+        logical :: use_center
+        
+        ! Set defaults
+        use_center = .false.
+        if (present(center)) use_center = center
+        min_count = 2  ! Need at least 2 values for std
+        if (present(min_periods)) min_count = max(2, min_periods)
+        
+        ! Only handle 1D real64 for now
+        if (this%data%dtype /= DTYPE_REAL64) then
+            write(error_unit, '(A)') "ERROR: rolling_std only supports real64 data type"
+            result_array = create_empty_like(this)
+            return
+        end if
+        
+        ! Allocate result array
+        allocate(rolling_values(this%n_elements))
+        
+        ! Calculate rolling std
+        do i = 1, this%n_elements
+            if (use_center) then
+                start_idx = max(1, i - window/2)
+                end_idx = min(this%n_elements, i + window/2)
+            else
+                start_idx = max(1, i - window + 1)
+                end_idx = i
+            end if
+            
+            ! Calculate window mean first
+            window_mean = 0.0_real64
+            count = 0
+            do j = start_idx, end_idx
+                window_mean = window_mean + this%data%values_r64(j)
+                count = count + 1
+            end do
+            
+            if (count >= min_count) then
+                window_mean = window_mean / real(count, real64)
+                
+                ! Calculate variance
+                sum_sq_diff = 0.0_real64
+                do j = start_idx, end_idx
+                    sum_sq_diff = sum_sq_diff + (this%data%values_r64(j) - window_mean)**2
+                end do
+                window_var = sum_sq_diff / real(count - 1, real64)  ! Sample variance
+                rolling_values(i) = sqrt(window_var)
+            else
+                rolling_values(i) = ieee_value(0.0_real64, ieee_quiet_nan)
+            end if
+        end do
+        
+        ! Create result array
+        result_array = new_array(rolling_values, name="rolling_std")
+        result_array%dim_names = this%dim_names
+        result_array%shape = this%shape
+        
+        deallocate(rolling_values)
+        
+    end function fortarray_rolling_std
+    
+    ! ======= HELPER FUNCTIONS =======
+    
+    !> Quicksort for real64 arrays
+    recursive subroutine quicksort_r64(arr, first, last)
+        real(real64), dimension(:), intent(inout) :: arr
+        integer, intent(in) :: first, last
+        
+        integer :: i, j
+        real(real64) :: x, temp
+        
+        if (first >= last) return
+        
+        x = arr((first + last) / 2)
+        i = first
+        j = last
+        
+        do
+            do while (arr(i) < x)
+                i = i + 1
+            end do
+            do while (x < arr(j))
+                j = j - 1
+            end do
+            if (i >= j) exit
+            
+            temp = arr(i)
+            arr(i) = arr(j)
+            arr(j) = temp
+            i = i + 1
+            j = j - 1
+        end do
+        
+        if (first < i - 1) call quicksort_r64(arr, first, i - 1)
+        if (j + 1 < last) call quicksort_r64(arr, j + 1, last)
+        
+    end subroutine quicksort_r64
 
 end submodule fortarray_methods
