@@ -604,9 +604,7 @@ contains
         end if
         
         var = new_array(data, name="test_data", dim_names=["x"])
-        if (allocated(var%coords)) deallocate(var%coords)
-        if (allocated(var%has_coord)) deallocate(var%has_coord)
-        allocate(var%coords(1), var%has_coord(1))
+        ! new_array already allocates coords and has_coord arrays
         var%coords(1) = x_coord
         var%has_coord(1) = .true.
         

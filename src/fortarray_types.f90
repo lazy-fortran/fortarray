@@ -236,11 +236,12 @@ module fortarray_types
             type(fortarray_t) :: result_array
         end function fortarray_sel
         
-        module function fortarray_sel_point_r64(this, coord_name, value, method) result(result_array)
+        module function fortarray_sel_point_r64(this, coord_name, value, method, drop) result(result_array)
             class(fortarray_t), intent(in) :: this
             character(len=*), intent(in) :: coord_name
             real(real64), intent(in) :: value
             character(len=*), intent(in), optional :: method
+            logical, intent(in), optional :: drop
             type(fortarray_t) :: result_array
         end function fortarray_sel_point_r64
         

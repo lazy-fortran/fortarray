@@ -498,12 +498,23 @@ contains
         expanded_mask%data%initialized = .true.
         allocate(expanded_mask%data%values_logical(var%n_elements))
         
-        ! Simple broadcast: repeat mask pattern
-        stride = var%n_elements / mask%n_elements
-        do i = 1, var%n_elements
-            mask_idx = mod((i - 1) / stride, mask%n_elements) + 1
-            expanded_mask%data%values_logical(i) = mask%data%values_logical(mask_idx)
-        end do
+        ! Broadcast mask to match var: mask applies to first dimension
+        ! For 2x3 array in column-major order: [1,2,3,4,5,6] -> [[1,3,5],[2,4,6]]
+        ! mask[1]=T, mask[2]=F should select first row: [1,3,5]
+        if (allocated(var%shape) .and. var%shape(1) == mask%n_elements) then
+            ! Column-major broadcasting: mask applies to rows
+            do i = 1, var%n_elements
+                mask_idx = mod(i - 1, var%shape(1)) + 1
+                expanded_mask%data%values_logical(i) = mask%data%values_logical(mask_idx)
+            end do
+        else
+            ! Fallback: simple repetition
+            stride = var%n_elements / mask%n_elements
+            do i = 1, var%n_elements
+                mask_idx = mod((i - 1) / stride, mask%n_elements) + 1
+                expanded_mask%data%values_logical(i) = mask%data%values_logical(mask_idx)
+            end do
+        end if
         
         expanded_mask%initialized = .true.
         
