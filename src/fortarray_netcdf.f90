@@ -1848,11 +1848,12 @@ contains
         character(len=*), intent(in) :: old_name, new_name
         integer, intent(out) :: status
         
-        ! Use system rename command
-        character(len=512) :: cmd
+        character(len=1024) :: cmd
         
-        write(cmd, '(A,A,A,A)') 'mv "', trim(old_name), '" "', trim(new_name), '"'
-        call execute_command_line(cmd, exitstat=status, wait=.true.)
+        ! Build command string
+        cmd = 'mv "' // trim(old_name) // '" "' // trim(new_name) // '"'
+        
+        call execute_command_line(trim(cmd), exitstat=status, wait=.true.)
         
     end subroutine rename_file
     
