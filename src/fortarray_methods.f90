@@ -11,6 +11,7 @@ submodule (fortarray_types) fortarray_methods
     use fortarray_indexing
     use fortarray_constructors, only: new_array, create_coordinate
     use fortarray_missing_data, only: dropna
+    use fortarray_netcdf, only: write_netcdf_variable
     ! DTYPE constants are in fortarray_types, available via parent module
     implicit none
     
@@ -796,8 +797,10 @@ contains
         class(fortarray_t), intent(in) :: this
         character(len=*), intent(in) :: filename
         integer :: status
-        write(error_unit, '(A)') "ERROR: to_netcdf_file not yet implemented"
-        status = -1
+        
+        ! Use the write_netcdf_variable function from fortarray_netcdf
+        status = write_netcdf_variable(filename, this)
+        
     end function fortarray_to_netcdf_file
     
     module function fortarray_to_numpy_like(this) result(result_array)
