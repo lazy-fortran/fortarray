@@ -129,8 +129,10 @@ module fortarray_types
         ! Note: Method implementations will be added in fortarray_methods.f90
         
         ! Selection methods
+        procedure :: sel => fortarray_sel  ! Generic sel for both point and range
         procedure :: sel_point => fortarray_sel_point_r64
         procedure :: sel_range => fortarray_sel_range_r64
+        procedure :: isel => fortarray_isel  ! Generic isel for both point and range
         procedure :: isel_point => fortarray_isel_point
         procedure :: isel_range => fortarray_isel_range
         
@@ -196,6 +198,15 @@ module fortarray_types
     
     ! Interface block for external procedures
     interface
+        module function fortarray_sel(this, coord_name, value, start_val, stop_val, method) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: coord_name
+            real(real64), intent(in), optional :: value      ! For point selection
+            real(real64), intent(in), optional :: start_val, stop_val  ! For range selection
+            character(len=*), intent(in), optional :: method
+            type(fortarray_t) :: result_array
+        end function fortarray_sel
+        
         module function fortarray_sel_point_r64(this, coord_name, value, method) result(result_array)
             class(fortarray_t), intent(in) :: this
             character(len=*), intent(in) :: coord_name
@@ -211,6 +222,14 @@ module fortarray_types
             real(real64), intent(in), optional :: step_val
             type(fortarray_t) :: result_array
         end function fortarray_sel_range_r64
+        
+        module function fortarray_isel(this, dim_name, index, start_idx, stop_idx, step_idx) result(result_array)
+            class(fortarray_t), intent(in) :: this
+            character(len=*), intent(in) :: dim_name
+            integer, intent(in), optional :: index      ! For point selection
+            integer, intent(in), optional :: start_idx, stop_idx, step_idx  ! For range selection
+            type(fortarray_t) :: result_array
+        end function fortarray_isel
         
         module function fortarray_isel_point(this, dim_name, index) result(result_array)
             class(fortarray_t), intent(in) :: this

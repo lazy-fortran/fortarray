@@ -18,6 +18,30 @@ contains
 
     ! ======= SELECTION METHODS (MIGRATED FROM fortarray_coordinate_selection.f90) =======
     
+    !> Generic sel method - dispatches to point or range selection
+    module function fortarray_sel(this, coord_name, value, start_val, stop_val, method) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: coord_name
+        real(real64), intent(in), optional :: value      ! For point selection
+        real(real64), intent(in), optional :: start_val, stop_val  ! For range selection
+        character(len=*), intent(in), optional :: method
+        type(fortarray_t) :: result_array
+        
+        ! Check which type of selection is requested
+        if (present(value) .and. .not. present(start_val) .and. .not. present(stop_val)) then
+            ! Point selection
+            result_array = fortarray_sel_point_r64(this, coord_name, value, method)
+        else if (present(start_val) .and. present(stop_val) .and. .not. present(value)) then
+            ! Range selection
+            result_array = fortarray_sel_range_r64(this, coord_name, start_val, stop_val)
+        else
+            write(error_unit, '(A)') "ERROR: sel() requires either 'value' for point selection or &
+                &both 'start_val' and 'stop_val' for range selection"
+            result_array = create_empty_like(this)
+        end if
+        
+    end function fortarray_sel
+    
     !> Select by coordinate name and real64 value
     module function fortarray_sel_point_r64(this, coord_name, value, method) result(result_array)
         class(fortarray_t), intent(in) :: this
@@ -145,6 +169,29 @@ contains
     end function fortarray_sel_range_char
     
     ! ======= INDEX SELECTION METHODS =======
+    
+    !> Generic isel method - dispatches to point or range selection
+    module function fortarray_isel(this, dim_name, index, start_idx, stop_idx, step_idx) result(result_array)
+        class(fortarray_t), intent(in) :: this
+        character(len=*), intent(in) :: dim_name
+        integer, intent(in), optional :: index      ! For point selection
+        integer, intent(in), optional :: start_idx, stop_idx, step_idx  ! For range selection
+        type(fortarray_t) :: result_array
+        
+        ! Check which type of selection is requested
+        if (present(index) .and. .not. present(start_idx) .and. .not. present(stop_idx)) then
+            ! Point selection
+            result_array = fortarray_isel_point(this, dim_name, index)
+        else if (present(start_idx) .and. present(stop_idx) .and. .not. present(index)) then
+            ! Range selection
+            result_array = fortarray_isel_range(this, dim_name, start_idx, stop_idx, step_idx)
+        else
+            write(error_unit, '(A)') "ERROR: isel() requires either 'index' for point selection or &
+                &both 'start_idx' and 'stop_idx' for range selection"
+            result_array = create_empty_like(this)
+        end if
+        
+    end function fortarray_isel
     
     !> Select by dimension name and integer index
     module function fortarray_isel_point(this, dim_name, index) result(result_array)

@@ -47,8 +47,8 @@ contains
         arr%coords(1) = time_coord
         arr%has_coord(1) = .true.
         
-        ! Test exact selection
-        result = arr%sel_point("time", 30.0_real64)
+        ! Test exact selection (using new unified interface)
+        result = arr%sel("time", value=30.0_real64)
         
         if (.not. allocated(result%data%values_r64)) then
             print *, "FAIL: sel_point exact - no data allocated"
