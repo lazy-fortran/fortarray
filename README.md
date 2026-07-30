@@ -18,6 +18,12 @@ Fortarray owns labeled computation. Fortio owns physical file formats.
 Fortplot owns rendering. Plotting and I/O are composed procedures rather than
 capabilities attached to `data_array_t`.
 
+CMake consumers that need only labeled computation can configure
+`FORTARRAY_BUILD_IO=OFF`; that build has no Fortio dependency and exports only
+`fortarray::core` plus the core-only `fortarray::fortarray` convenience target.
+The fpm dependency remains package-wide because fpm does not provide
+target-level dependency declarations.
+
 ```fortran
 use fortarray, only: dp, data_array_t, data_array, mean, sel
 
@@ -37,4 +43,3 @@ call mean_into(field, "zeta", surface)
 ```
 
 The latter reuses `surface` storage when its size is already correct.
-

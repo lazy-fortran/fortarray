@@ -6,33 +6,24 @@ include(CMakePackageConfigHelpers)
 include(FetchContent)
 
 option(FORTARRAY_ENABLE_OPENMP "Enable OpenMP kernels" ON)
+option(FORTARRAY_BUILD_IO "Build the Fortio-backed I/O adapter" ON)
 option(FORTARRAY_BUILD_TESTS "Build fortarray tests" ${PROJECT_IS_TOP_LEVEL})
 option(FORTARRAY_BUILD_BENCHMARKS "Build performance regression benchmarks" OFF)
 option(FORTARRAY_INSTALL "Install fortarray targets and package files" ${PROJECT_IS_TOP_LEVEL})
 
-find_package(fortio CONFIG QUIET)
-if(NOT fortio_FOUND)
-    set(_fortarray_build_testing "${BUILD_TESTING}")
-    set(BUILD_TESTING OFF)
-    set(FORTIO_INSTALL "${FORTARRAY_INSTALL}" CACHE BOOL "" FORCE)
-    FetchContent_Declare(fortio
-        GIT_REPOSITORY https://github.com/lazy-fortran/fortio.git
-        GIT_TAG a1e15804afa22d4721446e7885cd58f74f38a59d
-        GIT_SHALLOW FALSE
-    )
-    FetchContent_MakeAvailable(fortio)
-    set(BUILD_TESTING "${_fortarray_build_testing}")
-endif()
-
-if(FORTARRAY_BUILD_BENCHMARKS)
-    add_executable(benchmark_core_kernels benchmark/core_kernels.f90)
-    target_link_libraries(benchmark_core_kernels PRIVATE fortarray_core)
-    if(FORTARRAY_BUILD_TESTS)
-        add_test(NAME performance_core COMMAND benchmark_core_kernels)
-        set_tests_properties(performance_core PROPERTIES
-            ENVIRONMENT "OMP_NUM_THREADS=1"
-            RUN_SERIAL TRUE
+if(FORTARRAY_BUILD_IO)
+    find_package(fortio CONFIG QUIET)
+    if(NOT fortio_FOUND)
+        set(_fortarray_build_testing "${BUILD_TESTING}")
+        set(BUILD_TESTING OFF)
+        set(FORTIO_INSTALL "${FORTARRAY_INSTALL}" CACHE BOOL "" FORCE)
+        FetchContent_Declare(fortio
+            GIT_REPOSITORY https://github.com/lazy-fortran/fortio.git
+            GIT_TAG a1e15804afa22d4721446e7885cd58f74f38a59d
+            GIT_SHALLOW FALSE
         )
+        FetchContent_MakeAvailable(fortio)
+        set(BUILD_TESTING "${_fortarray_build_testing}")
     endif()
 endif()
 
@@ -52,22 +43,25 @@ target_include_directories(fortarray_core PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fortarray>
 )
 
-add_library(fortarray_io src/fortarray_io.f90)
-add_library(fortarray::io ALIAS fortarray_io)
-set_target_properties(fortarray_io PROPERTIES
-    Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules"
-    EXPORT_NAME io
-)
-target_include_directories(fortarray_io PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/modules>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fortarray>
-)
-target_link_libraries(fortarray_io PUBLIC fortarray_core fortio::fortio)
-
 add_library(fortarray_all INTERFACE)
 add_library(fortarray::fortarray ALIAS fortarray_all)
 set_target_properties(fortarray_all PROPERTIES EXPORT_NAME fortarray)
-target_link_libraries(fortarray_all INTERFACE fortarray_core fortarray_io)
+target_link_libraries(fortarray_all INTERFACE fortarray_core)
+
+if(FORTARRAY_BUILD_IO)
+    add_library(fortarray_io src/fortarray_io.f90)
+    add_library(fortarray::io ALIAS fortarray_io)
+    set_target_properties(fortarray_io PROPERTIES
+        Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules"
+        EXPORT_NAME io
+    )
+    target_include_directories(fortarray_io PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/modules>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fortarray>
+    )
+    target_link_libraries(fortarray_io PUBLIC fortarray_core fortio::fortio)
+    target_link_libraries(fortarray_all INTERFACE fortarray_io)
+endif()
 
 if(FORTARRAY_ENABLE_OPENMP)
     find_package(OpenMP COMPONENTS Fortran)
@@ -78,18 +72,39 @@ endif()
 
 if(FORTARRAY_BUILD_TESTS)
     enable_testing()
-    foreach(test_name IN ITEMS core thread_safety io_oracle)
+    foreach(test_name IN ITEMS core thread_safety)
         add_executable(test_${test_name} test/test_${test_name}.f90)
-        target_link_libraries(test_${test_name} PRIVATE fortarray_all)
+        target_link_libraries(test_${test_name} PRIVATE fortarray_core)
         add_test(NAME ${test_name} COMMAND test_${test_name})
     endforeach()
-    set_tests_properties(io_oracle PROPERTIES
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
+    if(FORTARRAY_BUILD_IO)
+        add_executable(test_io_oracle test/test_io_oracle.f90)
+        target_link_libraries(test_io_oracle PRIVATE fortarray_io)
+        add_test(NAME io_oracle COMMAND test_io_oracle)
+        set_tests_properties(io_oracle PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+endif()
+
+if(FORTARRAY_BUILD_BENCHMARKS)
+    add_executable(benchmark_core_kernels benchmark/core_kernels.f90)
+    target_link_libraries(benchmark_core_kernels PRIVATE fortarray_core)
+    if(FORTARRAY_BUILD_TESTS)
+        add_test(NAME performance_core COMMAND benchmark_core_kernels)
+        set_tests_properties(performance_core PROPERTIES
+            ENVIRONMENT "OMP_NUM_THREADS=1"
+            RUN_SERIAL TRUE
+        )
+    endif()
 endif()
 
 if(FORTARRAY_INSTALL)
-    install(TARGETS fortarray_core fortarray_io fortarray_all
+    set(_fortarray_install_targets fortarray_core fortarray_all)
+    if(FORTARRAY_BUILD_IO)
+        list(APPEND _fortarray_install_targets fortarray_io)
+    endif()
+    install(TARGETS ${_fortarray_install_targets}
         EXPORT fortarray-targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

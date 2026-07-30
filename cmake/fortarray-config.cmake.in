@@ -1,7 +1,9 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-find_dependency(fortio CONFIG)
+if(@FORTARRAY_BUILD_IO@)
+    find_dependency(fortio CONFIG)
+endif()
 if(@FORTARRAY_ENABLE_OPENMP@)
     find_dependency(OpenMP COMPONENTS Fortran)
 endif()

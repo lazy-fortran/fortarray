@@ -34,6 +34,13 @@ jobs:
         run: |
           cmake --build build --parallel
           OMP_NUM_THREADS=8 ctest --test-dir build --output-on-failure
+      - name: Build and execute without Fortio
+        run: |
+          cmake -S . -B build-core -DCMAKE_BUILD_TYPE=Release \
+            -DFORTARRAY_BUILD_IO=OFF -DFORTARRAY_BUILD_TESTS=ON \
+            -DCMAKE_DISABLE_FIND_PACKAGE_fortio=TRUE
+          cmake --build build-core --parallel
+          OMP_NUM_THREADS=8 ctest --test-dir build-core --output-on-failure
       - name: Install package
         run: cmake --install build --prefix "$RUNNER_TEMP/fortarray"
       - name: Verify installed package
