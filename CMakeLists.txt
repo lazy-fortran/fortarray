@@ -14,16 +14,13 @@ option(FORTARRAY_INSTALL "Install fortarray targets and package files" ${PROJECT
 if(FORTARRAY_BUILD_IO)
     find_package(fortio CONFIG QUIET)
     if(NOT fortio_FOUND)
-        set(_fortarray_build_testing "${BUILD_TESTING}")
-        set(BUILD_TESTING OFF)
         set(FORTIO_INSTALL "${FORTARRAY_INSTALL}" CACHE BOOL "" FORCE)
         FetchContent_Declare(fortio
             GIT_REPOSITORY https://github.com/lazy-fortran/fortio.git
-            GIT_TAG 88ce8de1fa42832b48df779f6d748e5873ee0bde
+            GIT_TAG e540614970bc63289339a7c8e120cc1ce608b23c
             GIT_SHALLOW FALSE
         )
         FetchContent_MakeAvailable(fortio)
-        set(BUILD_TESTING "${_fortarray_build_testing}")
     endif()
 endif()
 
