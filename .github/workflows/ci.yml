@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  fpm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compiler and independent NetCDF oracle
+        run: sudo apt-get update && sudo apt-get install -y gfortran netcdf-bin
+      - uses: fortran-lang/setup-fpm@v7
+      - name: Build and test
+        run: |
+          fpm build
+          OMP_NUM_THREADS=8 fpm test
+
+  cmake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compiler and independent NetCDF oracle
+        run: sudo apt-get update && sudo apt-get install -y gfortran netcdf-bin
+      - name: Configure
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DFORTARRAY_BUILD_TESTS=ON -DFORTARRAY_BUILD_BENCHMARKS=ON
+      - name: Build and test
+        run: |
+          cmake --build build --parallel
+          OMP_NUM_THREADS=8 ctest --test-dir build --output-on-failure
+      - name: Install package
+        run: cmake --install build --prefix "$RUNNER_TEMP/fortarray"
+      - name: Verify installed package
+        run: |
+          cmake -S example/cmake-consumer -B consumer-build \
+            -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/fortarray"
+          cmake --build consumer-build --parallel
+
+  thread-sanitizer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compiler
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+      - name: Configure ThreadSanitizer
+        run: >
+          cmake -S . -B build-tsan -DFORTARRAY_BUILD_TESTS=ON
+          -DCMAKE_Fortran_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -O1 -g"
+          -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -O1 -g"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+      - name: Build and test concurrent kernels
+        run: |
+          cmake --build build-tsan --parallel
+          OMP_NUM_THREADS=8 ctest --test-dir build-tsan \
+            -R thread_safety --output-on-failure

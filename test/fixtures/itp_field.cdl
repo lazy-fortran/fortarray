@@ -1,0 +1,13 @@
+netcdf itp_field {
+dimensions:
+    radius = 2 ;
+    theta = 3 ;
+variables:
+    double radius(radius) ;
+    double potential(theta, radius) ;
+        potential:units = "V" ;
+data:
+    radius = 0.25, 0.75 ;
+    potential = 11, 12, 21, 22, 31, 32 ;
+}
+

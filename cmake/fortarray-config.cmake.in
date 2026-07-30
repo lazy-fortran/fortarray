@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(fortio CONFIG)
+if(@FORTARRAY_ENABLE_OPENMP@)
+    find_dependency(OpenMP COMPONENTS Fortran)
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/fortarray-targets.cmake")
