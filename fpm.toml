@@ -10,7 +10,7 @@ auto-executables = false
 auto-examples = false
 auto-tests = true
 module-naming = false
-link = ["pthread", "z"]
+link = ["pthread"]
 
 [install]
 library = true
@@ -24,4 +24,4 @@ implicit-external = false
 source-form = "free"
 
 [dependencies]
-fortio = { git = "https://github.com/lazy-fortran/fortio.git", rev = "c40d632fd693a4437100c37542d9d9212e5eec77" }
+fortio = { git = "https://github.com/lazy-fortran/fortio.git", rev = "b6a0c57e7a7577612637ed1619c3bc50d26c2556" }

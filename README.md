@@ -1,45 +1,39 @@
-# fortarray
+# Fortarray
 
-Fortarray provides dense, labeled arrays for modern Fortran. Its data model is
-inspired by xarray, its storage rules by xtensor, and its composed generic
-procedures by Julia.
+Fortarray provides dense labeled arrays for modern Fortran. Its data model is
+inspired by xarray, its contiguous storage by Fortran and xtensor, and its
+composable generic procedures by Julia.
 
-The first implementation is intentionally limited to operations used by the
-ITP plasma codes:
+Version 0.1.0 supports:
 
-- dense column-major `real(real64)` arrays through rank four;
-- named dimensions, one-dimensional dimension coordinates, and text metadata;
-- positional and exact/nearest coordinate selection;
-- dimension reductions;
-- arithmetic aligned and broadcast by dimension name;
-- collections of named arrays.
-
-Fortarray owns labeled computation. Fortio owns physical file formats.
-Fortplot owns rendering. Plotting and I/O are composed procedures rather than
-capabilities attached to `data_array_t`.
-
-CMake consumers that need only labeled computation can configure
-`FORTARRAY_BUILD_IO=OFF`; that build has no Fortio dependency and exports only
-`fortarray::core` plus the core-only `fortarray::fortarray` convenience target.
-The fpm dependency remains package-wide because fpm does not provide
-target-level dependency declarations.
+- dense `real(real64)` arrays through rank four;
+- unique named dimensions and one-dimensional dimension coordinates;
+- positional and exact or nearest coordinate selection;
+- reductions and arithmetic aligned by dimension name;
+- allocation-reusing destination routines for hot paths;
+- collections of named arrays;
+- optional Fortio-backed NetCDF I/O.
 
 ```fortran
 use fortarray, only: dp, data_array_t, data_array, mean, sel
 
 type(data_array_t) :: field, surface
 real(dp) :: values(64, 128, 16)
+integer :: i
 
 field = data_array(values, ["radius", "theta ", "zeta  "], name="potential")
+call field%set_coord("radius", [(real(i - 1, dp)/63.0_dp, i=1, 64)])
 surface = mean(sel(field, "radius", 0.5_dp, method="nearest"), "zeta")
 ```
 
-Both allocating functions and destination-taking routines are provided for
-hot paths:
+Fortarray owns labeled computation. [Fortio](https://lazy-fortran.github.io/fortio/)
+owns physical formats, and Fortplot owns rendering. I/O and plotting are
+composed procedures rather than methods attached to `data_array_t`.
 
-```fortran
-surface = mean(field, "zeta")
-call mean_into(field, "zeta", surface)
-```
+Documentation: <https://lazy-fortran.github.io/fortarray/>
 
-The latter reuses `surface` storage when its size is already correct.
+- [Translate xarray concepts to Fortarray](docs/xarray-mapping.md)
+- [Understand storage and metadata invariants](docs/data-model.md)
+- [Use allocation-aware operations](docs/operations.md)
+- [Compose I/O and plotting](docs/composition.md)
+- [Install with fpm or CMake](docs/installation.md)
