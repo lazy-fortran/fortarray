@@ -8,14 +8,16 @@ include(FetchContent)
 option(FORTARRAY_ENABLE_OPENMP "Enable OpenMP kernels" ON)
 option(FORTARRAY_BUILD_TESTS "Build fortarray tests" ${PROJECT_IS_TOP_LEVEL})
 option(FORTARRAY_BUILD_BENCHMARKS "Build performance regression benchmarks" OFF)
+option(FORTARRAY_INSTALL "Install fortarray targets and package files" ${PROJECT_IS_TOP_LEVEL})
 
 find_package(fortio CONFIG QUIET)
 if(NOT fortio_FOUND)
     set(_fortarray_build_testing "${BUILD_TESTING}")
     set(BUILD_TESTING OFF)
+    set(FORTIO_INSTALL "${FORTARRAY_INSTALL}" CACHE BOOL "" FORCE)
     FetchContent_Declare(fortio
         GIT_REPOSITORY https://github.com/lazy-fortran/fortio.git
-        GIT_TAG cab69f3297fcda0ffa6c1acaa989da575865e64e
+        GIT_TAG e3504cb61a24cbc405723552ee52cddc20644db8
         GIT_SHALLOW FALSE
     )
     FetchContent_MakeAvailable(fortio)
@@ -86,32 +88,34 @@ if(FORTARRAY_BUILD_TESTS)
     )
 endif()
 
-install(TARGETS fortarray_core fortarray_io fortarray_all
-    EXPORT fortarray-targets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules/"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fortarray"
-)
-install(EXPORT fortarray-targets
-    FILE fortarray-targets.cmake
-    NAMESPACE fortarray::
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fortarray"
-)
-configure_package_config_file(
-    cmake/fortarray-config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fortarray"
-)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config-version.cmake"
-    VERSION "${PROJECT_VERSION}"
-    COMPATIBILITY SameMajorVersion
-)
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config-version.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fortarray"
-)
-install(FILES LICENSE DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/fortarray")
+if(FORTARRAY_INSTALL)
+    install(TARGETS fortarray_core fortarray_io fortarray_all
+        EXPORT fortarray-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+    install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fortarray"
+    )
+    install(EXPORT fortarray-targets
+        FILE fortarray-targets.cmake
+        NAMESPACE fortarray::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fortarray"
+    )
+    configure_package_config_file(
+        cmake/fortarray-config.cmake.in
+        "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fortarray"
+    )
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config-version.cmake"
+        VERSION "${PROJECT_VERSION}"
+        COMPATIBILITY SameMajorVersion
+    )
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/fortarray-config-version.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fortarray"
+    )
+    install(FILES LICENSE DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/fortarray")
+endif()
