@@ -23,4 +23,4 @@ implicit-external = false
 source-form = "free"
 
 [dependencies]
-fortio = { git = "https://github.com/lazy-fortran/fortio.git", rev = "d1cf48fda626c3b7d30ec335cca06a469f645e40" }
+fortio = { git = "https://github.com/lazy-fortran/fortio.git", rev = "46e16e7507550bb70a4c392073e20118d554aff5" }
