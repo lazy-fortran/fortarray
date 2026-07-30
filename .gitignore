@@ -1,0 +1,11 @@
+build/
+*.mod
+*.smod
+*.o
+*.a
+*.so
+*.nc
+*.h5
+*.hdf5
+*.tmp
+
