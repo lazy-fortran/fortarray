@@ -1,4 +1,5 @@
 module fortarray_io
+    !! Fortio-backed conversion between NetCDF variables and labeled arrays.
     use fortarray_core, only: dp, data_array_t, data_array, FORTARRAY_SUCCESS, &
         FORTARRAY_EINVAL
     use netcdf, only: NF90_NOERR, NF90_NOWRITE, NF90_CLOBBER, NF90_DOUBLE, &
@@ -13,6 +14,7 @@ module fortarray_io
 contains
 
     function read_netcdf(filename, variable, stat) result(array)
+        !! Read one NetCDF variable, its dimensions, coordinates, and metadata.
         character(len=*), intent(in) :: filename
         character(len=*), intent(in) :: variable
         integer, intent(out), optional :: stat
@@ -107,6 +109,7 @@ contains
     end subroutine read_dimension_coordinates
 
     subroutine write_netcdf(filename, array, stat)
+        !! Write one labeled array and its dimension coordinates as NetCDF.
         character(len=*), intent(in) :: filename
         type(data_array_t), intent(in) :: array
         integer, intent(out), optional :: stat

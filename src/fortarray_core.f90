@@ -1,4 +1,5 @@
 module fortarray_core
+    !! Dense labeled arrays, datasets, selection, reduction, and alignment.
     use, intrinsic :: iso_c_binding, only: c_double, c_int64_t
     use, intrinsic :: iso_fortran_env, only: int64, real64
     !$ use omp_lib, only: omp_get_max_threads
@@ -14,16 +15,19 @@ module fortarray_core
     integer, parameter :: ATTRIBUTE_LENGTH = 1024
 
     type, public :: coordinate_t
+        !! One-dimensional coordinate belonging to a named dimension.
         character(len=NAME_LENGTH) :: name = ""
         real(dp), allocatable :: values(:)
     end type coordinate_t
 
     type, public :: attribute_t
+        !! Text metadata entry.
         character(len=NAME_LENGTH) :: name = ""
         character(len=ATTRIBUTE_LENGTH) :: value = ""
     end type attribute_t
 
     type, public :: data_array_t
+        !! Owned contiguous values with named dimensions and optional metadata.
         character(len=NAME_LENGTH) :: name = ""
         real(dp), allocatable :: values(:)
         integer, allocatable :: shape(:)
@@ -44,6 +48,7 @@ module fortarray_core
     end type data_array_t
 
     type, public :: dataset_t
+        !! Owned collection of named data arrays and dataset attributes.
         type(data_array_t), allocatable :: variables(:)
         type(attribute_t), allocatable :: attrs(:)
     contains
@@ -92,6 +97,7 @@ module fortarray_core
 contains
 
     function data_array_scalar(values, name) result(array)
+        !! Construct a scalar labeled array.
         real(dp), intent(in) :: values
         character(len=*), intent(in), optional :: name
         type(data_array_t) :: array
@@ -103,6 +109,7 @@ contains
     end function data_array_scalar
 
     function data_array_rank1(values, dims, name) result(array)
+        !! Construct a rank-one labeled array by copying `values`.
         real(dp), intent(in) :: values(:)
         character(len=*), intent(in) :: dims(:)
         character(len=*), intent(in), optional :: name
@@ -112,6 +119,7 @@ contains
     end function data_array_rank1
 
     function data_array_rank2(values, dims, name) result(array)
+        !! Construct a rank-two labeled array in Fortran element order.
         real(dp), intent(in) :: values(:, :)
         character(len=*), intent(in) :: dims(:)
         character(len=*), intent(in), optional :: name
@@ -122,6 +130,7 @@ contains
     end function data_array_rank2
 
     function data_array_rank3(values, dims, name) result(array)
+        !! Construct a rank-three labeled array in Fortran element order.
         real(dp), intent(in) :: values(:, :, :)
         character(len=*), intent(in) :: dims(:)
         character(len=*), intent(in), optional :: name
@@ -132,6 +141,7 @@ contains
     end function data_array_rank3
 
     function data_array_rank4(values, dims, name) result(array)
+        !! Construct a rank-four labeled array in Fortran element order.
         real(dp), intent(in) :: values(:, :, :, :)
         character(len=*), intent(in) :: dims(:)
         character(len=*), intent(in), optional :: name
@@ -250,6 +260,7 @@ contains
     end function dim_index
 
     subroutine set_coord(this, name, values, stat)
+        !! Add or replace a coordinate for an existing dimension.
         class(data_array_t), intent(inout) :: this
         character(len=*), intent(in) :: name
         real(dp), intent(in) :: values(:)
@@ -281,6 +292,7 @@ contains
     end subroutine set_coord
 
     subroutine set_attr(this, name, value)
+        !! Add or replace a text attribute.
         class(data_array_t), intent(inout) :: this
         character(len=*), intent(in) :: name
         character(len=*), intent(in) :: value
@@ -325,6 +337,7 @@ contains
     end function array_isel_function
 
     subroutine isel_into(input, dim, index, output, stat)
+        !! Select a one-based positional index and remove that dimension.
         type(data_array_t), intent(in) :: input
         character(len=*), intent(in) :: dim
         integer, intent(in) :: index
@@ -387,6 +400,7 @@ contains
     end function array_sel_function
 
     subroutine sel_into(input, dim, value, output, method, stat)
+        !! Select an exact or nearest coordinate and remove that dimension.
         type(data_array_t), intent(in) :: input
         character(len=*), intent(in) :: dim
         real(dp), intent(in) :: value
@@ -439,6 +453,7 @@ contains
     end function array_mean_function
 
     subroutine mean_into(input, dim, output, stat)
+        !! Reduce one named dimension, reusing compatible output storage.
         type(data_array_t), intent(in) :: input
         character(len=*), intent(in) :: dim
         type(data_array_t), intent(inout) :: output
@@ -536,6 +551,7 @@ contains
     end function add_arrays
 
     subroutine add_into(left, right, output, stat)
+        !! Align dimensions by name and add, reusing compatible output storage.
         type(data_array_t), intent(in) :: left, right
         type(data_array_t), intent(inout) :: output
         integer, intent(out), optional :: stat
