@@ -1,4 +1,4 @@
-build/
+/build*/
 *.mod
 *.smod
 *.o
@@ -8,4 +8,3 @@ build/
 *.h5
 *.hdf5
 *.tmp
-
