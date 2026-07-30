@@ -340,7 +340,9 @@ contains
         output%name = input%name
         output%shape = [input%shape(:axis - 1), input%shape(axis + 1:)]
         output%strides = make_strides(output%shape)
-        output%dims = [input%dims(:axis - 1), input%dims(axis + 1:)]
+        allocate(character(len=len(input%dims)) :: output%dims(size(input%dims) - 1))
+        if (axis > 1) output%dims(:axis - 1) = input%dims(:axis - 1)
+        if (axis < size(input%dims)) output%dims(axis:) = input%dims(axis + 1:)
         allocate(output%values(product(output%shape)))
         if (size(output%shape) == 0) then
             deallocate(output%values)
@@ -441,27 +443,32 @@ contains
         character(len=*), intent(in) :: dim
         type(data_array_t), intent(inout) :: output
         integer, intent(out), optional :: stat
-        integer, allocatable :: output_shape(:)
-        character(len=:), allocatable :: output_dims(:)
         integer :: axis, base, inner, inner_index, k, outer, outer_index, required
-        logical :: use_parallel
+        logical :: layout_matches, use_parallel
         real(dp) :: total
 
         if (present(stat)) stat = FORTARRAY_ENOTFOUND
         axis = input%dim_index(dim)
         if (axis == 0) return
-        output_shape = [input%shape(:axis - 1), input%shape(axis + 1:)]
-        output_dims = [input%dims(:axis - 1), input%dims(axis + 1:)]
-        required = product(output_shape)
-        if (size(output_shape) == 0) required = 1
+        required = size(input%values)/input%shape(axis)
+        layout_matches = reduced_layout_matches(input, axis, output)
+        if (.not. layout_matches) then
+            if (allocated(output%shape)) deallocate(output%shape)
+            if (allocated(output%strides)) deallocate(output%strides)
+            if (allocated(output%dims)) deallocate(output%dims)
+            allocate(output%shape(size(input%shape) - 1))
+            if (axis > 1) output%shape(:axis - 1) = input%shape(:axis - 1)
+            if (axis < size(input%shape)) output%shape(axis:) = input%shape(axis + 1:)
+            output%strides = make_strides(output%shape)
+            allocate(character(len=len(input%dims)) :: output%dims(size(input%dims) - 1))
+            if (axis > 1) output%dims(:axis - 1) = input%dims(:axis - 1)
+            if (axis < size(input%dims)) output%dims(axis:) = input%dims(axis + 1:)
+        end if
         if (allocated(output%values)) then
             if (size(output%values) /= required) deallocate(output%values)
         end if
         if (.not. allocated(output%values)) allocate(output%values(required))
         output%name = input%name
-        output%shape = output_shape
-        output%strides = make_strides(output_shape)
-        output%dims = output_dims
         inner = input%strides(axis)
         outer = size(input%values)/(inner*input%shape(axis))
         use_parallel = .false.
@@ -501,6 +508,25 @@ contains
         call copy_remaining_metadata(input, output, removed_dim=dim)
         if (present(stat)) stat = FORTARRAY_SUCCESS
     end subroutine mean_into
+
+    pure logical function reduced_layout_matches(input, axis, output)
+        type(data_array_t), intent(in) :: input
+        integer, intent(in) :: axis
+        type(data_array_t), intent(in) :: output
+
+        reduced_layout_matches = .false.
+        if (.not. allocated(output%shape) .or. .not. allocated(output%dims)) return
+        if (size(output%shape) /= size(input%shape) - 1) return
+        if (axis > 1) then
+            if (any(output%shape(:axis - 1) /= input%shape(:axis - 1))) return
+            if (any(output%dims(:axis - 1) /= input%dims(:axis - 1))) return
+        end if
+        if (axis < size(input%shape)) then
+            if (any(output%shape(axis:) /= input%shape(axis + 1:))) return
+            if (any(output%dims(axis:) /= input%dims(axis + 1:))) return
+        end if
+        reduced_layout_matches = .true.
+    end function reduced_layout_matches
 
     function add_arrays(left, right) result(output)
         type(data_array_t), intent(in) :: left, right
