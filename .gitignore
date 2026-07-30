@@ -1,9 +1,13 @@
 /build*/
+site/
+doc/
 *.mod
 *.smod
 *.o
 *.a
 *.so
+*.bin
+*.zip
 *.nc
 *.h5
 *.hdf5
