@@ -5,6 +5,7 @@ on:
     types: [checks_requested]
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,7 +13,7 @@ permissions:
 jobs:
   fpm:
     if: >-
-      github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.actor != 'github-merge-queue[bot]') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full-ci'))
+      github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.actor != 'github-merge-queue[bot]')
     runs-on: [self-hosted, itp-ubuntu24]
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +27,7 @@ jobs:
 
   cmake:
     if: >-
-      github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.actor != 'github-merge-queue[bot]') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full-ci'))
+      github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.actor != 'github-merge-queue[bot]')
     runs-on: [self-hosted, itp-ubuntu24]
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +58,7 @@ jobs:
 
   thread-sanitizer:
     if: >-
-      github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.actor != 'github-merge-queue[bot]') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full-ci'))
+      github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.actor != 'github-merge-queue[bot]')
     runs-on: [self-hosted, itp-ubuntu24]
     steps:
       - uses: actions/checkout@v4
