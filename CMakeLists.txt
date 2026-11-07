@@ -17,7 +17,7 @@ if(FORTARRAY_BUILD_IO)
         set(FORTIO_INSTALL "${FORTARRAY_INSTALL}" CACHE BOOL "" FORCE)
         FetchContent_Declare(fortio
             GIT_REPOSITORY https://github.com/lazy-fortran/fortio.git
-            GIT_TAG b6a0c57e7a7577612637ed1619c3bc50d26c2556
+            GIT_TAG dc542fde60c312ecfb7930c4c3434889b74b5c20
             GIT_SHALLOW FALSE
         )
         FetchContent_MakeAvailable(fortio)
