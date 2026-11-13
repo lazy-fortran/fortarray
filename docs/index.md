@@ -11,3 +11,5 @@ title: User guide
 - [Installation](installation.html)
 - [Thread safety and performance](performance.html)
 - [Development](development.html)
+
+- [Status and verification](status.html)
