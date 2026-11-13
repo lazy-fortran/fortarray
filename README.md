@@ -15,15 +15,20 @@ Version 0.1.0 supports:
 - optional Fortio-backed NetCDF I/O.
 
 ```fortran
-use fortarray, only: dp, data_array_t, data_array, mean, sel
+program example
+    use fortarray, only: dp, data_array_t, data_array, mean, sel
+    implicit none
 
-type(data_array_t) :: field, surface
-real(dp) :: values(64, 128, 16)
-integer :: i
+    type(data_array_t) :: field, surface
+    real(dp) :: values(64, 128, 16)
+    integer :: i
 
-field = data_array(values, ["radius", "theta ", "zeta  "], name="potential")
-call field%set_coord("radius", [(real(i - 1, dp)/63.0_dp, i=1, 64)])
-surface = mean(sel(field, "radius", 0.5_dp, method="nearest"), "zeta")
+    values = 1.0_dp
+    field = data_array(values, ["radius", "theta ", "zeta  "], name="potential")
+    call field%set_coord("radius", [(real(i - 1, dp)/63.0_dp, i=1, 64)])
+    surface = mean(sel(field, "radius", 0.5_dp, method="nearest"), "zeta")
+    print *, surface%shape, surface%values(1)
+end program example
 ```
 
 Fortarray owns labeled computation. [Fortio](https://lazy-fortran.github.io/fortio/)
@@ -37,3 +42,15 @@ Documentation: <https://lazy-fortran.github.io/fortarray/>
 - [Use allocation-aware operations](docs/operations.md)
 - [Compose I/O and plotting](docs/composition.md)
 - [Install with fpm or CMake](docs/installation.md)
+
+## Status and verification
+
+The tests exercise storage and metadata invariants, selection, reductions,
+dimension-aligned arithmetic and concurrent calls with separate objects. The optional I/O adapter has
+an independent file-format oracle. See [status](docs/status.md) for scope and
+[the module overview](docs/data-model.md#modules) for interfaces.
+
+## Contributing, citation and licence
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CITATION.cff](CITATION.cff) and the
+MIT [LICENSE](LICENSE).

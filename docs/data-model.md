@@ -28,3 +28,14 @@ for the removed dimension is dropped; coordinates for remaining dimensions
 are retained. Addition aligns dimensions by name. Shared dimensions must have
 equal extents; a dimension present on only one operand is broadcast across
 the result.
+
+## Modules
+
+| Module | Interface |
+| --- | --- |
+| `fortarray` | Public labeled-array operations and types |
+| `fortarray_core` | Storage, metadata and core operation implementation |
+| `fortarray_io` | Optional Fortio-backed file input and output |
+
+The C kernels in `src/fortarray_kernels.c` support the Fortran core and are
+not a separate public array API.
