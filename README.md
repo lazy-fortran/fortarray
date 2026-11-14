@@ -1,5 +1,7 @@
 # Fortarray
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24223511.svg)](https://doi.org/10.5281/zenodo.24223511)
+
 Fortarray provides dense labeled arrays for modern Fortran. Its data model is
 inspired by xarray, its contiguous storage by Fortran and xtensor, and its
 composable generic procedures by Julia.
@@ -54,3 +56,11 @@ an independent file-format oracle. See [status](docs/status.md) for scope and
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [CITATION.cff](CITATION.cff) and the
 MIT [LICENSE](LICENSE).
+
+## Citation
+
+Cite fortarray through its Zenodo record,
+[doi:10.5281/zenodo.24223511](https://doi.org/10.5281/zenodo.24223511), which
+always resolves to the latest release; release 0.2.0 is
+[doi:10.5281/zenodo.24223512](https://doi.org/10.5281/zenodo.24223512).
+`CITATION.cff` holds the full citation metadata.
