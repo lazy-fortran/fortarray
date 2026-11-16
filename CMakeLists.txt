@@ -11,6 +11,20 @@ option(FORTARRAY_BUILD_TESTS "Build fortarray tests" ${PROJECT_IS_TOP_LEVEL})
 option(FORTARRAY_BUILD_BENCHMARKS "Build performance regression benchmarks" OFF)
 option(FORTARRAY_INSTALL "Install fortarray targets and package files" ${PROJECT_IS_TOP_LEVEL})
 
+# Consumers get fortarray's tests only on request: -DFORTARRAY_BUILD_TESTS=ON
+# plus include(CTest) in the consumer.
+if(PROJECT_IS_TOP_LEVEL)
+    include(CTest)
+endif()
+if(FORTARRAY_BUILD_TESTS AND NOT BUILD_TESTING)
+    message(STATUS "FORTARRAY_BUILD_TESTS is ON, but BUILD_TESTING is OFF; "
+        "fortarray tests will not be built.")
+    set(FORTARRAY_BUILD_TESTS OFF)
+endif()
+if(FORTARRAY_BUILD_TESTS)
+    enable_testing()
+endif()
+
 if(FORTARRAY_BUILD_IO)
     find_package(fortio CONFIG QUIET)
     if(NOT fortio_FOUND)
@@ -68,7 +82,6 @@ if(FORTARRAY_ENABLE_OPENMP)
 endif()
 
 if(FORTARRAY_BUILD_TESTS)
-    enable_testing()
     foreach(test_name IN ITEMS core thread_safety)
         add_executable(test_${test_name} test/test_${test_name}.f90)
         target_link_libraries(test_${test_name} PRIVATE fortarray_core)
