@@ -28,7 +28,10 @@ endif()
 if(FORTARRAY_BUILD_IO)
     find_package(fortio CONFIG QUIET)
     if(NOT fortio_FOUND)
-        set(FORTIO_INSTALL "${FORTARRAY_INSTALL}" CACHE BOOL "" FORCE)
+        # A default only: a FORTIO_INSTALL set by the user is kept.
+        if(NOT DEFINED FORTIO_INSTALL)
+            set(FORTIO_INSTALL "${FORTARRAY_INSTALL}")
+        endif()
         FetchContent_Declare(fortio
             GIT_REPOSITORY https://github.com/lazy-fortran/fortio.git
             GIT_TAG dc542fde60c312ecfb7930c4c3434889b74b5c20
