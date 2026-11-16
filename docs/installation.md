@@ -30,6 +30,10 @@ target_link_libraries(my_program PRIVATE fortarray::fortarray)
 Link `fortarray::core` when only labeled computation is needed, or
 `fortarray::io` for the Fortio adapter.
 
+Fortarray's tests are not part of a consumer's build, and Fortarray leaves the
+consumer's `BUILD_TESTING` and CTest setup alone. To run its tests there, pass
+`-DFORTARRAY_BUILD_TESTS=ON` and call `include(CTest)` in the consumer.
+
 ## Core-only CMake build
 
 ```sh
